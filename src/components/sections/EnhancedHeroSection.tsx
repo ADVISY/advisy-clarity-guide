@@ -1,15 +1,62 @@
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Shield, TrendingUp, Calendar, CheckCircle, Sparkles, Award, Users } from "lucide-react";
-
 import familyConsultation from "@/assets/family-consultation.jpg";
+import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
 
 export const EnhancedHeroSection = () => {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [
+    Autoplay({ delay: 4000, stopOnInteraction: false }),
+  ]);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const scrollTo = useCallback(
+    (index: number) => emblaApi && emblaApi.scrollTo(index),
+    [emblaApi]
+  );
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on("select", onSelect);
+    return () => {
+      emblaApi.off("select", onSelect);
+    };
+  }, [emblaApi, onSelect]);
+
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  const slides = [
+    {
+      icon: Shield,
+      title: "Conseil personnalisé",
+      description: "Votre famille mérite la meilleure protection. Des experts à votre écoute.",
+      image: familyConsultation,
+    },
+    {
+      icon: TrendingUp,
+      title: "Optimisez vos coûts",
+      description: "Économisez jusqu'à 40% sur vos primes d'assurance avec nos comparaisons.",
+      image: familyConsultation,
+    },
+    {
+      icon: Award,
+      title: "15 ans d'expertise",
+      description: "Plus de 500 clients nous font confiance. Accompagnement complet de A à Z.",
+      image: familyConsultation,
+    },
+  ];
 
   return (
     <section
@@ -106,60 +153,90 @@ export const EnhancedHeroSection = () => {
             </div>
           </div>
 
-          {/* Right Column - Image de consultation familiale */}
+          {/* Right Column - Carousel Cards */}
           <div className="relative animate-scale-in">
-            <div className="relative">
-              {/* Image principale de consultation */}
-              <div className="group relative z-20 rounded-[32px] overflow-hidden border-4 border-white/20 shadow-strong hover:shadow-[0_0_80px_rgba(100,50,255,0.5)] transition-all duration-700 hover:-translate-y-3 hover:border-primary/40">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-700 z-10" />
-                <img 
-                  src={familyConsultation} 
-                  alt="Famille en consultation avec un conseiller Advisy"
-                  className="w-full h-full object-cover aspect-[4/3] group-hover:scale-105 transition-transform duration-700"
+            <div className="relative overflow-hidden rounded-[32px]" ref={emblaRef}>
+              <div className="flex">
+                {slides.map((slide, index) => {
+                  const Icon = slide.icon;
+                  return (
+                    <div
+                      key={index}
+                      className="flex-[0_0_100%] min-w-0 px-2"
+                    >
+                      <div className="relative">
+                        {/* Main card avec image */}
+                        <div className="group relative z-20 rounded-[32px] overflow-hidden border-4 border-white/20 shadow-strong hover:shadow-[0_0_80px_rgba(100,50,255,0.5)] transition-all duration-700 hover:-translate-y-3 hover:border-primary/40">
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-700 z-10" />
+                          <img 
+                            src={slide.image} 
+                            alt={slide.title}
+                            className="w-full h-full object-cover aspect-[4/3] group-hover:scale-105 transition-transform duration-700"
+                          />
+                          
+                          {/* Badge flottant sur l'image */}
+                          <div className="absolute bottom-6 left-6 right-6 z-20 bg-white/95 backdrop-blur-xl rounded-2xl p-6 border border-primary/20 shadow-strong">
+                            <div className="flex items-center gap-4">
+                              <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-glow flex-shrink-0 group-hover:scale-110 transition-transform">
+                                <Icon className="w-8 h-8 text-white" />
+                              </div>
+                              <div>
+                                <h3 className="text-xl font-bold text-foreground mb-1">
+                                  {slide.title}
+                                </h3>
+                                <p className="text-sm text-muted-foreground">
+                                  {slide.description}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Premium floating cards */}
+                        <div className="absolute -top-6 -right-6 z-10 w-56 bg-gradient-to-br from-card/90 to-card/60 backdrop-blur-xl rounded-3xl p-7 border-2 border-primary/20 shadow-strong hover:shadow-glow transition-all duration-500 hover:-translate-y-2 hover:border-primary/50 hover:scale-105">
+                          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-5 shadow-soft">
+                            <TrendingUp className="w-7 h-7 text-primary-glow" />
+                          </div>
+                          <h4 className="font-bold text-foreground mb-2 text-lg">Optimisation</h4>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            Meilleur rapport qualité-prix
+                          </p>
+                        </div>
+
+                        <div className="absolute -bottom-6 -left-6 z-10 w-56 bg-gradient-to-br from-card/90 to-card/60 backdrop-blur-xl rounded-3xl p-7 border-2 border-primary/20 shadow-strong hover:shadow-glow transition-all duration-500 hover:-translate-y-2 hover:border-primary/50 hover:scale-105">
+                          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-5 shadow-soft">
+                            <Calendar className="w-7 h-7 text-primary-glow" />
+                          </div>
+                          <h4 className="font-bold text-foreground mb-2 text-lg">Prévoyance</h4>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            Planification long terme
+                          </p>
+                        </div>
+
+                        {/* Enhanced decorative glow effects */}
+                        <div className="absolute -top-16 -right-16 w-80 h-80 bg-gradient-to-br from-primary/15 to-primary-glow/10 rounded-full blur-[120px] -z-10 animate-float" />
+                        <div className="absolute -bottom-16 -left-16 w-96 h-96 bg-gradient-to-tl from-accent/20 to-primary/10 rounded-full blur-[140px] -z-10 animate-pulse" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Dots Indicators */}
+            <div className="flex justify-center gap-2 mt-6">
+              {slides.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => scrollTo(index)}
+                  className={`transition-all duration-300 rounded-full ${
+                    index === selectedIndex
+                      ? "w-8 h-3 bg-primary shadow-glow"
+                      : "w-3 h-3 bg-muted-foreground/40 hover:bg-muted-foreground/60"
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
                 />
-                
-                {/* Badge flottant sur l'image */}
-                <div className="absolute bottom-6 left-6 right-6 z-20 bg-white/95 backdrop-blur-xl rounded-2xl p-6 border border-primary/20 shadow-strong">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-glow flex-shrink-0">
-                      <Shield className="w-8 h-8 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-foreground mb-1">
-                        Conseil personnalisé
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Votre famille mérite la meilleure protection
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Premium floating cards */}
-              <div className="absolute -top-6 -right-6 z-10 w-56 bg-gradient-to-br from-card/90 to-card/60 backdrop-blur-xl rounded-3xl p-7 border-2 border-primary/20 shadow-strong hover:shadow-glow transition-all duration-500 hover:-translate-y-2 hover:border-primary/50 hover:scale-105">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-5 shadow-soft">
-                  <TrendingUp className="w-7 h-7 text-primary-glow" />
-                </div>
-                <h4 className="font-bold text-foreground mb-2 text-lg">Optimisation</h4>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Meilleur rapport qualité-prix
-                </p>
-              </div>
-
-              <div className="absolute -bottom-6 -left-6 z-10 w-56 bg-gradient-to-br from-card/90 to-card/60 backdrop-blur-xl rounded-3xl p-7 border-2 border-primary/20 shadow-strong hover:shadow-glow transition-all duration-500 hover:-translate-y-2 hover:border-primary/50 hover:scale-105">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-5 shadow-soft">
-                  <Calendar className="w-7 h-7 text-primary-glow" />
-                </div>
-                <h4 className="font-bold text-foreground mb-2 text-lg">Prévoyance</h4>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Planification long terme
-                </p>
-              </div>
-
-              {/* Enhanced decorative glow effects */}
-              <div className="absolute -top-16 -right-16 w-80 h-80 bg-gradient-to-br from-primary/15 to-primary-glow/10 rounded-full blur-[120px] -z-10 animate-float" />
-              <div className="absolute -bottom-16 -left-16 w-96 h-96 bg-gradient-to-tl from-accent/20 to-primary/10 rounded-full blur-[140px] -z-10 animate-pulse" />
+              ))}
             </div>
           </div>
         </div>
