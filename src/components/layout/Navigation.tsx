@@ -39,6 +39,7 @@ const navLinks = [
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [closeTimeout, setCloseTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
@@ -46,6 +47,21 @@ export const Navigation = () => {
       element.scrollIntoView({ behavior: "smooth" });
       setIsOpen(false);
     }
+  };
+
+  const handleMouseEnter = (label: string) => {
+    if (closeTimeout) {
+      clearTimeout(closeTimeout);
+      setCloseTimeout(null);
+    }
+    setActiveDropdown(label);
+  };
+
+  const handleMouseLeave = () => {
+    const timeout = setTimeout(() => {
+      setActiveDropdown(null);
+    }, 200);
+    setCloseTimeout(timeout);
   };
 
   return (
@@ -70,8 +86,8 @@ export const Navigation = () => {
               <div
                 key={link.label}
                 className="relative group"
-                onMouseEnter={() => link.type === "dropdown" && setActiveDropdown(link.label)}
-                onMouseLeave={() => setActiveDropdown(null)}
+                onMouseEnter={() => link.type === "dropdown" && handleMouseEnter(link.label)}
+                onMouseLeave={handleMouseLeave}
               >
                 {link.type === "link" && link.href && (
                   <Link
@@ -102,7 +118,8 @@ export const Navigation = () => {
                     </button>
                     
                     {activeDropdown === link.label && link.subLinks && (
-                      <div className="absolute top-full left-0 mt-2 bg-background border border-border rounded-xl shadow-medium p-4 min-w-[280px] animate-fade-in">
+                      <div className="absolute top-full left-0 pt-2">
+                        <div className="bg-background border border-border rounded-xl shadow-medium p-4 min-w-[280px] animate-fade-in">
                         {link.subLinks.map((subLink) => (
                           <div key={subLink.label} className="mb-4 last:mb-0">
                             <p className="text-xs font-semibold text-primary uppercase mb-2">{subLink.label}</p>
@@ -119,6 +136,7 @@ export const Navigation = () => {
                             </div>
                           </div>
                         ))}
+                        </div>
                       </div>
                     )}
                   </>
