@@ -15,14 +15,9 @@ export const EnhancedHeroSection = () => {
     <section
       id="accueil"
       className="relative min-h-screen flex items-center pt-20 overflow-hidden"
-      style={{
-        backgroundImage: `url(${bgPatternGray})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
     >
       {/* Premium Light Overlay avec glassmorphism */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/85 to-primary/5 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-gradient-to-br from-background/40 via-background/30 to-primary/5 backdrop-blur-sm" />
       
       {/* Advanced Premium Background effects */}
       <div className="absolute inset-0">
