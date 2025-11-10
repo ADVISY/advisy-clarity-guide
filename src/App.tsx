@@ -17,6 +17,7 @@ import APropos from "./pages/APropos";
 import Carriere from "./pages/Carriere";
 import Connexion from "./pages/Connexion";
 import Simulateurs from "./pages/Simulateurs";
+import Assurances from "./pages/Assurances";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,9 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          
+          {/* Assurances Hub */}
+          <Route path="/assurances" element={<Assurances />} />
           
           {/* Assurances Particuliers */}
           <Route path="/assurances/sante" element={<AssuranceSante />} />

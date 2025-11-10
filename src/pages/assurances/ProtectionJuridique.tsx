@@ -1,64 +1,87 @@
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
-import { Button } from "@/components/ui/button";
-import { Scale } from "lucide-react";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { Scale, CheckCircle } from "lucide-react";
+import { DevisForm } from "@/components/forms/DevisForm";
+import juridiqueModerne from "@/assets/juridique-moderne.jpg";
 
 const ProtectionJuridique = () => {
+  const domaines = [
+    {
+      title: "Droit du travail",
+      items: ["Licenciement abusif", "Salaire impayé", "Conflit employeur", "Harcèlement"],
+    },
+    {
+      title: "Circulation routière",
+      items: ["Amendes contestées", "Accidents", "Retrait de permis", "Litiges parking"],
+    },
+    {
+      title: "Droit du logement",
+      items: ["Litiges propriétaire", "Augmentation loyer", "État des lieux", "Résiliation bail"],
+    },
+  ];
+
   return (
     <div className="min-h-screen">
       <Navigation />
       <main>
-        <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden bg-gradient-subtle">
-          <div className="absolute inset-0 bg-[url('/src/assets/bg-pattern.png')] opacity-5" />
+        <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
+          <div className="absolute inset-0">
+            <img src={juridiqueModerne} alt="Protection juridique" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background" />
+          </div>
           
-          <div className="container mx-auto px-4 lg:px-8 relative z-10">
-            <div className="max-w-4xl mx-auto text-center space-y-6">
-              <Scale className="w-16 h-16 mx-auto text-primary" />
+          <div className="container mx-auto px-4 lg:px-8 relative z-10 text-center">
+            <div className="max-w-4xl mx-auto space-y-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm mb-4">
+                <Scale className="w-4 h-4 text-primary" />
+                <span className="text-sm font-semibold text-primary uppercase tracking-wide">Protection Juridique</span>
+              </div>
+              
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground">
-                Ne soyez plus seul face aux litiges.
+                Défendez vos{" "}
+                <span className="bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent">droits</span>
               </h1>
-              <p className="text-lg md:text-xl text-foreground/80 max-w-3xl mx-auto leading-relaxed">
-                La protection juridique vous aide à défendre vos droits sans supporter les frais d'avocat.
-                Droit du travail, circulation, logement : nous vous accompagnons dans chaque domaine.
+              
+              <p className="text-lg md:text-xl text-foreground/80 max-w-3xl mx-auto">
+                Ne soyez plus seul face aux litiges juridiques
               </p>
-              <Button size="lg" className="mt-8" onClick={() => document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' })}>
-                ⚖️ Protégez vos droits dès maintenant
-              </Button>
             </div>
           </div>
         </section>
 
-        <section className="py-20 lg:py-32">
+        <section className="py-20 bg-gradient-to-b from-muted/30 to-background">
           <div className="container mx-auto px-4 lg:px-8">
-            <div className="max-w-4xl mx-auto prose prose-lg">
-              <h2 className="text-3xl font-bold mb-6">Nos domaines de protection</h2>
-              
-              <div className="space-y-8">
-                <div>
-                  <h3 className="text-2xl font-semibold mb-3">Droit du travail</h3>
-                  <p>Licenciement abusif, salaire impayé, conflit avec l'employeur : défendez vos droits.</p>
-                </div>
-
-                <div>
-                  <h3 className="text-2xl font-semibold mb-3">Circulation routière</h3>
-                  <p>Amendes, accidents, retrait de permis : bénéficiez d'un soutien juridique complet.</p>
-                </div>
-
-                <div>
-                  <h3 className="text-2xl font-semibold mb-3">Droit du logement</h3>
-                  <p>Litiges avec le propriétaire, augmentation de loyer, état des lieux : nous vous conseillons.</p>
-                </div>
-
-                <div>
-                  <h3 className="text-2xl font-semibold mb-3">Droit contractuel</h3>
-                  <p>Achats en ligne, garanties, litiges avec des prestataires : faites valoir vos droits.</p>
-                </div>
+            <div className="max-w-6xl mx-auto">
+              <div className="grid md:grid-cols-3 gap-8 mb-16">
+                {domaines.map((domaine, index) => (
+                  <div key={index} className="p-8 rounded-3xl bg-card border border-border shadow-soft">
+                    <h3 className="text-xl font-bold text-foreground mb-6">{domaine.title}</h3>
+                    <ul className="space-y-3">
+                      {domaine.items.map((item, i) => (
+                        <li key={i} className="flex items-start gap-3">
+                          <CheckCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                          <span className="text-muted-foreground">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-20 bg-background">
+          <div className="container mx-auto px-4 lg:px-8">
+            <div className="max-w-4xl mx-auto">
+              <DevisForm type="protection-juridique" title="Devis Protection Juridique" />
             </div>
           </div>
         </section>
       </main>
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 };
