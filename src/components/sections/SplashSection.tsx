@@ -36,9 +36,16 @@ export const SplashSection = ({ onEnter }: SplashSectionProps) => {
         <Button
           size="lg"
           onClick={onEnter}
-          className="bg-gradient-to-r from-primary to-primary-light text-lg tracking-widest uppercase"
+          className="relative group bg-gradient-primary text-white text-lg tracking-[0.4em] uppercase font-semibold px-16 py-7 rounded-full shadow-glow hover:shadow-[0_0_60px_rgba(24,0,173,0.5)] transition-all duration-500 hover:scale-110 overflow-hidden border-2 border-primary-light/30"
         >
-          e n t e r
+          {/* Effet de brillance animé */}
+          <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+          
+          {/* Texte avec effet */}
+          <span className="relative z-10 flex items-center gap-3">
+            e n t e r
+            <span className="group-hover:translate-x-2 transition-transform duration-300">→</span>
+          </span>
         </Button>
 
         {/* Website URL */}
