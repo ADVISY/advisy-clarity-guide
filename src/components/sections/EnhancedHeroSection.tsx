@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Shield, TrendingUp, Calendar, CheckCircle, Sparkles, Award, Users } from "lucide-react";
 import familyConsultation from "@/assets/family-consultation.jpg";
+import calculatorSavings from "@/assets/calculator-savings.jpg";
+import teamExpertise from "@/assets/team-expertise.jpg";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 
@@ -48,13 +50,13 @@ export const EnhancedHeroSection = () => {
       icon: TrendingUp,
       title: "Optimisez vos coûts",
       description: "Économisez jusqu'à 40% sur vos primes d'assurance avec nos comparaisons.",
-      image: familyConsultation,
+      image: calculatorSavings,
     },
     {
       icon: Award,
       title: "15 ans d'expertise",
       description: "Plus de 500 clients nous font confiance. Accompagnement complet de A à Z.",
-      image: familyConsultation,
+      image: teamExpertise,
     },
   ];
 
