@@ -11,7 +11,7 @@ import { FAQSection } from "@/components/sections/FAQSection";
 import { ContactSection } from "@/components/sections/ContactSection";
 
 const Index = () => {
-  const [showSplash, setShowSplash] = useState(false); // Désactivé par défaut
+  const [showSplash, setShowSplash] = useState(true); // Réactivé
 
   const handleEnter = () => {
     setShowSplash(false);
