@@ -27,7 +27,7 @@ export const SplashSection = ({ onEnter }: SplashSectionProps) => {
           <img 
             src={advisyLogo} 
             alt="Advisy - Le bon choix, à chaque fois" 
-            className="w-auto h-40 md:h-48 object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-300"
+            className="w-auto h-24 md:h-32 object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-300"
           />
         </div>
 

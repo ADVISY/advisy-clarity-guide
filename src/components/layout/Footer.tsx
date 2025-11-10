@@ -26,7 +26,8 @@ export const Footer = () => {
             <img 
               src={advisyLogo} 
               alt="Advisy - Le bon choix, à chaque fois" 
-              className="h-20 w-auto object-contain brightness-0 invert opacity-90"
+              className="h-12 w-auto object-contain brightness-0 invert opacity-90"
+              style={{ imageRendering: 'crisp-edges' }}
             />
           </div>
 
