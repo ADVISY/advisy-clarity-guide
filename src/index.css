@@ -8,15 +8,15 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Advisy Brand Colors - Premium Dark Background */
-    --background: 220 15% 8%;
-    --foreground: 0 0% 98%;
+    /* Advisy Brand Colors - Premium Background */
+    --background: 240 20% 96%;
+    --foreground: 246 100% 12%;
 
-    --card: 220 15% 12%;
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 246 100% 12%;
 
-    --popover: 220 15% 10%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 246 100% 12%;
 
     /* Primary: Advisy Blue #1800AD */
     --primary: 246 100% 34%;
@@ -26,39 +26,39 @@ All colors MUST be HSL.
     --primary-glow: 246 100% 70%;
 
     /* Secondary: Premium Grays */
-    --secondary: 220 15% 15%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 240 15% 92%;
+    --secondary-foreground: 246 100% 12%;
     
-    --neutral-light: 220 15% 20%;
-    --neutral-mid: 220 10% 35%;
-    --neutral-dark: 220 10% 50%;
+    --neutral-light: 240 10% 88%;
+    --neutral-mid: 240 8% 60%;
+    --neutral-dark: 240 10% 40%;
 
-    --muted: 220 15% 18%;
-    --muted-foreground: 220 10% 65%;
+    --muted: 240 12% 94%;
+    --muted-foreground: 240 8% 45%;
 
-    --accent: 246 60% 20%;
-    --accent-foreground: 246 100% 70%;
+    --accent: 246 80% 97%;
+    --accent-foreground: 246 100% 34%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 20%;
-    --input: 220 15% 18%;
+    --border: 240 15% 88%;
+    --input: 240 12% 92%;
     --ring: 246 100% 50%;
 
     --radius: 1rem;
 
     /* Advanced Design Tokens - Premium */
-    --gradient-primary: linear-gradient(135deg, hsl(246 100% 50%) 0%, hsl(246 100% 65%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(246 100% 40%) 0%, hsl(246 100% 55%) 50%, hsl(270 100% 60%) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(220 15% 10%) 0%, hsl(246 30% 15%) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(220 15% 12%) 0%, hsl(246 20% 16%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(246 100% 34%) 0%, hsl(246 100% 50%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(246 100% 34%) 0%, hsl(246 100% 45%) 50%, hsl(270 100% 55%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(240 20% 98%) 0%, hsl(246 40% 98%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(246 40% 98%) 100%);
     
-    --shadow-xs: 0 2px 4px rgba(24, 0, 173, 0.15);
-    --shadow-soft: 0 8px 20px rgba(24, 0, 173, 0.25);
-    --shadow-medium: 0 12px 32px rgba(24, 0, 173, 0.35);
-    --shadow-strong: 0 20px 60px rgba(24, 0, 173, 0.45);
-    --shadow-glow: 0 0 50px rgba(100, 50, 255, 0.5), 0 0 100px rgba(100, 50, 255, 0.2);
+    --shadow-xs: 0 2px 4px rgba(24, 0, 173, 0.08);
+    --shadow-soft: 0 8px 20px rgba(24, 0, 173, 0.12);
+    --shadow-medium: 0 12px 32px rgba(24, 0, 173, 0.18);
+    --shadow-strong: 0 20px 60px rgba(24, 0, 173, 0.25);
+    --shadow-glow: 0 0 40px rgba(100, 50, 255, 0.4), 0 0 80px rgba(100, 50, 255, 0.15);
     
     --blur-glass: blur(12px);
     --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
