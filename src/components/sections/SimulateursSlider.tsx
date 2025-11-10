@@ -56,8 +56,8 @@ export const SimulateursSlider = () => {
   ];
 
   return (
-    <section className="relative py-20 bg-gradient-to-b from-primary/5 to-background overflow-hidden">
-      <div className="container mx-auto px-4 lg:px-8">
+    <section className="relative min-h-screen flex items-center pt-20 overflow-hidden">
+      <div className="container relative z-10 mx-auto px-4 lg:px-8 py-20 lg:py-32">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
@@ -162,6 +162,9 @@ export const SimulateursSlider = () => {
           </div>
         </div>
       </div>
+      
+      {/* Bottom wave decoration */}
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
     </section>
   );
 };
