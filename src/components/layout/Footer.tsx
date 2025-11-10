@@ -21,7 +21,7 @@ export const Footer = () => {
 
   return (
     <footer className="bg-background text-foreground py-16 lg:py-20 relative">
-      <div className="absolute inset-0 bg-background/95" />
+      <div className="absolute inset-0 bg-neutral-light/30" />
       <div className="container relative z-10 mx-auto px-4 lg:px-8">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           {/* Column 1 - Logo & Description */}

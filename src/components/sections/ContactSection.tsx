@@ -58,7 +58,7 @@ export const ContactSection = () => {
       id="contact" 
       className="relative py-20 lg:py-32 overflow-hidden"
     >
-      <div className="absolute inset-0 bg-background/95" />
+      <div className="absolute inset-0 bg-neutral-light/20" />
       <div className="container relative z-10 mx-auto px-4 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16 animate-fade-in">
