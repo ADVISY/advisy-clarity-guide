@@ -20,23 +20,27 @@ export const EnhancedHeroSection = () => {
         backgroundPosition: "center",
       }}
     >
-      {/* Overlay subtil pour améliorer la lisibilité */}
-      <div className="absolute inset-0 bg-background/30" />
+      {/* Premium Dark Overlay avec glassmorphism */}
+      <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/90 to-primary/10 backdrop-blur-sm" />
       
-      {/* Advanced Background effects */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-20 left-10 w-96 h-96 bg-primary/15 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-10 w-[500px] h-[500px] bg-accent blur-3xl" />
+      {/* Advanced Premium Background effects */}
+      <div className="absolute inset-0">
+        <div className="absolute top-20 left-10 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] animate-float" />
+        <div className="absolute bottom-20 right-10 w-[700px] h-[700px] bg-gradient-to-br from-primary-glow/20 to-accent/20 rounded-full blur-[140px] animate-pulse" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/10 rounded-full blur-[160px]" />
       </div>
+      
+      {/* Mesh gradient overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(100,50,255,0.05),transparent_50%)]" />
 
       <div className="container relative z-10 mx-auto px-4 lg:px-8 py-20 lg:py-32">
         <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
           {/* Left Column - Enhanced Text */}
           <div className="space-y-10 animate-fade-in">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-sm font-semibold text-primary">
+            {/* Premium Badge avec glow effect */}
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-primary/15 via-primary/10 to-primary/15 border border-primary/40 backdrop-blur-md shadow-glow hover:shadow-[0_0_60px_rgba(100,50,255,0.4)] transition-all duration-500 hover:scale-105">
+              <Sparkles className="w-5 h-5 text-primary-glow animate-pulse" />
+              <span className="text-sm font-bold text-primary-glow tracking-wide">
                 Conseil indépendant en Suisse
               </span>
             </div>
@@ -67,74 +71,82 @@ export const EnhancedHeroSection = () => {
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-5">
               <Button
                 size="lg"
+                variant="premium"
                 onClick={() => scrollToSection("#contact")}
-                className="text-base shadow-glow group relative overflow-hidden"
+                className="group"
               >
-                <span className="relative z-10">Prendre rendez-vous</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-primary-light to-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Calendar className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" />
+                <span className="relative z-10 font-bold">Prendre rendez-vous</span>
               </Button>
               <Button
                 size="lg"
                 variant="outline"
                 onClick={() => scrollToSection("#services")}
-                className="text-base border-2 group"
+                className="group"
               >
-                Découvrir nos services
-                <span className="ml-2 group-hover:translate-x-1 transition-transform">
+                <span className="font-semibold">Découvrir nos services</span>
+                <span className="ml-2 group-hover:translate-x-2 transition-transform text-lg">
                   →
                 </span>
               </Button>
             </div>
 
-            {/* Trust Indicators */}
-            <div className="grid grid-cols-3 gap-6 pt-8 border-t border-border">
-              <div className="space-y-1">
+            {/* Premium Trust Indicators avec glassmorphism */}
+            <div className="grid grid-cols-3 gap-6 pt-10 mt-6 border-t border-primary/20">
+              <div className="space-y-2 p-4 rounded-2xl bg-gradient-card backdrop-blur-sm border border-border/50 hover:border-primary/50 hover:shadow-glow transition-all duration-500 hover:scale-105">
                 <div className="flex items-center gap-2">
-                  <Award className="w-5 h-5 text-primary" />
-                  <p className="text-2xl font-bold text-foreground">100%</p>
+                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                    <Award className="w-5 h-5 text-primary-glow" />
+                  </div>
+                  <p className="text-3xl font-bold bg-gradient-to-r from-primary-light to-primary-glow bg-clip-text text-transparent">100%</p>
                 </div>
-                <p className="text-sm text-muted-foreground">Indépendant</p>
+                <p className="text-sm text-muted-foreground font-medium">Indépendant</p>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2 p-4 rounded-2xl bg-gradient-card backdrop-blur-sm border border-border/50 hover:border-primary/50 hover:shadow-glow transition-all duration-500 hover:scale-105">
                 <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-primary" />
-                  <p className="text-2xl font-bold text-foreground">500+</p>
+                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                    <Users className="w-5 h-5 text-primary-glow" />
+                  </div>
+                  <p className="text-3xl font-bold bg-gradient-to-r from-primary-light to-primary-glow bg-clip-text text-transparent">500+</p>
                 </div>
-                <p className="text-sm text-muted-foreground">Clients</p>
+                <p className="text-sm text-muted-foreground font-medium">Clients</p>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2 p-4 rounded-2xl bg-gradient-card backdrop-blur-sm border border-border/50 hover:border-primary/50 hover:shadow-glow transition-all duration-500 hover:scale-105">
                 <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-primary" />
-                  <p className="text-2xl font-bold text-foreground">15+</p>
+                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-primary-glow" />
+                  </div>
+                  <p className="text-3xl font-bold bg-gradient-to-r from-primary-light to-primary-glow bg-clip-text text-transparent">15+</p>
                 </div>
-                <p className="text-sm text-muted-foreground">Ans d'expertise</p>
+                <p className="text-sm text-muted-foreground font-medium">Ans d'expertise</p>
               </div>
             </div>
           </div>
 
-          {/* Right Column - Advanced 3D Card Layout */}
+          {/* Right Column - Premium 3D Card Layout avec glassmorphism */}
           <div className="relative animate-scale-in">
             <div className="relative">
-              {/* Main feature card */}
-              <div className="relative z-20 bg-gradient-card backdrop-blur-sm rounded-3xl p-8 border border-border shadow-strong hover:shadow-glow transition-all duration-500 hover:-translate-y-2">
-                <div className="flex items-start gap-6">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-medium">
-                    <Shield className="w-8 h-8 text-white" />
+              {/* Main premium feature card */}
+              <div className="group relative z-20 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-xl rounded-[32px] p-10 border-2 border-primary/30 shadow-strong hover:shadow-[0_0_80px_rgba(100,50,255,0.5)] transition-all duration-700 hover:-translate-y-3 hover:border-primary/60">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent rounded-[32px] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                <div className="relative flex items-start gap-6">
+                  <div className="w-20 h-20 rounded-3xl bg-gradient-primary flex items-center justify-center shadow-glow group-hover:scale-110 transition-transform duration-500">
+                    <Shield className="w-10 h-10 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-2xl font-bold text-foreground mb-3">
+                    <h3 className="text-3xl font-bold text-foreground mb-4 group-hover:text-primary-glow transition-colors duration-500">
                       Protection complète
                     </h3>
-                    <p className="text-muted-foreground leading-relaxed mb-4">
+                    <p className="text-muted-foreground leading-relaxed mb-6 text-base">
                       Analyse approfondie de toutes vos couvertures d'assurance
                       et recommandations personnalisées.
                     </p>
-                    <div className="flex items-center gap-2 text-primary font-semibold">
+                    <div className="flex items-center gap-3 text-primary-glow font-bold group-hover:gap-5 transition-all duration-500">
                       <span>En savoir plus</span>
-                      <span className="group-hover:translate-x-1 transition-transform">
+                      <span className="text-xl group-hover:translate-x-2 transition-transform duration-500">
                         →
                       </span>
                     </div>
@@ -142,30 +154,30 @@ export const EnhancedHeroSection = () => {
                 </div>
               </div>
 
-              {/* Floating cards */}
-              <div className="absolute -top-6 -right-6 z-10 w-48 bg-card backdrop-blur-sm rounded-2xl p-6 border border-border shadow-medium hover:shadow-strong transition-all duration-300 hover:-translate-y-1">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                  <TrendingUp className="w-6 h-6 text-primary" />
+              {/* Premium floating cards */}
+              <div className="absolute -top-6 -right-6 z-10 w-56 bg-gradient-to-br from-card/90 to-card/60 backdrop-blur-xl rounded-3xl p-7 border-2 border-primary/20 shadow-strong hover:shadow-glow transition-all duration-500 hover:-translate-y-2 hover:border-primary/50 hover:scale-105">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-5 shadow-soft">
+                  <TrendingUp className="w-7 h-7 text-primary-glow" />
                 </div>
-                <h4 className="font-bold text-foreground mb-2">Optimisation</h4>
-                <p className="text-sm text-muted-foreground">
+                <h4 className="font-bold text-foreground mb-2 text-lg">Optimisation</h4>
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   Meilleur rapport qualité-prix
                 </p>
               </div>
 
-              <div className="absolute -bottom-6 -left-6 z-10 w-48 bg-card backdrop-blur-sm rounded-2xl p-6 border border-border shadow-medium hover:shadow-strong transition-all duration-300 hover:-translate-y-1">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                  <Calendar className="w-6 h-6 text-primary" />
+              <div className="absolute -bottom-6 -left-6 z-10 w-56 bg-gradient-to-br from-card/90 to-card/60 backdrop-blur-xl rounded-3xl p-7 border-2 border-primary/20 shadow-strong hover:shadow-glow transition-all duration-500 hover:-translate-y-2 hover:border-primary/50 hover:scale-105">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-5 shadow-soft">
+                  <Calendar className="w-7 h-7 text-primary-glow" />
                 </div>
-                <h4 className="font-bold text-foreground mb-2">Prévoyance</h4>
-                <p className="text-sm text-muted-foreground">
+                <h4 className="font-bold text-foreground mb-2 text-lg">Prévoyance</h4>
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   Planification long terme
                 </p>
               </div>
 
-              {/* Decorative glow effects */}
-              <div className="absolute -top-12 -right-12 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-10 animate-pulse" />
-              <div className="absolute -bottom-12 -left-12 w-72 h-72 bg-accent blur-3xl -z-10" />
+              {/* Enhanced decorative glow effects */}
+              <div className="absolute -top-16 -right-16 w-80 h-80 bg-gradient-to-br from-primary/15 to-primary-glow/10 rounded-full blur-[120px] -z-10 animate-float" />
+              <div className="absolute -bottom-16 -left-16 w-96 h-96 bg-gradient-to-tl from-accent/20 to-primary/10 rounded-full blur-[140px] -z-10 animate-pulse" />
             </div>
           </div>
         </div>
