@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { SplashSection } from "@/components/sections/SplashSection";
-import { HeroSlider } from "@/components/sections/HeroSlider";
+import { EnhancedHeroSection } from "@/components/sections/EnhancedHeroSection";
 import { ServicesSection } from "@/components/sections/ServicesSection";
 import { PartnersSection } from "@/components/sections/PartnersSection";
 import { WhyAdvisySection } from "@/components/sections/WhyAdvisySection";
@@ -27,13 +27,6 @@ const Index = () => {
     }, 100);
   };
 
-  const scrollToSection = (href: string) => {
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
   return (
     <div className="min-h-screen">
       {showSplash ? (
@@ -42,12 +35,7 @@ const Index = () => {
         <>
           <Navigation />
           <main>
-            <section id="accueil" className="relative">
-              <HeroSlider
-                onContactClick={() => scrollToSection("#contact")}
-                onServicesClick={() => scrollToSection("#services")}
-              />
-            </section>
+            <EnhancedHeroSection />
             <ServicesSection />
             <PartnersSection />
             <WhyAdvisySection />
