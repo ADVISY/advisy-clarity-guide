@@ -64,12 +64,12 @@ export const Navigation = () => {
   const handleMouseLeave = () => {
     const timeout = setTimeout(() => {
       setActiveDropdown(null);
-    }, 450);
+    }, 600);
     setCloseTimeout(timeout);
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-glass border-b border-border/50 shadow-xs">
+    <nav className="fixed top-0 left-0 right-0 z-[100] bg-background/80 backdrop-blur-glass border-b border-border/50 shadow-xs">
       <div className="container mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between h-24">
           {/* Logo */}
@@ -130,7 +130,10 @@ export const Navigation = () => {
                     </button>
                     
                     {activeDropdown === link.label && link.subLinks && (
-                      <div className="absolute top-full left-0 pt-2 z-50">
+                      <div className="absolute top-full left-0 pt-2 z-[120] pointer-events-auto"
+                        onMouseEnter={() => handleMouseEnter(link.label)}
+                        onMouseLeave={handleMouseLeave}
+                      >
                         <div className="bg-background/95 backdrop-blur-md border border-border rounded-xl shadow-medium p-4 min-w-[280px] animate-fade-in">
                         {link.subLinks.map((subLink) => (
                           <div key={subLink.label} className="mb-4 last:mb-0">
