@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import bgPattern from "@/assets/bg-pattern.png";
+import logoInfo from "@/assets/logo-info.png";
 
 interface SplashSectionProps {
   onEnter: () => void;
@@ -21,23 +22,13 @@ export const SplashSection = ({ onEnter }: SplashSectionProps) => {
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center gap-8 px-4 animate-scale-in">
-        {/* Logo with icon */}
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-24 h-24 rounded-3xl bg-neutral-light flex items-center justify-center shadow-medium">
-            <div className="relative">
-              <div className="absolute -left-1 -top-1 w-8 h-8 rounded-full bg-primary" />
-              <div className="absolute left-3 top-3 w-6 h-6 rounded-full bg-primary" />
-            </div>
-          </div>
-
-          <div className="text-center">
-            <h1 className="text-6xl md:text-7xl font-bold text-primary mb-2">
-              advisy<span className="text-primary">.</span>
-            </h1>
-            <p className="text-sm md:text-base text-primary font-medium tracking-wide uppercase">
-              Le bon choix, à chaque fois.
-            </p>
-          </div>
+        {/* Logo and branding */}
+        <div className="flex flex-col items-center gap-6">
+          <img 
+            src={logoInfo} 
+            alt="Advisy Logo" 
+            className="w-auto h-32 md:h-40 object-contain drop-shadow-2xl"
+          />
         </div>
 
         {/* Enter Button */}

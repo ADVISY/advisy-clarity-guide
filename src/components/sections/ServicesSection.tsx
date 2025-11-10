@@ -1,5 +1,6 @@
 import { Shield, LineChart, Briefcase, Calculator } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import bgPattern from "@/assets/bg-pattern.png";
 
 const services = [
   {
@@ -34,10 +35,21 @@ const services = [
 
 export const ServicesSection = () => {
   return (
-    <section id="services" className="relative py-24 lg:py-40 bg-background overflow-hidden">
+    <section 
+      id="services" 
+      className="relative py-24 lg:py-40 overflow-hidden"
+      style={{
+        backgroundImage: `url(${bgPattern})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      {/* Background overlay */}
+      <div className="absolute inset-0 bg-background/95" />
+      
       {/* Background decoration */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl opacity-20">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl opacity-10">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl" />
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent blur-3xl" />
       </div>
       

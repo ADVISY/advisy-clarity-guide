@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import logoInfo from "@/assets/logo-info.png";
 
 const navLinks = [
   { label: "Accueil", href: "#accueil" },
@@ -30,9 +31,13 @@ export const Navigation = () => {
           {/* Logo */}
           <button
             onClick={() => scrollToSection("#accueil")}
-            className="text-3xl font-bold text-primary hover:text-primary-light transition-all duration-300 hover:scale-105"
+            className="flex items-center hover:scale-105 transition-all duration-300"
           >
-            advisy<span className="text-primary">.</span>
+            <img 
+              src={logoInfo} 
+              alt="Advisy" 
+              className="h-10 md:h-12 w-auto object-contain"
+            />
           </button>
 
           {/* Desktop Navigation */}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import bgPattern from "@/assets/bg-pattern.png";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -54,8 +55,17 @@ export const ContactSection = () => {
   };
 
   return (
-    <section id="contact" className="py-20 lg:py-32 bg-gradient-subtle">
-      <div className="container mx-auto px-4 lg:px-8">
+    <section 
+      id="contact" 
+      className="relative py-20 lg:py-32 overflow-hidden"
+      style={{
+        backgroundImage: `url(${bgPattern})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      <div className="absolute inset-0 bg-gradient-subtle" />
+      <div className="container relative z-10 mx-auto px-4 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-6">

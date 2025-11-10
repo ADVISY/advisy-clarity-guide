@@ -1,3 +1,5 @@
+import logoInfo from "@/assets/logo-info.png";
+
 export const Footer = () => {
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
@@ -21,9 +23,11 @@ export const Footer = () => {
         <div className="grid md:grid-cols-3 gap-8 lg:gap-12 items-center">
           {/* Left - Logo and Tagline */}
           <div>
-            <h3 className="text-2xl font-bold mb-2">
-              advisy<span className="text-primary-light">.</span>
-            </h3>
+            <img 
+              src={logoInfo} 
+              alt="Advisy" 
+              className="h-16 w-auto object-contain brightness-0 invert mb-2"
+            />
             <p className="text-sm text-background/70">
               Le bon choix, à chaque fois.
             </p>
