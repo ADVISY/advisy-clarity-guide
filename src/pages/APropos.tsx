@@ -1,7 +1,9 @@
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { Eye, Users, MapPin, Target, Heart, Shield, Award, TrendingUp, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import officeImage from "@/assets/office-consultation.jpg";
 import teamImage from "@/assets/team-meeting.jpg";
 
@@ -86,9 +88,11 @@ const APropos = () => {
                   Notre mission est de démystifier le secteur, d'offrir des conseils personnalisés et indépendants, 
                   et de vous accompagner dans toutes les étapes de votre vie avec des solutions adaptées à vos besoins réels.
                 </p>
-                <Button size="lg" onClick={() => document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' })}>
-                  Prendre rendez-vous
-                </Button>
+                <Link to="/#contact">
+                  <Button size="lg">
+                    Prendre rendez-vous
+                  </Button>
+                </Link>
               </div>
               <div className="relative">
                 <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-elegant">
@@ -213,15 +217,18 @@ const APropos = () => {
                 garantissant des solutions neutres, performantes et sur mesure pour chaque client.
               </p>
               <div className="pt-8">
-                <Button size="lg" onClick={() => document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' })}>
-                  Découvrir nos solutions
-                </Button>
+                <Link to="/#contact">
+                  <Button size="lg">
+                    Découvrir nos solutions
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
         </section>
       </main>
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 };

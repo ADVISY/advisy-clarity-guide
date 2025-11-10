@@ -1,6 +1,8 @@
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { Rocket, GraduationCap, TrendingUp, Users, Target, Award, Briefcase, Heart, CheckCircle2 } from "lucide-react";
 import trainingImage from "@/assets/team-expertise.jpg";
 import consultationImage from "@/assets/family-consultation.jpg";
@@ -89,9 +91,11 @@ const Carriere = () => {
                 Nous formons la nouvelle génération de conseillers financiers.
                 Formations internes, coaching, outils digitaux et commissions attractives : Advisy te donne les moyens de réussir.
               </p>
-              <Button size="lg" className="mt-8" onClick={() => document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' })}>
-                Postule dès maintenant
-              </Button>
+              <Link to="/#contact">
+                <Button size="lg" className="mt-8">
+                  Postule dès maintenant
+                </Button>
+              </Link>
             </div>
           </div>
         </section>
@@ -248,9 +252,11 @@ const Carriere = () => {
                     </li>
                   ))}
                 </ul>
-                <Button size="lg" className="mt-4" onClick={() => document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' })}>
-                  Postuler maintenant
-                </Button>
+                <Link to="/#contact">
+                  <Button size="lg" className="mt-4">
+                    Postuler maintenant
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
@@ -268,14 +274,17 @@ const Carriere = () => {
                 Rejoins une équipe qui croit en ton potentiel et qui investit dans ta réussite. 
                 Démarre ton aventure chez Advisy dès aujourd'hui.
               </p>
-              <Button size="lg" onClick={() => document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' })}>
-                Envoyer ma candidature
-              </Button>
+              <Link to="/#contact">
+                <Button size="lg">
+                  Envoyer ma candidature
+                </Button>
+              </Link>
             </div>
           </div>
         </section>
       </main>
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 };
