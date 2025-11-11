@@ -14,6 +14,10 @@ import { FAQSection } from "@/components/sections/FAQSection";
 import { ContactSection } from "@/components/sections/ContactSection";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { AIAssistant } from "@/components/AIAssistant";
+import { BlogSection } from "@/components/sections/BlogSection";
+import { StatsSection } from "@/components/sections/StatsSection";
+import { LeadMagnetModal } from "@/components/LeadMagnetModal";
+import { CTABanner } from "@/components/CTABanner";
 
 const Index = () => {
   const [showSplash, setShowSplash] = useState(true);
@@ -37,6 +41,7 @@ const Index = () => {
         <>
           <main>
             <EnhancedHeroSection />
+            <StatsSection />
             <ServicesSection />
             <PartnersSection />
             <WhyAdvisySection />
@@ -44,12 +49,15 @@ const Index = () => {
             <MethodSection />
             <AboutSection />
             <TestimonialsSection />
+            <BlogSection />
             <FAQSection />
             <ContactSection />
           </main>
           <Footer />
           <WhatsAppButton />
           <AIAssistant />
+          <LeadMagnetModal />
+          <CTABanner />
         </>
       )}
     </div>
