@@ -6,7 +6,7 @@ import { ChevronLeft } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
-import advisyTextLogo from "@/assets/advisy-text-logo.svg";
+import advisyLogo from "@/assets/advisy-logo.svg";
 
 const Connexion = () => {
   const [clientEmail, setClientEmail] = useState("");
@@ -52,9 +52,9 @@ const Connexion = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 relative overflow-hidden">
+    <div className="min-h-screen bg-[#F8F9FA] relative overflow-hidden">
       {/* Background pattern */}
-      <div className="absolute inset-0 bg-[url('/src/assets/bg-pattern.png')] opacity-[0.03]" />
+      <div className="absolute inset-0 bg-[url('/images/bg-pattern-gray.png')] opacity-40" />
       
       {/* Retour au site button */}
       <Link 
@@ -70,9 +70,9 @@ const Connexion = () => {
         {/* Logo */}
         <div className="text-center mb-8 animate-fade-in">
           <img 
-            src={advisyTextLogo} 
+            src={advisyLogo} 
             alt="Advisy" 
-            className="h-12 mx-auto mb-6"
+            className="h-32 sm:h-40 mx-auto mb-8"
           />
           <h1 className="text-2xl font-bold text-slate-900 mb-2">
             Espace sécurisé Advisy
