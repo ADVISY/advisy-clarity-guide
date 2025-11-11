@@ -29,7 +29,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      <Navigation />
+      {!showSplash && <Navigation />}
       {showSplash ? (
         <SplashSection onEnter={handleEnter} />
       ) : (

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -46,6 +46,15 @@ export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [closeTimeout, setCloseTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
@@ -71,9 +80,15 @@ export const Navigation = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-[100] bg-background/80 backdrop-blur-glass border-b border-border/50 shadow-xs">
-      <div className="container mx-auto px-4 lg:px-8">
-        <div className="flex items-center justify-between h-24">
+    <nav className={`fixed left-1/2 -translate-x-1/2 z-[100] rounded-full transition-all duration-300 ${
+      scrolled 
+        ? 'top-4 bg-white/95 shadow-medium backdrop-blur-md w-[95%] max-w-6xl' 
+        : 'top-6 bg-white/90 shadow-sm backdrop-blur-sm w-[96%] max-w-7xl'
+    }`}>
+      <div className="px-6 lg:px-8">
+        <div className={`flex items-center justify-between transition-all duration-300 ${
+          scrolled ? 'h-20' : 'h-24'
+        }`}>
           {/* Logo */}
           <Link
             to="/"
@@ -82,7 +97,9 @@ export const Navigation = () => {
             <img 
               src={advisyLogo} 
               alt="Advisy - Le bon choix, à chaque fois" 
-              className="h-14 md:h-16 w-auto object-contain"
+              className={`w-auto object-contain transition-all duration-300 ${
+                scrolled ? 'h-12 md:h-14' : 'h-14 md:h-16'
+              }`}
             />
           </Link>
 
