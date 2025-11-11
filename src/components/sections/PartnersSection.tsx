@@ -1,4 +1,6 @@
 import { Award } from "lucide-react";
+import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
 import liechtensteinLogo from "@/assets/partners/liechtenstein-life.webp";
 import cssLogo from "@/assets/partners/css-logo.png";
 import groupeMutuelLogo from "@/assets/partners/groupe-mutuel-logo.png";
@@ -18,8 +20,17 @@ const partners = [
 ];
 
 export const PartnersSection = () => {
-  // Calculate rotation angle for each logo
-  const angleStep = 360 / partners.length;
+  const [emblaRef] = useEmblaCarousel(
+    { 
+      loop: true, 
+      dragFree: true,
+      containScroll: false,
+    },
+    [Autoplay({ delay: 1500, stopOnInteraction: false })]
+  );
+
+  // Duplicate partners array for seamless infinite scroll
+  const duplicatedPartners = [...partners, ...partners, ...partners];
 
   return (
     <section className="relative py-16 bg-background overflow-hidden">
@@ -47,55 +58,21 @@ export const PartnersSection = () => {
           </p>
         </div>
 
-        {/* 3D Half-Circle Carousel - Desktop */}
-        <div className="hidden md:block relative w-full h-[200px] overflow-hidden" style={{ perspective: "1200px" }}>
-          <div 
-            className="absolute left-1/2 -translate-x-1/2 w-[900px] h-[180px] animate-sphere-rotate"
-            style={{ 
-              transformStyle: "preserve-3d",
-              transformOrigin: "center center"
-            }}
-          >
-            {partners.map((partner, index) => {
-              // Distribute logos on a half-circle (180 degrees)
-              const angle = (index / (partners.length - 1)) * 180 - 90; // -90 to 90 degrees
-              const radius = 350;
-              
-              return (
-                <div
-                  key={partner.name}
-                  className="absolute top-1/2 left-1/2"
-                  style={{
-                    transform: `translate(-50%, -50%) rotateY(${angle}deg) translateZ(${radius}px)`,
-                    transformStyle: "preserve-3d",
-                  }}
-                >
-                  <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-gray-100 p-4 w-36 h-24 flex items-center justify-center">
-                    <img 
-                      src={partner.logo} 
-                      alt={`Logo ${partner.name}`}
-                      className="max-h-12 max-w-full object-contain mix-blend-multiply dark:mix-blend-normal dark:brightness-0 dark:invert"
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Mobile Carousel Fallback */}
-        <div className="md:hidden overflow-x-auto overflow-y-hidden">
-          <div className="flex gap-4 px-4 pb-4">
-            {partners.map((partner, index) => (
+        {/* Horizontal Carousel with Auto-play */}
+        <div className="relative overflow-hidden" ref={emblaRef}>
+          <div className="flex gap-6">
+            {duplicatedPartners.map((partner, index) => (
               <div
-                key={index}
-                className="flex-shrink-0 bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-gray-100 p-4 w-32 h-20 flex items-center justify-center"
+                key={`${partner.name}-${index}`}
+                className="flex-[0_0_auto] w-40 h-24"
               >
-                <img 
-                  src={partner.logo} 
-                  alt={`Logo ${partner.name}`}
-                  className="max-h-10 object-contain mix-blend-multiply dark:mix-blend-normal dark:brightness-0 dark:invert"
-                />
+                <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-border p-4 h-full flex items-center justify-center transition-all duration-300">
+                  <img 
+                    src={partner.logo} 
+                    alt={`Logo ${partner.name}`}
+                    className="max-h-12 max-w-full object-contain mix-blend-multiply dark:mix-blend-normal dark:brightness-0 dark:invert"
+                  />
+                </div>
               </div>
             ))}
           </div>
