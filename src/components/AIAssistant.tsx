@@ -6,6 +6,7 @@ import { Sparkles, X, Send, User, Bot, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import advisyLogo from "@/assets/advisy-logo.svg";
+import aivyAvatar from "@/assets/aivy-avatar.jpg";
 
 type Message = {
   id: string;
@@ -133,8 +134,8 @@ export const AIAssistant = () => {
           {/* Header */}
           <div className="bg-gradient-to-r from-[#1800AD] to-[#2800CD] text-white p-4 flex items-center justify-between rounded-t-3xl">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                <img src={advisyLogo} alt="Advisy" className="h-6 w-6" />
+              <div className="h-12 w-12 rounded-full overflow-hidden border-2 border-white/30 shadow-lg">
+                <img src={aivyAvatar} alt="Aivy" className="h-full w-full object-cover" />
               </div>
               <div>
                 <h3 className="font-semibold text-lg">Aivy</h3>
@@ -155,10 +156,10 @@ export const AIAssistant = () => {
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* User Type Selection */}
             {!userType && messages.length === 0 && (
-              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+              <div className="flex flex-col items-center justify-center p-6 text-center">
                 <div className="mb-6">
-                  <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#1800AD] to-[#2800CD] flex items-center justify-center mx-auto mb-4">
-                    <Sparkles className="h-8 w-8 text-white" />
+                  <div className="h-24 w-24 rounded-full overflow-hidden border-4 border-[#1800AD] shadow-xl mx-auto mb-4">
+                    <img src={aivyAvatar} alt="Aivy" className="h-full w-full object-cover" />
                   </div>
                   <h4 className="text-xl font-semibold mb-2 text-slate-900 dark:text-white">
                     Bonjour 👋 je suis Aivy
@@ -198,8 +199,8 @@ export const AIAssistant = () => {
                         }`}
                       >
                         {message.role === "assistant" && (
-                          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#1800AD] to-[#2800CD] flex items-center justify-center flex-shrink-0">
-                            <Bot className="h-5 w-5 text-white" />
+                          <div className="h-8 w-8 rounded-full overflow-hidden border-2 border-[#1800AD]/20 flex-shrink-0">
+                            <img src={aivyAvatar} alt="Aivy" className="h-full w-full object-cover" />
                           </div>
                         )}
                         <div
@@ -220,8 +221,8 @@ export const AIAssistant = () => {
                     ))}
                     {isLoading && (
                       <div className="flex gap-3 justify-start">
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#1800AD] to-[#2800CD] flex items-center justify-center">
-                          <Bot className="h-5 w-5 text-white" />
+                        <div className="h-8 w-8 rounded-full overflow-hidden border-2 border-[#1800AD]/20">
+                          <img src={aivyAvatar} alt="Aivy" className="h-full w-full object-cover" />
                         </div>
                         <div className="rounded-2xl px-4 py-2 bg-slate-100 dark:bg-slate-800">
                           <Loader2 className="h-5 w-5 animate-spin text-slate-600 dark:text-slate-400" />
