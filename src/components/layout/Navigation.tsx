@@ -83,14 +83,14 @@ export const Navigation = () => {
   };
 
   return (
-    <nav className={`fixed left-1/2 -translate-x-1/2 z-[100] rounded-full transition-all duration-300 overflow-hidden ${
+    <nav className={`fixed left-1/2 -translate-x-1/2 z-[100] rounded-full transition-all duration-300 ${
       scrolled 
         ? 'top-4 bg-white/70 shadow-lg backdrop-blur-md w-[95%] max-w-6xl border border-white/40' 
         : 'top-6 bg-white/70 shadow-lg backdrop-blur-md w-[96%] max-w-7xl border border-white/40'
     }`}>
       {/* Glossy shine effect */}
       <div 
-        className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
+        className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden rounded-full"
         style={{
           background: 'linear-gradient(60deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%)',
           animation: 'shine 5s linear infinite',
