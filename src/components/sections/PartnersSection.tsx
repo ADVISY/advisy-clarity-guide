@@ -47,30 +47,34 @@ export const PartnersSection = () => {
           </p>
         </div>
 
-        {/* 3D Rotating Partners Display - Desktop */}
-        <div className="hidden md:flex relative w-full max-w-xl mx-auto h-[320px] items-center justify-center" style={{ perspective: "1000px" }}>
+        {/* 3D Half-Circle Carousel - Desktop */}
+        <div className="hidden md:block relative w-full h-[200px] overflow-hidden" style={{ perspective: "1200px" }}>
           <div 
-            className="relative w-[260px] h-[260px] animate-sphere-rotate"
-            style={{ transformStyle: "preserve-3d" }}
+            className="absolute left-1/2 -translate-x-1/2 w-[900px] h-[180px] animate-sphere-rotate"
+            style={{ 
+              transformStyle: "preserve-3d",
+              transformOrigin: "center center"
+            }}
           >
             {partners.map((partner, index) => {
-              const angle = angleStep * index;
-              const translateZ = 200; // Distance from center
+              // Distribute logos on a half-circle (180 degrees)
+              const angle = (index / (partners.length - 1)) * 180 - 90; // -90 to 90 degrees
+              const radius = 350;
               
               return (
                 <div
                   key={partner.name}
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-105"
+                  className="absolute top-1/2 left-1/2 transition-all duration-200 hover:scale-110 hover:z-10"
                   style={{
-                    transform: `rotateY(${angle}deg) translateZ(${translateZ}px)`,
+                    transform: `translate(-50%, -50%) rotateY(${angle}deg) translateZ(${radius}px)`,
                     transformStyle: "preserve-3d",
                   }}
                 >
-                  <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-gray-100 p-4 hover:shadow-lg transition-all duration-200 w-32 h-20 flex items-center justify-center">
+                  <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-gray-100 p-4 hover:shadow-xl transition-all duration-200 w-36 h-24 flex items-center justify-center">
                     <img 
                       src={partner.logo} 
                       alt={`Logo ${partner.name}`}
-                      className="max-h-10 object-contain mix-blend-multiply dark:mix-blend-normal dark:brightness-0 dark:invert"
+                      className="max-h-12 max-w-full object-contain mix-blend-multiply dark:mix-blend-normal dark:brightness-0 dark:invert"
                     />
                   </div>
                 </div>
