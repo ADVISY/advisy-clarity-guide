@@ -64,13 +64,13 @@ export const PartnersSection = () => {
               return (
                 <div
                   key={partner.name}
-                  className="absolute top-1/2 left-1/2 transition-all duration-200 hover:scale-110 hover:z-10"
+                  className="absolute top-1/2 left-1/2"
                   style={{
                     transform: `translate(-50%, -50%) rotateY(${angle}deg) translateZ(${radius}px)`,
                     transformStyle: "preserve-3d",
                   }}
                 >
-                  <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-gray-100 p-4 hover:shadow-xl transition-all duration-200 w-36 h-24 flex items-center justify-center">
+                  <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-gray-100 p-4 w-36 h-24 flex items-center justify-center">
                     <img 
                       src={partner.logo} 
                       alt={`Logo ${partner.name}`}

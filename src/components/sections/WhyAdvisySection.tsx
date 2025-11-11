@@ -31,7 +31,7 @@ const advantages = [
 
 export const WhyAdvisySection = () => {
   return (
-    <section className="relative py-20 lg:py-32 bg-background overflow-hidden">
+    <section id="pourquoi-advisy" className="relative py-20 lg:py-32 bg-background overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-40 right-20 w-96 h-96 bg-primary rounded-full blur-3xl animate-pulse" />

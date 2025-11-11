@@ -24,7 +24,7 @@ const values = [
 
 export const AboutSection = () => {
   return (
-    <section id="apropos" className="relative py-20 lg:py-32 bg-background overflow-hidden">
+    <section id="a-propos" className="relative py-20 lg:py-32 bg-background overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-40 left-20 w-96 h-96 bg-primary rounded-full blur-3xl" />
