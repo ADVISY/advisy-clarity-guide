@@ -1,6 +1,4 @@
 import { Award } from "lucide-react";
-import useEmblaCarousel from "embla-carousel-react";
-import Autoplay from "embla-carousel-autoplay";
 import liechtensteinLogo from "@/assets/partners/liechtenstein-life.webp";
 import cssLogo from "@/assets/partners/css-logo.png";
 import groupeMutuelLogo from "@/assets/partners/groupe-mutuel-logo.png";
@@ -20,15 +18,8 @@ const partners = [
 ];
 
 export const PartnersSection = () => {
-  const [emblaRef] = useEmblaCarousel(
-    { 
-      loop: true,
-      align: "center",
-      skipSnaps: false,
-      dragFree: false,
-    },
-    [Autoplay({ delay: 1500, stopOnInteraction: false, stopOnMouseEnter: false })]
-  );
+  // Calculate rotation angle for each logo
+  const angleStep = 360 / partners.length;
 
   return (
     <section className="relative py-16 bg-background overflow-hidden">
@@ -56,21 +47,51 @@ export const PartnersSection = () => {
           </p>
         </div>
 
-        {/* Partners Slider */}
-        <div className="overflow-hidden" ref={emblaRef}>
-          <div className="flex gap-6">
-            {[...partners, ...partners, ...partners].map((partner, index) => (
+        {/* 3D Rotating Partners Display - Desktop */}
+        <div className="hidden md:flex relative w-full max-w-xl mx-auto h-[320px] items-center justify-center" style={{ perspective: "1000px" }}>
+          <div 
+            className="relative w-[260px] h-[260px] animate-sphere-rotate"
+            style={{ transformStyle: "preserve-3d" }}
+          >
+            {partners.map((partner, index) => {
+              const angle = angleStep * index;
+              const translateZ = 200; // Distance from center
+              
+              return (
+                <div
+                  key={partner.name}
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-105"
+                  style={{
+                    transform: `rotateY(${angle}deg) translateZ(${translateZ}px)`,
+                    transformStyle: "preserve-3d",
+                  }}
+                >
+                  <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-gray-100 p-4 hover:shadow-lg transition-all duration-200 w-32 h-20 flex items-center justify-center">
+                    <img 
+                      src={partner.logo} 
+                      alt={`Logo ${partner.name}`}
+                      className="max-h-10 object-contain mix-blend-multiply dark:mix-blend-normal dark:brightness-0 dark:invert"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Mobile Carousel Fallback */}
+        <div className="md:hidden overflow-x-auto overflow-y-hidden">
+          <div className="flex gap-4 px-4 pb-4">
+            {partners.map((partner, index) => (
               <div
                 key={index}
-                className="relative bg-card rounded-2xl p-8 border border-border shadow-soft flex items-center justify-center flex-[0_0_180px] min-w-0"
+                className="flex-shrink-0 bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-gray-100 p-4 w-32 h-20 flex items-center justify-center"
               >
-                <div className="w-full h-16 flex items-center justify-center">
-                  <img 
-                    src={partner.logo} 
-                    alt={`Logo ${partner.name}`}
-                    className="max-w-full max-h-full object-contain mix-blend-multiply dark:mix-blend-normal dark:brightness-0 dark:invert"
-                  />
-                </div>
+                <img 
+                  src={partner.logo} 
+                  alt={`Logo ${partner.name}`}
+                  className="max-h-10 object-contain mix-blend-multiply dark:mix-blend-normal dark:brightness-0 dark:invert"
+                />
               </div>
             ))}
           </div>

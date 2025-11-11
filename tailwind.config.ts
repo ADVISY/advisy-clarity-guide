@@ -183,6 +183,14 @@ export default {
             transform: "translateX(200%)",
           },
         },
+        "sphere-rotate": {
+          "0%": {
+            transform: "rotateX(-15deg) rotateY(0deg)",
+          },
+          "100%": {
+            transform: "rotateX(-15deg) rotateY(360deg)",
+          },
+        },
         "call-blink": {
           "0%, 100%": {
             opacity: "1",
@@ -205,6 +213,7 @@ export default {
         "float": "float 3s ease-in-out infinite",
         "bounce-in": "bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
         "shine": "shine 5s linear infinite",
+        "sphere-rotate": "sphere-rotate 22s linear infinite",
         "call-blink": "call-blink 1.2s ease-in-out infinite",
       },
     },
