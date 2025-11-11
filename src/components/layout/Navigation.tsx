@@ -85,17 +85,21 @@ export const Navigation = () => {
   return (
     <nav className={`fixed left-1/2 -translate-x-1/2 z-[100] rounded-full transition-all duration-300 overflow-hidden ${
       scrolled 
-        ? 'top-4 bg-white/90 shadow-xl backdrop-blur-md w-[95%] max-w-6xl border border-white/40' 
+        ? 'top-4 bg-white/70 shadow-lg backdrop-blur-md w-[95%] max-w-6xl border border-white/40' 
         : 'top-6 bg-white/70 shadow-lg backdrop-blur-md w-[96%] max-w-7xl border border-white/40'
     }`}>
       {/* Glossy shine effect */}
       <div 
-        className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-60 animate-shine"
+        className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
+        style={{
+          background: 'linear-gradient(60deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%)',
+          animation: 'shine 5s linear infinite',
+        }}
       />
       
       <div className="relative px-6 lg:px-8">
         <div className={`flex items-center justify-between transition-all duration-300 ${
-          scrolled ? 'py-2' : 'py-3'
+          scrolled ? 'h-20' : 'h-24'
         }`}>
           {/* Logo */}
           <Link
@@ -123,25 +127,27 @@ export const Navigation = () => {
                 {link.type === "link" && link.href && (
                   <Link
                     to={link.href}
-                    className="text-sm sm:text-base font-medium text-slate-800 tracking-wide transition-all duration-200 hover:text-[#1800AD] hover:bg-[#1800AD]/10 rounded-full px-3 py-1"
+                    className="text-sm font-semibold text-muted-foreground hover:text-primary transition-all duration-300 relative group flex items-center gap-1"
                   >
                     {link.label}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-primary group-hover:w-full transition-all duration-300" />
                   </Link>
                 )}
                 
                 {link.type === "scroll" && link.href && (
                   <button
                     onClick={() => scrollToSection(link.href!)}
-                    className="text-sm sm:text-base font-medium text-slate-800 tracking-wide transition-all duration-200 hover:text-[#1800AD] hover:bg-[#1800AD]/10 rounded-full px-3 py-1"
+                    className="text-sm font-semibold text-muted-foreground hover:text-primary transition-all duration-300 relative group"
                   >
                     {link.label}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-primary group-hover:w-full transition-all duration-300" />
                   </button>
                 )}
 
                 {link.type === "dropdown" && (
                   <>
                     <button 
-                      className="text-sm sm:text-base font-medium text-slate-800 tracking-wide transition-all duration-200 hover:text-[#1800AD] hover:bg-[#1800AD]/10 rounded-full px-3 py-1 flex items-center gap-1"
+                      className="text-sm font-semibold text-muted-foreground hover:text-primary transition-all duration-300 relative flex items-center gap-1"
                       onClick={() => {
                         if (closeTimeout) { clearTimeout(closeTimeout); setCloseTimeout(null); }
                         setActiveDropdown(activeDropdown === link.label ? null : link.label);
@@ -150,25 +156,25 @@ export const Navigation = () => {
                       aria-haspopup="menu"
                     >
                       {link.label}
-                      <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${activeDropdown === link.label ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === link.label ? 'rotate-180' : ''}`} />
+                      <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-primary group-hover:w-full transition-all duration-300" />
                     </button>
                     
                     {activeDropdown === link.label && link.subLinks && (
-                      <div className="absolute top-full left-0 mt-3 z-[120] pointer-events-auto animate-fade-in"
+                      <div className="absolute top-full left-0 pt-2 z-[120] pointer-events-auto"
                         onMouseEnter={() => handleMouseEnter(link.label)}
                         onMouseLeave={handleMouseLeave}
                       >
-                        <div className="bg-white/90 backdrop-blur-md border border-gray-200 rounded-xl shadow-lg min-w-[280px] py-2">
+                        <div className="bg-background/95 backdrop-blur-md border border-border rounded-xl shadow-medium p-4 min-w-[280px] animate-fade-in">
                         {link.subLinks.map((subLink) => (
-                          <div key={subLink.label} className="px-4 py-2">
-                            <p className="text-xs font-semibold text-[#1800AD] uppercase mb-2">{subLink.label}</p>
+                          <div key={subLink.label} className="mb-4 last:mb-0">
+                            <p className="text-xs font-semibold text-primary uppercase mb-2">{subLink.label}</p>
                             <div className="space-y-1">
                               {subLink.subItems?.map((item) => (
                                 <Link
                                   key={item.href}
                                   to={item.href}
-                                  className="block px-4 py-2 text-sm text-slate-700 hover:bg-[#1800AD]/10 hover:text-[#1800AD] rounded-md transition-all duration-150"
-                                  onClick={() => setActiveDropdown(null)}
+                                  className="block px-3 py-2 text-sm text-foreground hover:bg-accent rounded-lg transition-colors"
                                 >
                                   {item.label}
                                 </Link>
@@ -189,7 +195,7 @@ export const Navigation = () => {
           <a
             href={`tel:${PHONE_NUMBER}`}
             aria-label="Appeler Advisy par téléphone"
-            className="hidden lg:flex items-center gap-2 bg-red-500 text-white font-semibold rounded-full px-5 py-2 shadow-lg transition-all duration-200 hover:-translate-y-[1px] hover:shadow-xl animate-call-blink"
+            className="hidden lg:flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-full px-5 py-2.5 shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl animate-call-blink"
           >
             <Phone className="w-4 h-4" />
             <span>Appeler-nous</span>
@@ -209,15 +215,15 @@ export const Navigation = () => {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="lg:hidden absolute top-full left-0 right-0 mt-2 bg-white/90 backdrop-blur-md border border-gray-200 rounded-3xl shadow-lg animate-fade-in max-h-[80vh] overflow-y-auto z-50 mx-2">
-          <div className="px-4 py-6 flex flex-col gap-2">
+        <div className="lg:hidden absolute top-20 left-0 right-0 bg-background/95 backdrop-blur-md border-b border-border shadow-medium animate-fade-in max-h-[80vh] overflow-y-auto z-50">
+          <div className="container mx-auto px-4 py-6 flex flex-col gap-4">
             {navLinks.map((link) => (
               <div key={link.label}>
                 {link.type === "link" && link.href && (
                   <Link
                     to={link.href}
                     onClick={() => setIsOpen(false)}
-                    className="text-base font-medium text-slate-800 hover:text-[#1800AD] hover:bg-[#1800AD]/10 transition-all duration-200 py-2 px-3 rounded-lg block"
+                    className="text-left text-base font-medium text-foreground hover:text-primary transition-colors py-2 block"
                   >
                     {link.label}
                   </Link>
@@ -229,7 +235,7 @@ export const Navigation = () => {
                       scrollToSection(link.href!);
                       setIsOpen(false);
                     }}
-                    className="text-base font-medium text-slate-800 hover:text-[#1800AD] hover:bg-[#1800AD]/10 transition-all duration-200 py-2 px-3 rounded-lg w-full text-left"
+                    className="text-left text-base font-medium text-foreground hover:text-primary transition-colors py-2 w-full"
                   >
                     {link.label}
                   </button>
@@ -239,23 +245,23 @@ export const Navigation = () => {
                   <div>
                     <button
                       onClick={() => setActiveDropdown(activeDropdown === link.label ? null : link.label)}
-                      className="text-base font-medium text-slate-800 hover:text-[#1800AD] hover:bg-[#1800AD]/10 transition-all duration-200 py-2 px-3 rounded-lg w-full flex items-center justify-between"
+                      className="text-left text-base font-medium text-foreground hover:text-primary transition-colors py-2 w-full flex items-center justify-between"
                     >
                       {link.label}
-                      <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${activeDropdown === link.label ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === link.label ? 'rotate-180' : ''}`} />
                     </button>
                     {activeDropdown === link.label && (
-                      <div className="pl-3 mt-2 space-y-2">
+                      <div className="pl-4 mt-2 space-y-3">
                         {link.subLinks.map((subLink) => (
                           <div key={subLink.label}>
-                            <p className="text-xs font-semibold text-[#1800AD] uppercase mb-2 px-3">{subLink.label}</p>
+                            <p className="text-xs font-semibold text-primary uppercase mb-2">{subLink.label}</p>
                             <div className="space-y-1">
                               {subLink.subItems?.map((item) => (
                                 <Link
                                   key={item.href}
                                   to={item.href}
                                   onClick={() => setIsOpen(false)}
-                                  className="block px-3 py-2 text-sm text-slate-700 hover:bg-[#1800AD]/10 hover:text-[#1800AD] rounded-lg transition-all duration-150"
+                                  className="block px-3 py-2 text-sm text-foreground hover:bg-accent rounded-lg transition-colors"
                                 >
                                   {item.label}
                                 </Link>
@@ -275,7 +281,7 @@ export const Navigation = () => {
               href={`tel:${PHONE_NUMBER}`}
               onClick={() => setIsOpen(false)}
               aria-label="Appeler Advisy par téléphone"
-              className="flex items-center justify-center gap-2 bg-red-500 text-white font-semibold rounded-full px-6 py-3 shadow-lg transition-all duration-200 animate-call-blink mt-4"
+              className="flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-full px-6 py-3 shadow-lg transition-all duration-300 animate-call-blink mt-4"
             >
               <Phone className="w-5 h-5" />
               <span>Appeler-nous: {PHONE_DISPLAY}</span>
