@@ -1,4 +1,5 @@
 import { Award } from "lucide-react";
+import { useEffect, useRef } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import liechtensteinLogo from "@/assets/partners/liechtenstein-life.webp";
@@ -20,7 +21,8 @@ const partners = [
 ];
 
 export const PartnersSection = () => {
-  const [emblaRef] = useEmblaCarousel(
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [emblaRef, emblaApi] = useEmblaCarousel(
     { 
       loop: true, 
       dragFree: true,
@@ -31,6 +33,47 @@ export const PartnersSection = () => {
 
   // Duplicate partners array for seamless infinite scroll
   const duplicatedPartners = [...partners, ...partners, ...partners];
+
+  useEffect(() => {
+    if (!emblaApi || !containerRef.current) return;
+
+    const applyTransforms = () => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const slides = container.querySelectorAll('.partner-slide');
+      const containerRect = container.getBoundingClientRect();
+      const containerCenter = containerRect.left + containerRect.width / 2;
+
+      slides.forEach((slide) => {
+        const slideRect = slide.getBoundingClientRect();
+        const slideCenter = slideRect.left + slideRect.width / 2;
+        const distanceFromCenter = slideCenter - containerCenter;
+        const maxDistance = containerRect.width / 2;
+        const normalizedDistance = Math.max(-1, Math.min(1, distanceFromCenter / maxDistance));
+
+        // Apply 3D transforms based on distance from center
+        const rotateY = normalizedDistance * -25; // Rotate up to 25deg
+        const translateZ = (1 - Math.abs(normalizedDistance)) * 50; // Move forward when centered
+        const opacity = 0.4 + (1 - Math.abs(normalizedDistance)) * 0.6; // Fade edges
+
+        (slide as HTMLElement).style.transform = `
+          rotateY(${rotateY}deg) 
+          translateZ(${translateZ}px)
+        `;
+        (slide as HTMLElement).style.opacity = `${opacity}`;
+      });
+    };
+
+    applyTransforms();
+    emblaApi.on('scroll', applyTransforms);
+    emblaApi.on('reInit', applyTransforms);
+
+    return () => {
+      emblaApi.off('scroll', applyTransforms);
+      emblaApi.off('reInit', applyTransforms);
+    };
+  }, [emblaApi]);
 
   return (
     <section className="relative py-16 bg-background overflow-hidden">
@@ -58,23 +101,34 @@ export const PartnersSection = () => {
           </p>
         </div>
 
-        {/* Horizontal Carousel with Auto-play */}
-        <div className="relative overflow-hidden" ref={emblaRef}>
-          <div className="flex gap-6">
-            {duplicatedPartners.map((partner, index) => (
-              <div
-                key={`${partner.name}-${index}`}
-                className="flex-[0_0_auto] w-40 h-24"
-              >
-                <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-border p-4 h-full flex items-center justify-center transition-all duration-300">
-                  <img 
-                    src={partner.logo} 
-                    alt={`Logo ${partner.name}`}
-                    className="max-h-12 max-w-full object-contain mix-blend-multiply dark:mix-blend-normal dark:brightness-0 dark:invert"
-                  />
-                </div>
+        {/* Horizontal Carousel with 3D Effect */}
+        <div 
+          ref={containerRef}
+          className="relative overflow-visible py-8" 
+          style={{ perspective: "1200px" }}
+        >
+          <div className="overflow-hidden">
+            <div ref={emblaRef} className="overflow-visible">
+              <div className="flex gap-8" style={{ transformStyle: "preserve-3d" }}>
+                {duplicatedPartners.map((partner, index) => (
+                  <div
+                    key={`${partner.name}-${index}`}
+                    className="partner-slide flex-[0_0_auto] w-40 h-24 transition-all duration-300"
+                    style={{
+                      transformStyle: "preserve-3d",
+                    }}
+                  >
+                    <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-border p-4 h-full flex items-center justify-center hover:shadow-lg">
+                      <img 
+                        src={partner.logo} 
+                        alt={`Logo ${partner.name}`}
+                        className="max-h-12 max-w-full object-contain mix-blend-multiply dark:mix-blend-normal dark:brightness-0 dark:invert"
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         </div>
 
