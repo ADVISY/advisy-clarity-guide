@@ -72,7 +72,7 @@ const Connexion = () => {
           <img 
             src={advisyLogo} 
             alt="Advisy" 
-            className="h-32 sm:h-40 mx-auto mb-8"
+            className="h-32 sm:h-40 mx-auto mb-8 drop-shadow-2xl hover:scale-105 transition-transform duration-300"
           />
           <h1 className="text-2xl font-bold text-slate-900 mb-2">
             Espace sécurisé Advisy
