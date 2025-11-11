@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronDown, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import advisyLogo from "@/assets/advisy-logo.svg";
+
+const PHONE_NUMBER = "+41782122360";
+const PHONE_DISPLAY = "+41 78 212 23 60";
 
 const navLinks = [
   { label: "Accueil", href: "/", type: "link" },
@@ -80,12 +83,21 @@ export const Navigation = () => {
   };
 
   return (
-    <nav className={`fixed left-1/2 -translate-x-1/2 z-[100] rounded-full transition-all duration-300 ${
+    <nav className={`fixed left-1/2 -translate-x-1/2 z-[100] rounded-full transition-all duration-300 overflow-hidden ${
       scrolled 
-        ? 'top-4 bg-white/95 shadow-medium backdrop-blur-md w-[95%] max-w-6xl' 
-        : 'top-6 bg-white/90 shadow-sm backdrop-blur-sm w-[96%] max-w-7xl'
+        ? 'top-4 bg-white/70 shadow-lg backdrop-blur-md w-[95%] max-w-6xl border border-white/40' 
+        : 'top-6 bg-white/70 shadow-lg backdrop-blur-md w-[96%] max-w-7xl border border-white/40'
     }`}>
-      <div className="px-6 lg:px-8">
+      {/* Glossy shine effect */}
+      <div 
+        className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
+        style={{
+          background: 'linear-gradient(60deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%)',
+          animation: 'shine 5s linear infinite',
+        }}
+      />
+      
+      <div className="relative px-6 lg:px-8">
         <div className={`flex items-center justify-between transition-all duration-300 ${
           scrolled ? 'h-20' : 'h-24'
         }`}>
@@ -104,7 +116,7 @@ export const Navigation = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-10">
+          <div className="hidden lg:flex items-center gap-8 flex-1 justify-center">
             {navLinks.map((link) => (
               <div
                 key={link.label}
@@ -178,6 +190,16 @@ export const Navigation = () => {
               </div>
             ))}
           </div>
+
+          {/* Call Button - Desktop */}
+          <a
+            href={`tel:${PHONE_NUMBER}`}
+            aria-label="Appeler Advisy par téléphone"
+            className="hidden lg:flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-full px-5 py-2.5 shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl animate-call-blink"
+          >
+            <Phone className="w-4 h-4" />
+            <span>Appeler-nous</span>
+          </a>
 
           {/* Mobile Menu Button */}
           <Button
@@ -253,6 +275,17 @@ export const Navigation = () => {
                 )}
               </div>
             ))}
+            
+            {/* Call Button - Mobile */}
+            <a
+              href={`tel:${PHONE_NUMBER}`}
+              onClick={() => setIsOpen(false)}
+              aria-label="Appeler Advisy par téléphone"
+              className="flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-full px-6 py-3 shadow-lg transition-all duration-300 animate-call-blink mt-4"
+            >
+              <Phone className="w-5 h-5" />
+              <span>Appeler-nous: {PHONE_DISPLAY}</span>
+            </a>
           </div>
         </div>
       )}
