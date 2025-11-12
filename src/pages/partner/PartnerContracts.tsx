@@ -157,84 +157,224 @@ export default function PartnerContracts() {
                   Nouveau contrat
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
+              <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>{isEditMode ? "Modifier le contrat" : "Nouveau contrat"}</DialogTitle>
                   <DialogDescription>
-                    {isEditMode ? "Modifier les informations du contrat" : "Créer un nouveau contrat d'assurance (mock)"}
+                    {isEditMode ? "Modifier les informations du contrat et du client" : "Créer un nouveau contrat d'assurance complet"}
                   </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleNewContract} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Client</Label>
-                    <Input 
-                      placeholder="Nom du client" 
-                      defaultValue={isEditMode ? editingContract?.client : ""} 
-                      required 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Type de produit</Label>
-                    <Select required defaultValue={isEditMode ? editingContract?.type.toLowerCase() : ""}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="auto">Auto</SelectItem>
-                        <SelectItem value="sante">Santé</SelectItem>
-                        <SelectItem value="rc-pro">RC Pro</SelectItem>
-                        <SelectItem value="3e-pilier">3e Pilier</SelectItem>
-                        <SelectItem value="multirisque">Multirisque</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Compagnie</Label>
-                    <Select required defaultValue={isEditMode ? editingContract?.company : ""}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {uniqueCompanies.map(company => (
-                          <SelectItem key={company} value={company.toLowerCase()}>
-                            {company}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Prime mensuelle (CHF)</Label>
-                      <Input 
-                        type="number" 
-                        placeholder="0" 
-                        defaultValue={isEditMode && editingContract?.premiumMonthly ? editingContract.premiumMonthly : ""} 
-                      />
+                <form onSubmit={handleNewContract} className="space-y-6">
+                  {/* Informations Client */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                      <Building2 className="h-4 w-4" />
+                      Informations Client
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Prénom *</Label>
+                        <Input 
+                          placeholder="Prénom" 
+                          defaultValue={isEditMode ? editingContract?.client.split(' ')[0] : ""} 
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Nom *</Label>
+                        <Input 
+                          placeholder="Nom de famille" 
+                          defaultValue={isEditMode ? editingContract?.client.split(' ')[1] : ""} 
+                          required 
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Email *</Label>
+                        <Input 
+                          type="email"
+                          placeholder="client@example.com" 
+                          defaultValue={isEditMode ? editingContract?.contactEmail : ""} 
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Téléphone *</Label>
+                        <Input 
+                          type="tel"
+                          placeholder="+41 XX XXX XX XX" 
+                          defaultValue={isEditMode ? editingContract?.contactPhone : ""} 
+                          required 
+                        />
+                      </div>
                     </div>
                     <div className="space-y-2">
-                      <Label>Prime annuelle (CHF)</Label>
+                      <Label>Adresse *</Label>
                       <Input 
-                        type="number" 
-                        placeholder="0" 
+                        placeholder="Rue et numéro" 
                         required 
-                        defaultValue={isEditMode && editingContract?.premiumYearly ? editingContract.premiumYearly : ""} 
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>Code Postal *</Label>
+                        <Input 
+                          placeholder="1000" 
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-2 col-span-2">
+                        <Label>Ville *</Label>
+                        <Input 
+                          placeholder="Lausanne" 
+                          required 
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Date de naissance</Label>
+                      <Input type="date" />
+                    </div>
+                  </div>
+
+                  {/* Informations Bancaires */}
+                  <div className="space-y-4 pt-4 border-t">
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                      <DollarSign className="h-4 w-4" />
+                      Informations Bancaires
+                    </h3>
+                    <div className="space-y-2">
+                      <Label>IBAN</Label>
+                      <Input 
+                        placeholder="CH93 0000 0000 0000 0000 0" 
+                        pattern="[A-Z]{2}[0-9]{2}[A-Z0-9]+"
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Date de renouvellement</Label>
-                    <Input 
-                      type="date" 
-                      required 
-                      defaultValue={isEditMode && editingContract?.renewal ? new Date(editingContract.renewal).toISOString().split('T')[0] : ""} 
-                    />
+
+                  {/* Informations Contrat */}
+                  <div className="space-y-4 pt-4 border-t">
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Informations Contrat
+                    </h3>
+                    <div className="space-y-2">
+                      <Label>Numéro de police</Label>
+                      <Input 
+                        placeholder="POL-2024-XXXXX" 
+                        defaultValue={isEditMode ? editingContract?.id : ""} 
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Type de produit *</Label>
+                        <Select required defaultValue={isEditMode ? editingContract?.type.toLowerCase() : ""}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="auto">Auto</SelectItem>
+                            <SelectItem value="sante">Santé</SelectItem>
+                            <SelectItem value="rc-pro">RC Pro</SelectItem>
+                            <SelectItem value="3e-pilier">3e Pilier</SelectItem>
+                            <SelectItem value="multirisque">Multirisque</SelectItem>
+                            <SelectItem value="menage">RC Ménage</SelectItem>
+                            <SelectItem value="vie">Vie</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Compagnie *</Label>
+                        <Select required defaultValue={isEditMode ? editingContract?.company : ""}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {uniqueCompanies.map(company => (
+                              <SelectItem key={company} value={company.toLowerCase()}>
+                                {company}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Date de début *</Label>
+                        <Input 
+                          type="date" 
+                          required 
+                          defaultValue={new Date().toISOString().split('T')[0]} 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Date de renouvellement *</Label>
+                        <Input 
+                          type="date" 
+                          required 
+                          defaultValue={isEditMode && editingContract?.renewal ? new Date(editingContract.renewal).toISOString().split('T')[0] : ""} 
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Prime mensuelle (CHF)</Label>
+                        <Input 
+                          type="number" 
+                          step="0.01"
+                          placeholder="0.00" 
+                          defaultValue={isEditMode && editingContract?.premiumMonthly ? editingContract.premiumMonthly : ""} 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Prime annuelle (CHF) *</Label>
+                        <Input 
+                          type="number" 
+                          step="0.01"
+                          placeholder="0.00" 
+                          required 
+                          defaultValue={isEditMode && editingContract?.premiumYearly ? editingContract.premiumYearly : ""} 
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Franchise (CHF)</Label>
+                        <Input 
+                          type="number" 
+                          placeholder="0" 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Statut</Label>
+                        <Select defaultValue={isEditMode ? editingContract?.status.toLowerCase() : "en-attente"}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="en-attente">En attente</SelectItem>
+                            <SelectItem value="signé">Signé</SelectItem>
+                            <SelectItem value="refusé">Refusé</SelectItem>
+                            <SelectItem value="résilié">Résilié</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Notes / Remarques</Label>
+                      <Input 
+                        placeholder="Informations complémentaires..." 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Document PDF</Label>
+                      <Input type="file" accept=".pdf" />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Document PDF</Label>
-                    <Input type="file" accept=".pdf" />
-                  </div>
-                  <div className="flex justify-end gap-2 pt-4">
+
+                  <div className="flex justify-end gap-2 pt-4 border-t">
                     <Button 
                       type="button" 
                       variant="outline" 
