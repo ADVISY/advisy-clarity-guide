@@ -19,6 +19,8 @@ import Carriere from "./pages/Carriere";
 import Connexion from "./pages/Connexion";
 import Simulateurs from "./pages/Simulateurs";
 import Assurances from "./pages/Assurances";
+import MentionsLegales from "./pages/MentionsLegales";
+import PolitiqueConfidentialite from "./pages/PolitiqueConfidentialite";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +54,10 @@ const App = () => (
           <Route path="/carriere" element={<Carriere />} />
           <Route path="/simulateurs" element={<Simulateurs />} />
           <Route path="/connexion" element={<Connexion />} />
+          
+          {/* Legal Pages */}
+          <Route path="/mentions-legales" element={<MentionsLegales />} />
+          <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

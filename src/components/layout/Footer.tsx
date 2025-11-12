@@ -98,14 +98,14 @@ export const Footer = () => {
               Informations légales
             </h3>
             <div className="flex flex-col gap-3">
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/politique-confidentialite" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Politique de confidentialité
-              </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              </Link>
+              <Link to="/mentions-legales" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Mentions légales
-              </a>
+              </Link>
               <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Conditions d'utilisation
+                Conditions d&apos;utilisation
               </a>
             </div>
           </div>
