@@ -21,6 +21,7 @@ import Connexion from "./pages/Connexion";
 import Simulateurs from "./pages/Simulateurs";
 import Assurances from "./pages/Assurances";
 import CRM from "./pages/CRM";
+import Dashboard from "./pages/Dashboard";
 import PartnerContracts from "./pages/partner/PartnerContracts";
 import PartnerDocuments from "./pages/partner/PartnerDocuments";
 import PartnerCommissions from "./pages/partner/PartnerCommissions";
@@ -71,7 +72,7 @@ const App = () => (
           
           {/* CRM - Nested Routes with Sidebar */}
           <Route path="/crm" element={<ProtectedRoute><CRMLayout /></ProtectedRoute>}>
-            <Route index element={<CRM />} />
+            <Route index element={<Dashboard />} />
             <Route path="contracts" element={<PartnerContracts />} />
             <Route path="documents" element={<PartnerDocuments />} />
             <Route path="commissions" element={<PartnerCommissions />} />
