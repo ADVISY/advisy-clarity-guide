@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { 
-  ShieldCheck, Users, LayoutDashboard, Bot, LineChart, Activity,
-  Building2, MessageSquare, Bell, CreditCard, FileSignature, Lock,
-  Database, Mail, Smartphone, BarChart4, Settings, Cloud, Globe2,
-  Wallet, ChevronRight, Sun, Moon, Sparkles, Cpu, LogOut, User
+  ShieldCheck, Users, LayoutDashboard, LineChart, Activity,
+  Building2, MessageSquare, Bell, CreditCard, FileSignature,
+  Mail, Smartphone, BarChart4, Settings, Cloud, Globe2,
+  Wallet, ChevronRight, Sun, Moon, Sparkles, Cpu, LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AdminUserManagement } from "@/components/crm/AdminUserManagement";
 
 // Helpers d'animation
 const fadeIn = {
@@ -172,15 +173,48 @@ function SidebarNav() {
 }
 
 function StatCards() {
-  const stats = [
-    { title: "Contrats actifs", value: "1 284", icon: <ShieldCheck className="h-5 w-5" /> },
-    { title: "Primes (mois)", value: "CHF 492 150", icon: <CreditCard className="h-5 w-5" /> },
-    { title: "Commissions (YTD)", value: "CHF 128 440", icon: <Wallet className="h-5 w-5" /> },
-    { title: "Taux résiliation", value: "2.4%", icon: <Activity className="h-5 w-5" /> },
+  const { user } = useAuth();
+  const [stats, setStats] = useState({
+    activeContracts: 0,
+    monthlyPremiums: 0,
+    totalCommissions: 0,
+    cancelRate: 0
+  });
+
+  useEffect(() => {
+    if (user) {
+      // Fetch contracts count and total premiums
+      supabase
+        .from("contracts")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .then(({ data }) => {
+          if (data) {
+            const activeCount = data.length;
+            const monthlyTotal = data.reduce((sum, contract) => 
+              sum + Number(contract.monthly_premium), 0
+            );
+            setStats(prev => ({
+              ...prev,
+              activeContracts: activeCount,
+              monthlyPremiums: monthlyTotal
+            }));
+          }
+        });
+    }
+  }, [user]);
+
+  const statsData = [
+    { title: "Contrats actifs", value: stats.activeContracts.toString(), icon: <ShieldCheck className="h-5 w-5" /> },
+    { title: "Primes (mois)", value: `CHF ${stats.monthlyPremiums.toFixed(2)}`, icon: <CreditCard className="h-5 w-5" /> },
+    { title: "Épargne annuelle", value: `CHF ${(stats.monthlyPremiums * 12).toFixed(2)}`, icon: <Wallet className="h-5 w-5" /> },
+    { title: "Statut", value: "Actif", icon: <Activity className="h-5 w-5" /> },
   ];
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-      {stats.map((s) => (
+      {statsData.map((s) => (
         <motion.div key={s.title} variants={fadeIn} initial="hidden" animate="show">
           <Card className="rounded-2xl border-white/30 dark:border-slate-700/40 bg-white/70 dark:bg-slate-900/50 backdrop-blur">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -573,6 +607,13 @@ export default function CRM() {
           {/* CRM Admin - visible uniquement pour admins */}
           {userRole === "admin" && (
             <>
+              <section className="space-y-4">
+                <motion.h2 variants={fadeIn} initial="hidden" animate="show" className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-50 flex items-center gap-2">
+                  <Users className="h-5 w-5" /> Gestion Utilisateurs
+                </motion.h2>
+                <AdminUserManagement />
+              </section>
+
               <section className="space-y-4">
                 <motion.h2 variants={fadeIn} initial="hidden" animate="show" className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-50 flex items-center gap-2">
                   <Settings className="h-5 w-5" /> Administration CRM
