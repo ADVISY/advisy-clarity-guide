@@ -234,7 +234,7 @@ const mockContracts: Contract[] = [
     clientId: "CLI-001-CONJ",
     policyNumber: "POL-2023-029",
     productName: "Assurance Auto Standard",
-    company: "Allianz Suisse",
+    company: "AXA Assurances",
     status: 'Actif',
     startDate: "2023-01-15",
     premiumMonthly: 160
@@ -243,8 +243,8 @@ const mockContracts: Contract[] = [
     id: "CNT-003-CONJ-2",
     clientId: "CLI-001-CONJ",
     policyNumber: "POL-2023-030",
-    productName: "3ème Pilier A",
-    company: "Swiss Life",
+    productName: "3ème Pilier B",
+    company: "Vaudoise Assurances",
     status: 'Actif',
     startDate: "2023-06-10",
     premiumMonthly: 280
@@ -263,8 +263,8 @@ const mockContracts: Contract[] = [
     id: "CNT-003-ENF2-1",
     clientId: "CLI-001-ENF2",
     policyNumber: "POL-2023-032",
-    productName: "Assurance Santé Enfant",
-    company: "CSS Assurance",
+    productName: "Assurance Santé Base",
+    company: "Helsana",
     status: 'Actif',
     startDate: "2023-01-15",
     premiumMonthly: 75
@@ -274,7 +274,7 @@ const mockContracts: Contract[] = [
     clientId: "CLI-002",
     policyNumber: "POL-2023-042",
     productName: "Assurance Santé Complémentaire",
-    company: "CSS Assurance",
+    company: "Sanitas",
     status: 'Actif',
     startDate: "2023-02-20",
     premiumMonthly: 220
@@ -288,6 +288,16 @@ const mockContracts: Contract[] = [
     status: 'Actif',
     startDate: "2023-04-15",
     premiumMonthly: 45
+  },
+  {
+    id: "CNT-006",
+    clientId: "CLI-002",
+    policyNumber: "POL-2023-056",
+    productName: "Assurance Vie",
+    company: "Helvetia",
+    status: 'Actif',
+    startDate: "2023-05-01",
+    premiumMonthly: 180
   }
 ];
 
