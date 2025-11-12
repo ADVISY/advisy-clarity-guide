@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AdminUserManagement } from "@/components/crm/AdminUserManagement";
 import { useToast } from "@/hooks/use-toast";
+import { ContractsSection } from "@/components/crm/ContractsSection";
 
 // Helpers d'animation
 const fadeIn = {
@@ -148,6 +149,7 @@ function SidebarNav() {
   const { toast } = useToast();
   const links = [
     { label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" />, action: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
+    { label: "Contrats", icon: <ShieldCheck className="h-4 w-4" />, action: () => document.getElementById('contracts-section')?.scrollIntoView({ behavior: 'smooth' }) },
     { label: "Espace Client", icon: <ShieldCheck className="h-4 w-4" />, action: () => document.getElementById('client-section')?.scrollIntoView({ behavior: 'smooth' }) },
     { label: "Espace Partner", icon: <Users className="h-4 w-4" />, action: () => document.getElementById('partner-section')?.scrollIntoView({ behavior: 'smooth' }) },
     { label: "CRM Admin", icon: <Settings className="h-4 w-4" />, action: () => document.getElementById('admin-section')?.scrollIntoView({ behavior: 'smooth' }) },
@@ -608,6 +610,11 @@ export default function CRM() {
               <ChartPlaceholder title="Montant total des primes (mois)" />
               <ChartPlaceholder title="Répartition par type d'assurance" />
             </div>
+          </section>
+
+          {/* Section Contrats - Vue CRM professionnelle */}
+          <section id="contracts-section" className="space-y-4">
+            {user && <ContractsSection userId={user.id} />}
           </section>
 
           {/* Espace Client - visible pour clients et admins */}
