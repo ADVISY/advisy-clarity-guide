@@ -59,6 +59,8 @@ interface Client {
   totalPremium: number;
   status: 'Actif' | 'Inactif' | 'Prospect';
   createdAt: string;
+  familyRole?: 'principal' | 'conjoint' | 'enfant';
+  parentClientId?: string;
 }
 
 interface Contract {
@@ -108,7 +110,60 @@ const mockClients: Client[] = [
     contractsCount: 3,
     totalPremium: 4500,
     status: 'Actif',
-    createdAt: "2023-01-15"
+    createdAt: "2023-01-15",
+    familyRole: 'principal'
+  },
+  {
+    id: "CLI-001-CONJ",
+    firstName: "Pierre",
+    lastName: "Dupont",
+    email: "pierre.dupont@email.ch",
+    phone: "+41 79 123 45 68",
+    address: "Rue de la Paix 12",
+    city: "Lausanne",
+    postalCode: "1003",
+    birthdate: "1983-11-20",
+    iban: "CH93 0000 0000 0000 0000 1",
+    contractsCount: 2,
+    totalPremium: 2800,
+    status: 'Actif',
+    createdAt: "2023-01-15",
+    familyRole: 'conjoint',
+    parentClientId: 'CLI-001'
+  },
+  {
+    id: "CLI-001-ENF1",
+    firstName: "Emma",
+    lastName: "Dupont",
+    email: "emma.dupont@email.ch",
+    phone: "+41 79 123 45 69",
+    address: "Rue de la Paix 12",
+    city: "Lausanne",
+    postalCode: "1003",
+    birthdate: "2010-05-15",
+    contractsCount: 1,
+    totalPremium: 850,
+    status: 'Actif',
+    createdAt: "2023-01-15",
+    familyRole: 'enfant',
+    parentClientId: 'CLI-001'
+  },
+  {
+    id: "CLI-001-ENF2",
+    firstName: "Lucas",
+    lastName: "Dupont",
+    email: "lucas.dupont@email.ch",
+    phone: "+41 79 123 45 70",
+    address: "Rue de la Paix 12",
+    city: "Lausanne",
+    postalCode: "1003",
+    birthdate: "2013-08-22",
+    contractsCount: 1,
+    totalPremium: 750,
+    status: 'Actif',
+    createdAt: "2023-01-15",
+    familyRole: 'enfant',
+    parentClientId: 'CLI-001'
   },
   {
     id: "CLI-002",
@@ -123,7 +178,8 @@ const mockClients: Client[] = [
     contractsCount: 2,
     totalPremium: 3200,
     status: 'Actif',
-    createdAt: "2023-02-20"
+    createdAt: "2023-02-20",
+    familyRole: 'principal'
   },
   {
     id: "CLI-003",
@@ -137,7 +193,8 @@ const mockClients: Client[] = [
     contractsCount: 0,
     totalPremium: 0,
     status: 'Prospect',
-    createdAt: "2024-01-10"
+    createdAt: "2024-01-10",
+    familyRole: 'principal'
   }
 ];
 
@@ -171,6 +228,46 @@ const mockContracts: Contract[] = [
     status: 'Actif',
     startDate: "2023-06-10",
     premiumMonthly: 300
+  },
+  {
+    id: "CNT-003-CONJ-1",
+    clientId: "CLI-001-CONJ",
+    policyNumber: "POL-2023-029",
+    productName: "Assurance Auto Standard",
+    company: "Allianz Suisse",
+    status: 'Actif',
+    startDate: "2023-01-15",
+    premiumMonthly: 160
+  },
+  {
+    id: "CNT-003-CONJ-2",
+    clientId: "CLI-001-CONJ",
+    policyNumber: "POL-2023-030",
+    productName: "3ème Pilier A",
+    company: "Swiss Life",
+    status: 'Actif',
+    startDate: "2023-06-10",
+    premiumMonthly: 280
+  },
+  {
+    id: "CNT-003-ENF1-1",
+    clientId: "CLI-001-ENF1",
+    policyNumber: "POL-2023-031",
+    productName: "Assurance Santé Enfant",
+    company: "CSS Assurance",
+    status: 'Actif',
+    startDate: "2023-01-15",
+    premiumMonthly: 85
+  },
+  {
+    id: "CNT-003-ENF2-1",
+    clientId: "CLI-001-ENF2",
+    policyNumber: "POL-2023-032",
+    productName: "Assurance Santé Enfant",
+    company: "CSS Assurance",
+    status: 'Actif',
+    startDate: "2023-01-15",
+    premiumMonthly: 75
   },
   {
     id: "CNT-004",
@@ -291,6 +388,8 @@ export default function PartnerClients() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [addingFamilyMember, setAddingFamilyMember] = useState(false);
+  const [familyMemberType, setFamilyMemberType] = useState<'conjoint' | 'enfant'>('conjoint');
   const { toast } = useToast();
 
   const getStatusBadge = (status: string) => {
@@ -325,13 +424,23 @@ export default function PartnerClients() {
   const handleRowClick = (client: Client) => {
     setSelectedClient(client);
     setViewMode('detail');
+    setAddingFamilyMember(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleBackToList = () => {
     setViewMode('list');
     setSelectedClient(null);
+    setAddingFamilyMember(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleAddFamilyMember = (type: 'conjoint' | 'enfant') => {
+    setFamilyMemberType(type);
+    setAddingFamilyMember(true);
+    setIsModalOpen(true);
+    setIsEditMode(false);
+    setEditingClient(null);
   };
 
   const getClientContracts = (clientId: string) => {
@@ -344,6 +453,28 @@ export default function PartnerClients() {
 
   const getClientCommissions = (clientId: string) => {
     return mockCommissions.filter(c => c.clientId === clientId);
+  };
+
+  const getFamilyMembers = (clientId: string): Client[] => {
+    return mockClients.filter(c => c.parentClientId === clientId);
+  };
+
+  const getTotalFamilyContracts = (clientId: string): number => {
+    const familyMembers = getFamilyMembers(clientId);
+    let total = getClientContracts(clientId).length;
+    familyMembers.forEach(member => {
+      total += getClientContracts(member.id).length;
+    });
+    return total;
+  };
+
+  const getTotalFamilyPremiums = (clientId: string): number => {
+    const familyMembers = getFamilyMembers(clientId);
+    let total = getClientContracts(clientId).reduce((sum, c) => sum + c.premiumMonthly, 0);
+    familyMembers.forEach(member => {
+      total += getClientContracts(member.id).reduce((sum, c) => sum + c.premiumMonthly, 0);
+    });
+    return total;
   };
 
   const getContractStatusBadge = (status: string) => {
@@ -438,9 +569,12 @@ export default function PartnerClients() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Contrats</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Contrats famille</p>
                     <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">
-                      {clientContracts.length}
+                      {getTotalFamilyContracts(selectedClient.id)}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Dont {clientContracts.length} directs
                     </p>
                   </div>
                   <FileText className="h-10 w-10 text-blue-500/20" />
@@ -451,9 +585,12 @@ export default function PartnerClients() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Prime mensuelle</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Primes famille/mois</p>
                     <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">
-                      CHF {clientContracts.reduce((sum, c) => sum + c.premiumMonthly, 0)}
+                      CHF {getTotalFamilyPremiums(selectedClient.id).toFixed(0)}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Dont CHF {clientContracts.reduce((sum, c) => sum + c.premiumMonthly, 0)} directs
                     </p>
                   </div>
                   <CreditCard className="h-10 w-10 text-green-500/20" />
@@ -492,9 +629,10 @@ export default function PartnerClients() {
           <Card className="rounded-2xl bg-white/70 dark:bg-slate-900/50 border-white/30 dark:border-slate-700/40 backdrop-blur">
             <CardContent className="p-6">
               <Tabs defaultValue="info" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger value="info">Informations</TabsTrigger>
-                  <TabsTrigger value="contracts">Contrats ({clientContracts.length})</TabsTrigger>
+                  <TabsTrigger value="family">Famille ({getFamilyMembers(selectedClient.id).length})</TabsTrigger>
+                  <TabsTrigger value="contracts">Contrats ({getTotalFamilyContracts(selectedClient.id)})</TabsTrigger>
                   <TabsTrigger value="documents">Documents ({clientDocuments.length})</TabsTrigger>
                   <TabsTrigger value="commissions">Commissions ({clientCommissions.length})</TabsTrigger>
                 </TabsList>
@@ -571,6 +709,73 @@ export default function PartnerClients() {
                           <div className="font-mono">{selectedClient.iban}</div>
                         </div>
                       </div>
+                    )}
+                  </div>
+                </TabsContent>
+
+                {/* Family Tab */}
+                <TabsContent value="family" className="mt-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold">Membres de la famille</h3>
+                    <div className="flex gap-2">
+                      <Button onClick={() => handleAddFamilyMember('conjoint')} size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Ajouter conjoint
+                      </Button>
+                      <Button onClick={() => handleAddFamilyMember('enfant')} size="sm" variant="outline">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Ajouter enfant
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {getFamilyMembers(selectedClient.id).length === 0 ? (
+                      <div className="text-center py-12">
+                        <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                        <p className="text-slate-500">Aucun membre de la famille ajouté</p>
+                      </div>
+                    ) : (
+                      getFamilyMembers(selectedClient.id).map((member) => (
+                        <Card key={member.id} className="rounded-xl hover:shadow-lg transition-all cursor-pointer" onClick={() => handleRowClick(member)}>
+                          <CardContent className="p-6">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1 space-y-3">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-semibold text-lg">{member.firstName} {member.lastName}</h4>
+                                  <Badge variant={member.familyRole === 'conjoint' ? 'default' : 'secondary'}>
+                                    {member.familyRole === 'conjoint' ? 'Conjoint' : 'Enfant'}
+                                  </Badge>
+                                  {getStatusBadge(member.status)}
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                                      <Mail className="h-3 w-3" />
+                                      {member.email}
+                                    </div>
+                                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                                      <Phone className="h-3 w-3" />
+                                      {member.phone}
+                                    </div>
+                                  </div>
+                                  <div className="space-y-1 text-right">
+                                    <p className="text-slate-600 dark:text-slate-400">
+                                      <span className="font-semibold text-blue-600">{getClientContracts(member.id).length}</span> contrat{getClientContracts(member.id).length > 1 ? 's' : ''}
+                                    </p>
+                                    <p className="text-slate-600 dark:text-slate-400">
+                                      <span className="font-semibold text-green-600">CHF {getClientContracts(member.id).reduce((sum, c) => sum + c.premiumMonthly, 0)}</span>/mois
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                              <Button variant="ghost" size="sm">
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
                     )}
                   </div>
                 </TabsContent>
@@ -737,9 +942,17 @@ export default function PartnerClients() {
               </DialogTrigger>
               <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>{isEditMode ? "Modifier le client" : "Nouveau client"}</DialogTitle>
+                  <DialogTitle>
+                    {addingFamilyMember 
+                      ? `Ajouter ${familyMemberType === 'conjoint' ? 'un conjoint' : 'un enfant'} pour ${selectedClient?.firstName} ${selectedClient?.lastName}`
+                      : isEditMode ? "Modifier le client" : "Nouveau client principal"
+                    }
+                  </DialogTitle>
                   <DialogDescription>
-                    {isEditMode ? "Modifier les informations du client" : "Ajouter un nouveau client"}
+                    {addingFamilyMember 
+                      ? `Complétez les informations du membre de la famille (${familyMemberType})`
+                      : isEditMode ? "Modifier les informations du client" : "Ajouter un nouveau client principal"
+                    }
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-6">
