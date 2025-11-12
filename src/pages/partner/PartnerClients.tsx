@@ -535,6 +535,7 @@ export default function PartnerClients() {
     const clientContracts = getClientContracts(selectedClient.id);
     const clientDocuments = getClientDocuments(selectedClient.id);
     const clientCommissions = getClientCommissions(selectedClient.id);
+    const familyMembers = getFamilyMembers(selectedClient.id);
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-50 dark:from-slate-950 dark:to-slate-900 p-6">
@@ -542,7 +543,7 @@ export default function PartnerClients() {
           variants={fadeIn} 
           initial="hidden" 
           animate="show"
-          className="max-w-7xl mx-auto space-y-6"
+          className="max-w-[1800px] mx-auto space-y-6"
         >
           {/* Header with Back Button */}
           <div className="flex items-center gap-4">
@@ -635,17 +636,20 @@ export default function PartnerClients() {
             </Card>
           </div>
 
-          {/* Tabs with Details */}
-          <Card className="rounded-2xl bg-white/70 dark:bg-slate-900/50 border-white/30 dark:border-slate-700/40 backdrop-blur">
-            <CardContent className="p-6">
-              <Tabs defaultValue="info" className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
-                  <TabsTrigger value="info">Informations</TabsTrigger>
-                  <TabsTrigger value="family">Famille ({getFamilyMembers(selectedClient.id).length})</TabsTrigger>
-                  <TabsTrigger value="contracts">Contrats ({getTotalFamilyContracts(selectedClient.id)})</TabsTrigger>
-                  <TabsTrigger value="documents">Documents ({clientDocuments.length})</TabsTrigger>
-                  <TabsTrigger value="commissions">Commissions ({clientCommissions.length})</TabsTrigger>
-                </TabsList>
+          {/* Two Column Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Content Column */}
+            <div className="lg:col-span-2 space-y-6">
+              <Card className="rounded-2xl bg-white/70 dark:bg-slate-900/50 border-white/30 dark:border-slate-700/40 backdrop-blur">
+                <CardContent className="p-6">
+                  <Tabs defaultValue="info" className="w-full">
+                    <TabsList className="grid w-full grid-cols-5">
+                      <TabsTrigger value="info">Informations</TabsTrigger>
+                      <TabsTrigger value="family">Famille ({familyMembers.length})</TabsTrigger>
+                      <TabsTrigger value="contracts">Contrats</TabsTrigger>
+                      <TabsTrigger value="documents">Documents</TabsTrigger>
+                      <TabsTrigger value="activity">Suivi</TabsTrigger>
+                    </TabsList>
 
                 {/* Info Tab */}
                 <TabsContent value="info" className="space-y-6 mt-6">
@@ -862,54 +866,197 @@ export default function PartnerClients() {
                   )}
                 </TabsContent>
 
-                {/* Commissions Tab */}
-                <TabsContent value="commissions" className="mt-6">
-                  {clientCommissions.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Banknote className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                      <p className="text-slate-500">Aucune commission pour ce client</p>
+                {/* Activity / Suivi Tab */}
+                <TabsContent value="activity" className="mt-6 space-y-4">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold">Historique et suivi</h3>
+                      <Button size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Ajouter une note
+                      </Button>
                     </div>
-                  ) : (
-                    <div className="rounded-xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
-                            <TableHead className="font-semibold">Période</TableHead>
-                            <TableHead className="font-semibold">Contrat</TableHead>
-                            <TableHead className="font-semibold">Statut</TableHead>
-                            <TableHead className="font-semibold">Date</TableHead>
-                            <TableHead className="font-semibold text-right">Montant</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {clientCommissions.map((commission) => {
-                            const contract = clientContracts.find(c => c.id === commission.contractId);
-                            return (
-                              <TableRow key={commission.id}>
-                                <TableCell className="font-medium">{commission.period}</TableCell>
-                                <TableCell className="text-sm">
-                                  {contract?.productName || commission.contractId}
-                                </TableCell>
-                                <TableCell>{getCommissionStatusBadge(commission.status)}</TableCell>
-                                <TableCell>{new Date(commission.date).toLocaleDateString('fr-CH')}</TableCell>
-                                <TableCell className="text-right font-semibold">
-                                  CHF {commission.amount}
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
+                    
+                    {/* Timeline */}
+                    <div className="space-y-4">
+                      <div className="flex gap-4">
+                        <div className="flex flex-col items-center">
+                          <div className="w-3 h-3 rounded-full bg-blue-500" />
+                          <div className="w-0.5 h-full bg-slate-200 dark:bg-slate-700" />
+                        </div>
+                        <div className="flex-1 pb-6">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium">Contrat signé</span>
+                            <Badge variant="outline">Auto</Badge>
+                          </div>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            Contrat Assurance Auto signé avec Allianz
+                          </p>
+                          <p className="text-xs text-slate-500 mt-1">15 janvier 2023</p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-4">
+                        <div className="flex flex-col items-center">
+                          <div className="w-3 h-3 rounded-full bg-green-500" />
+                          <div className="w-0.5 h-full bg-slate-200 dark:bg-slate-700" />
+                        </div>
+                        <div className="flex-1 pb-6">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium">Appel téléphonique</span>
+                          </div>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            Discussion sur les options complémentaires santé
+                          </p>
+                          <p className="text-xs text-slate-500 mt-1">8 mars 2023</p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-4">
+                        <div className="flex flex-col items-center">
+                          <div className="w-3 h-3 rounded-full bg-purple-500" />
+                          <div className="w-0.5 h-full bg-slate-200 dark:bg-slate-700" />
+                        </div>
+                        <div className="flex-1 pb-6">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium">Email envoyé</span>
+                          </div>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            Devis pour 3ème pilier envoyé
+                          </p>
+                          <p className="text-xs text-slate-500 mt-1">25 mai 2023</p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-4">
+                        <div className="flex flex-col items-center">
+                          <div className="w-3 h-3 rounded-full bg-blue-500" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium">Contrat 3ème pilier signé</span>
+                            <Badge variant="outline">Prévoyance</Badge>
+                          </div>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            Contrat 3ème Pilier A signé avec Swiss Life
+                          </p>
+                          <p className="text-xs text-slate-500 mt-1">10 juin 2023</p>
+                        </div>
+                      </div>
                     </div>
-                  )}
+
+                    {/* Comments Section */}
+                    <div className="border-t pt-4 mt-6">
+                      <h4 className="font-semibold mb-3">Commentaires internes</h4>
+                      <div className="space-y-3">
+                        <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                          <p className="text-sm mb-1">Client très satisfait du service. Intéressé par une assurance RC ménage.</p>
+                          <p className="text-xs text-slate-500">Agent: Marie Laurent • 12 fév 2024</p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                          <p className="text-sm mb-1">À recontacter pour renouvellement auto en janvier 2025.</p>
+                          <p className="text-xs text-slate-500">Agent: Marc Dubois • 5 jan 2024</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </TabsContent>
               </Tabs>
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
+
+        {/* Right Sidebar - Commissions */}
+        <div className="lg:col-span-1 space-y-6">
+          <Card className="rounded-2xl bg-white/70 dark:bg-slate-900/50 border-white/30 dark:border-slate-700/40 backdrop-blur sticky top-6">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Banknote className="h-5 w-5" />
+                  Commissions
+                </h3>
+                <Badge variant="outline">{clientCommissions.length}</Badge>
+              </div>
+
+              {/* Commission Summary */}
+              <div className="space-y-4 mb-6">
+                <div className="p-4 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800">
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Total commissions</p>
+                  <p className="text-2xl font-bold text-green-700 dark:text-green-400">
+                    CHF {clientCommissions.reduce((sum, c) => sum + c.amount, 0).toLocaleString()}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Payées</p>
+                    <p className="text-lg font-bold text-blue-700 dark:text-blue-400">
+                      CHF {clientCommissions.filter(c => c.status === 'Payée').reduce((sum, c) => sum + c.amount, 0)}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">En attente</p>
+                    <p className="text-lg font-bold text-amber-700 dark:text-amber-400">
+                      CHF {clientCommissions.filter(c => c.status === 'En attente').reduce((sum, c) => sum + c.amount, 0)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Commission List */}
+              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Détail des commissions</h4>
+                {clientCommissions.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Banknote className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                    <p className="text-sm text-slate-500">Aucune commission</p>
+                  </div>
+                ) : (
+                  clientCommissions.map((commission) => {
+                    const contract = clientContracts.find(c => c.id === commission.contractId);
+                    return (
+                      <div key={commission.id} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{contract?.productName || 'Contrat'}</p>
+                            <p className="text-xs text-slate-500 font-mono">{contract?.policyNumber}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-bold text-green-700 dark:text-green-400">CHF {commission.amount}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-slate-600 dark:text-slate-400">{commission.period}</p>
+                          {getCommissionStatusBadge(commission.status)}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Décommissions Section */}
+              <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                  <X className="h-4 w-4" />
+                  Décommissions
+                </h4>
+                <div className="text-center py-6">
+                  <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-2">
+                    <X className="h-6 w-6 text-slate-400" />
+                  </div>
+                  <p className="text-sm text-slate-500">Aucune décommission</p>
+                  <p className="text-xs text-slate-400 mt-1">Les annulations et rétrocessions apparaîtront ici</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    );
-  }
+    </motion.div>
+  </div>
+);
+}
 
   // List View
   return (
