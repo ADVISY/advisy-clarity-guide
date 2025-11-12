@@ -445,6 +445,22 @@ function Roadmap() {
 }
 
 export default function CRM() {
+  const { user } = useAuth();
+  const [userRole, setUserRole] = useState<string>("client");
+
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) setUserRole(data.role);
+        });
+    }
+  }, [user]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-50 dark:from-slate-950 dark:to-slate-900">
       <GlassHeader />
@@ -452,9 +468,10 @@ export default function CRM() {
         <SidebarNav />
 
         <div className="space-y-6">
+          {/* Dashboard - Tous les rôles */}
           <section className="space-y-4">
             <motion.h1 variants={fadeIn} initial="hidden" animate="show" className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 flex items-center gap-2">
-              <LayoutDashboard className="h-6 w-6" /> Tableau de bord (démo)
+              <LayoutDashboard className="h-6 w-6" /> Tableau de bord
             </motion.h1>
             <StatCards />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -463,50 +480,48 @@ export default function CRM() {
             </div>
           </section>
 
-          <section className="space-y-4">
-            <motion.h2 variants={fadeIn} initial="hidden" animate="show" className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-50 flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5" /> Espace Client (maquette)
-            </motion.h2>
-            <ClientPanelDemo />
-          </section>
+          {/* Espace Client - visible pour clients et admins */}
+          {(userRole === "client" || userRole === "admin") && (
+            <section className="space-y-4">
+              <motion.h2 variants={fadeIn} initial="hidden" animate="show" className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-50 flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5" /> Mes Contrats
+              </motion.h2>
+              <ClientPanelDemo />
+            </section>
+          )}
 
-          <section className="space-y-4">
-            <motion.h2 variants={fadeIn} initial="hidden" animate="show" className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-50 flex items-center gap-2">
-              <Users className="h-5 w-5" /> Espace Partner (maquette)
-            </motion.h2>
-            <PartnerPanelDemo />
-          </section>
+          {/* Espace Partner - visible pour partners et admins */}
+          {(userRole === "partner" || userRole === "admin") && (
+            <section className="space-y-4">
+              <motion.h2 variants={fadeIn} initial="hidden" animate="show" className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-50 flex items-center gap-2">
+                <Users className="h-5 w-5" /> Espace Partner
+              </motion.h2>
+              <PartnerPanelDemo />
+            </section>
+          )}
 
-          <section className="space-y-4">
-            <motion.h2 variants={fadeIn} initial="hidden" animate="show" className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-50 flex items-center gap-2">
-              <Settings className="h-5 w-5" /> CRM Admin (maquette)
-            </motion.h2>
-            <AdminPanelDemo />
-          </section>
+          {/* CRM Admin - visible uniquement pour admins */}
+          {userRole === "admin" && (
+            <>
+              <section className="space-y-4">
+                <motion.h2 variants={fadeIn} initial="hidden" animate="show" className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-50 flex items-center gap-2">
+                  <Settings className="h-5 w-5" /> Administration CRM
+                </motion.h2>
+                <AdminPanelDemo />
+              </section>
 
-          <section className="space-y-4">
-            <motion.h2 variants={fadeIn} initial="hidden" animate="show" className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-50 flex items-center gap-2">
-              <LineChart className="h-5 w-5" /> Phases projet
-            </motion.h2>
-            <Roadmap />
-          </section>
-
-          <section className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
-            <div className="font-semibold">Notes d'intégration (Back & Data)</div>
-            <ul className="list-disc pl-4 space-y-1">
-              <li>API REST + GraphQL (subscriptions pour stats temps réel)</li>
-              <li>DB PostgreSQL (tables : users, roles, clients, partners, policies, contracts, commissions, messages, notifications, audit_logs)</li>
-              <li>Auth : OAuth2/JWT, 2FA (Twilio/SendGrid), RBAC</li>
-              <li>Stockage : S3/Infomaniak, dossiers par client, versionning</li>
-              <li>PDF & Signature : service de génération + Yousign/DocuSign</li>
-              <li>Automatisation : webhooks + Zapier/Make</li>
-              <li>Analytics : entrepôt (optionnel) + vues matérialisées pour KPI</li>
-            </ul>
-          </section>
+              <section className="space-y-4">
+                <motion.h2 variants={fadeIn} initial="hidden" animate="show" className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-50 flex items-center gap-2">
+                  <LineChart className="h-5 w-5" /> Roadmap Projet
+                </motion.h2>
+                <Roadmap />
+              </section>
+            </>
+          )}
         </div>
       </main>
       <footer className="py-8 text-center text-xs text-slate-500">
-        © {new Date().getFullYear()} Advisy – Prototype UI
+        © {new Date().getFullYear()} Advisy – CRM
       </footer>
     </div>
   );
