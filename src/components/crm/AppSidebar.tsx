@@ -29,9 +29,9 @@ import { Separator } from "@/components/ui/separator";
 
 const partnerItems = [
   { title: "Dashboard", url: "/crm", icon: LayoutDashboard },
-  { title: "Contrats", url: "/partner/contracts", icon: FileText },
-  { title: "Documents", url: "/partner/documents", icon: FolderOpen },
-  { title: "Commissions", url: "/partner/commissions", icon: DollarSign },
+  { title: "Contrats", url: "/crm/contracts", icon: FileText },
+  { title: "Documents", url: "/crm/documents", icon: FolderOpen },
+  { title: "Commissions", url: "/crm/commissions", icon: DollarSign },
 ];
 
 const adminItems = [
