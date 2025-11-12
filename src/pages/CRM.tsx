@@ -1,15 +1,18 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { 
   ShieldCheck, Users, LayoutDashboard, Bot, LineChart, Activity,
   Building2, MessageSquare, Bell, CreditCard, FileSignature, Lock,
   Database, Mail, Smartphone, BarChart4, Settings, Cloud, Globe2,
-  Wallet, ChevronRight, Sun, Moon, Sparkles, Cpu
+  Wallet, ChevronRight, Sun, Moon, Sparkles, Cpu, LogOut, User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 // Helpers d'animation
 const fadeIn = {
@@ -23,6 +26,39 @@ const springy = {
 };
 
 function GlassHeader() {
+  const { user, signOut } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string>("client");
+
+  useEffect(() => {
+    if (user) {
+      // Fetch user profile
+      supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle()
+        .then(({ data }) => setProfile(data));
+
+      // Fetch user role
+      supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) setUserRole(data.role);
+        });
+    }
+  }, [user]);
+
+  const getInitials = () => {
+    if (profile?.first_name && profile?.last_name) {
+      return `${profile.first_name[0]}${profile.last_name[0]}`.toUpperCase();
+    }
+    return user?.email?.[0].toUpperCase() || "U";
+  };
+
   return (
     <motion.header
       initial={{ opacity: 0, y: -12 }}
@@ -34,14 +70,16 @@ function GlassHeader() {
           <motion.div
             initial={{ rotateX: -8, rotateY: 8, scale: 0.95 }}
             whileHover={{ rotateX: 0, rotateY: 0, scale: 1 }}
-            transition={{ type: "spring", stiffness: 120, damping: 12 }}
+            transition={{ type: "spring" as const, stiffness: 120, damping: 12 }}
             className="h-9 w-9 rounded-xl bg-gradient-to-br from-sky-300 to-indigo-500 shadow-inner flex items-center justify-center text-white"
             aria-label="Advisy logo 3D"
           >
             <Sparkles className="h-5 w-5" />
           </motion.div>
           <div className="font-semibold tracking-tight text-slate-900 dark:text-slate-50">Advisy CRM 2.0</div>
-          <span className="ml-2 text-xs px-2 py-1 rounded-full bg-slate-900/5 dark:bg-white/10 text-slate-500 dark:text-slate-300">Prototype UI</span>
+          <span className="ml-2 text-xs px-2 py-1 rounded-full bg-slate-900/5 dark:bg-white/10 text-slate-500 dark:text-slate-300">
+            {userRole === "admin" ? "Admin" : userRole === "partner" ? "Partner" : "Client"}
+          </span>
         </div>
         <div className="flex items-center gap-3">
           <div className="hidden md:flex items-center gap-2">
@@ -49,7 +87,29 @@ function GlassHeader() {
             <Switch />
             <Moon className="h-4 w-4 text-indigo-400" />
           </div>
-          <Button variant="outline" className="rounded-2xl">Se connecter</Button>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 dark:bg-slate-800/70 border border-white/30 dark:border-slate-700/40">
+            <Avatar className="h-7 w-7">
+              <AvatarFallback className="bg-gradient-to-br from-indigo-400 to-sky-300 text-white text-xs">
+                {getInitials()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="hidden sm:block">
+              <div className="text-xs font-medium text-slate-900 dark:text-slate-50">
+                {profile?.first_name && profile?.last_name 
+                  ? `${profile.first_name} ${profile.last_name}`
+                  : user?.email
+                }
+              </div>
+            </div>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={signOut}
+            className="rounded-full"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </div>
       <TickerStrip />
