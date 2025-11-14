@@ -26,7 +26,13 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import CRMLayout from "./pages/crm/CRMLayout";
 import CRMDashboard from "./pages/crm/CRMDashboard";
 import CRMClients from "./pages/crm/CRMClients";
+import CRMSuivis from "./pages/crm/CRMSuivis";
+import CRMPropositions from "./pages/crm/CRMPropositions";
 import CRMContracts from "./pages/crm/CRMContracts";
+import CRMCommissions from "./pages/crm/CRMCommissions";
+import CRMCollaborateurs from "./pages/crm/CRMCollaborateurs";
+import CRMRapports from "./pages/crm/CRMRapports";
+import CRMParametres from "./pages/crm/CRMParametres";
 
 const queryClient = new QueryClient();
 
@@ -70,7 +76,13 @@ const App = () => (
           <Route path="/crm" element={<ProtectedRoute><CRMLayout /></ProtectedRoute>}>
             <Route index element={<CRMDashboard />} />
             <Route path="clients" element={<CRMClients />} />
-            <Route path="contracts" element={<CRMContracts />} />
+            <Route path="suivis" element={<CRMSuivis />} />
+            <Route path="propositions" element={<CRMPropositions />} />
+            <Route path="contrats" element={<CRMContracts />} />
+            <Route path="commissions" element={<CRMCommissions />} />
+            <Route path="collaborateurs" element={<CRMCollaborateurs />} />
+            <Route path="rapports" element={<CRMRapports />} />
+            <Route path="parametres" element={<CRMParametres />} />
           </Route>
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

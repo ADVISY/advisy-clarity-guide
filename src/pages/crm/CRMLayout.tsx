@@ -2,9 +2,33 @@ import { Outlet, NavLink } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Users, FileText, LogOut, Menu } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  ClipboardList,
+  FileText,
+  FileCheck,
+  DollarSign,
+  UserCog,
+  BarChart3,
+  Settings,
+  LogOut,
+  Menu,
+} from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+
+const menuItems = [
+  { to: "/crm", icon: LayoutDashboard, label: "Dashboard", end: true },
+  { to: "/crm/clients", icon: Users, label: "Clients" },
+  { to: "/crm/suivis", icon: ClipboardList, label: "Suivis" },
+  { to: "/crm/propositions", icon: FileText, label: "Propositions" },
+  { to: "/crm/contrats", icon: FileCheck, label: "Contrats" },
+  { to: "/crm/commissions", icon: DollarSign, label: "Commissions" },
+  { to: "/crm/collaborateurs", icon: UserCog, label: "Collaborateurs" },
+  { to: "/crm/rapports", icon: BarChart3, label: "Rapports" },
+  { to: "/crm/parametres", icon: Settings, label: "Paramètres" },
+];
 
 export default function CRMLayout() {
   const { user, signOut } = useAuth();
@@ -19,15 +43,9 @@ export default function CRMLayout() {
     );
   }
 
-  const navItems = [
-    { to: "/crm", icon: LayoutDashboard, label: "Dashboard", end: true },
-    { to: "/crm/clients", icon: Users, label: "Clients" },
-    { to: "/crm/contracts", icon: FileText, label: "Contrats" },
-  ];
-
   const NavItems = () => (
     <>
-      {navItems.map((item) => (
+      {menuItems.map((item) => (
         <NavLink
           key={item.to}
           to={item.to}
@@ -53,8 +71,8 @@ export default function CRMLayout() {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-64 flex-col border-r">
         <div className="p-6 border-b">
-          <h1 className="text-2xl font-bold">ADVISY CRM</h1>
-          <p className="text-sm text-muted-foreground mt-1">{role}</p>
+          <h1 className="text-2xl font-bold text-primary">ADVISY CRM</h1>
+          <p className="text-sm text-muted-foreground mt-1 capitalize">{role}</p>
         </div>
 
         <nav className="flex-1 p-4 space-y-2">
@@ -64,6 +82,7 @@ export default function CRMLayout() {
         <div className="p-4 border-t">
           <div className="mb-4">
             <p className="text-sm font-medium truncate">{user?.email}</p>
+            <p className="text-xs text-muted-foreground capitalize">{role}</p>
           </div>
           <Button
             variant="outline"
@@ -89,7 +108,7 @@ export default function CRMLayout() {
             <SheetContent side="left" className="w-64 p-0">
               <div className="p-6 border-b">
                 <h2 className="text-xl font-bold">ADVISY CRM</h2>
-                <p className="text-sm text-muted-foreground mt-1">{role}</p>
+                <p className="text-sm text-muted-foreground mt-1 capitalize">{role}</p>
               </div>
               <nav className="p-4 space-y-2">
                 <NavItems />
