@@ -26,6 +26,7 @@ import PartnerClients from "./pages/partner/PartnerClients";
 import PartnerContracts from "./pages/partner/PartnerContracts";
 import PartnerDocuments from "./pages/partner/PartnerDocuments";
 import PartnerCommissions from "./pages/partner/PartnerCommissions";
+import PartnerReports from "./pages/partner/PartnerReports";
 import AdminUsers from "./pages/AdminUsers";
 import AdminSettings from "./pages/AdminSettings";
 import MentionsLegales from "./pages/MentionsLegales";
@@ -78,6 +79,7 @@ const App = () => (
             <Route path="contracts" element={<PartnerContracts />} />
             <Route path="documents" element={<PartnerDocuments />} />
             <Route path="commissions" element={<PartnerCommissions />} />
+            <Route path="reports" element={<PartnerReports />} />
           </Route>
           
           {/* Admin Routes */}

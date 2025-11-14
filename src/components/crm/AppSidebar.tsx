@@ -6,7 +6,8 @@ import {
   Users, 
   Settings,
   LogOut,
-  UserCircle
+  UserCircle,
+  BarChart3
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -34,6 +35,7 @@ const partnerItems = [
   { title: "Contrats", url: "/crm/contracts", icon: FileText },
   { title: "Documents", url: "/crm/documents", icon: FolderOpen },
   { title: "Commissions", url: "/crm/commissions", icon: DollarSign },
+  { title: "Rapports", url: "/crm/reports", icon: BarChart3 },
 ];
 
 const adminItems = [
