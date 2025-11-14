@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,7 @@ export function ContractsSection({ userId }: { userId: string }) {
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
   const { products } = useInsuranceProducts(selectedCompanyId);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     company_id: '',
     product_id: '',
@@ -50,6 +52,15 @@ export function ContractsSection({ userId }: { userId: string }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.product_id) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner un produit d'assurance",
+        variant: "destructive"
+      });
+      return;
+    }
     
     try {
       await createPolicy({

@@ -79,6 +79,22 @@ export function usePolicies() {
 
   const createPolicy = async (policyData: any) => {
     try {
+      // Get the current user's partner profile if they have one
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
+      if (currentUser) {
+        const { data: partnerData } = await supabase
+          .from('partners')
+          .select('id')
+          .eq('user_id', currentUser.id)
+          .single();
+        
+        // Add partner_id if the user has a partner profile
+        if (partnerData) {
+          policyData.partner_id = partnerData.id;
+        }
+      }
+
       const { data, error } = await supabase
         .from('policies' as any)
         .insert([policyData])
