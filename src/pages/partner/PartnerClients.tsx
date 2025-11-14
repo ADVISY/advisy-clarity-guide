@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useClients } from "@/hooks/useClients";
+import { useClients, type Client } from "@/hooks/useClients";
 import {
   Table,
   TableBody,
@@ -78,107 +78,6 @@ interface Commission {
 
 // Mock data conservé pour les contrats, documents et commissions
 // À connecter plus tard
-  {
-    id: "CLI-001",
-    firstName: "Marie",
-    lastName: "Dupont",
-    email: "marie.dupont@email.ch",
-    phone: "+41 79 123 45 67",
-    address: "Rue de la Paix 12",
-    city: "Lausanne",
-    postalCode: "1003",
-    birthdate: "1985-03-15",
-    iban: "CH93 0000 0000 0000 0000 0",
-    contractsCount: 3,
-    totalPremium: 4500,
-    status: 'Actif',
-    createdAt: "2023-01-15",
-    familyRole: 'principal'
-  },
-  {
-    id: "CLI-001-CONJ",
-    firstName: "Pierre",
-    lastName: "Dupont",
-    email: "pierre.dupont@email.ch",
-    phone: "+41 79 123 45 68",
-    address: "Rue de la Paix 12",
-    city: "Lausanne",
-    postalCode: "1003",
-    birthdate: "1983-11-20",
-    iban: "CH93 0000 0000 0000 0000 1",
-    contractsCount: 2,
-    totalPremium: 2800,
-    status: 'Actif',
-    createdAt: "2023-01-15",
-    familyRole: 'conjoint',
-    parentClientId: 'CLI-001'
-  },
-  {
-    id: "CLI-001-ENF1",
-    firstName: "Emma",
-    lastName: "Dupont",
-    email: "emma.dupont@email.ch",
-    phone: "+41 79 123 45 69",
-    address: "Rue de la Paix 12",
-    city: "Lausanne",
-    postalCode: "1003",
-    birthdate: "2010-05-15",
-    contractsCount: 1,
-    totalPremium: 850,
-    status: 'Actif',
-    createdAt: "2023-01-15",
-    familyRole: 'enfant',
-    parentClientId: 'CLI-001'
-  },
-  {
-    id: "CLI-001-ENF2",
-    firstName: "Lucas",
-    lastName: "Dupont",
-    email: "lucas.dupont@email.ch",
-    phone: "+41 79 123 45 70",
-    address: "Rue de la Paix 12",
-    city: "Lausanne",
-    postalCode: "1003",
-    birthdate: "2013-08-22",
-    contractsCount: 1,
-    totalPremium: 750,
-    status: 'Actif',
-    createdAt: "2023-01-15",
-    familyRole: 'enfant',
-    parentClientId: 'CLI-001'
-  },
-  {
-    id: "CLI-002",
-    firstName: "Jean",
-    lastName: "Martin",
-    email: "jean.martin@email.ch",
-    phone: "+41 78 987 65 43",
-    address: "Avenue des Sports 25",
-    city: "Genève",
-    postalCode: "1201",
-    birthdate: "1978-07-22",
-    contractsCount: 2,
-    totalPremium: 3200,
-    status: 'Actif',
-    createdAt: "2023-02-20",
-    familyRole: 'principal'
-  },
-  {
-    id: "CLI-003",
-    firstName: "Sophie",
-    lastName: "Bernard",
-    email: "sophie.bernard@email.ch",
-    phone: "+41 76 555 44 33",
-    address: "Chemin du Lac 8",
-    city: "Montreux",
-    postalCode: "1820",
-    contractsCount: 0,
-    totalPremium: 0,
-    status: 'Prospect',
-    createdAt: "2024-01-10",
-    familyRole: 'principal'
-  }
-];
 
 const mockContracts: Contract[] = [
   {
@@ -465,7 +364,8 @@ export default function PartnerClients() {
   };
 
   const getFamilyMembers = (clientId: string): Client[] => {
-    return mockClients.filter(c => c.parentClientId === clientId);
+    // TODO: Implement family members relationship in database
+    return [];
   };
 
   const getTotalFamilyContracts = (clientId: string): number => {
@@ -788,53 +688,11 @@ export default function PartnerClients() {
                   </div>
 
                   <div className="space-y-4">
-                    {getFamilyMembers(selectedClient.id).length === 0 ? (
-                      <div className="text-center py-12">
-                        <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                        <p className="text-slate-500">Aucun membre de la famille ajouté</p>
-                      </div>
-                    ) : (
-                      getFamilyMembers(selectedClient.id).map((member) => (
-                        <Card key={member.id} className="rounded-xl hover:shadow-lg transition-all cursor-pointer" onClick={() => handleRowClick(member)}>
-                          <CardContent className="p-6">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1 space-y-3">
-                                <div className="flex items-center gap-2">
-                                  <h4 className="font-semibold text-lg">{member.firstName} {member.lastName}</h4>
-                                  <Badge variant={member.familyRole === 'conjoint' ? 'default' : 'secondary'}>
-                                    {member.familyRole === 'conjoint' ? 'Conjoint' : 'Enfant'}
-                                  </Badge>
-                                  {getStatusBadge(member.status)}
-                                </div>
-                                <div className="grid grid-cols-2 gap-4 text-sm">
-                                  <div className="space-y-1">
-                                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                                      <Mail className="h-3 w-3" />
-                                      {member.email}
-                                    </div>
-                                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                                      <Phone className="h-3 w-3" />
-                                      {member.phone}
-                                    </div>
-                                  </div>
-                                  <div className="space-y-1 text-right">
-                                    <p className="text-slate-600 dark:text-slate-400">
-                                      <span className="font-semibold text-blue-600">{getClientContracts(member.id).length}</span> contrat{getClientContracts(member.id).length > 1 ? 's' : ''}
-                                    </p>
-                                    <p className="text-slate-600 dark:text-slate-400">
-                                      <span className="font-semibold text-green-600">CHF {getClientContracts(member.id).reduce((sum, c) => sum + c.premiumMonthly, 0)}</span>/mois
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                              <Button variant="ghost" size="sm">
-                                <ChevronRight className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))
-                    )}
+                    <div className="text-center py-12">
+                      <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                      <p className="text-slate-500 mb-2">Gestion des membres de la famille</p>
+                      <p className="text-sm text-slate-400">Fonctionnalité à venir</p>
+                    </div>
                   </div>
                 </TabsContent>
 
