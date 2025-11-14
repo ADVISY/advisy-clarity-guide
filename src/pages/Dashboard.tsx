@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { usePolicies } from "@/hooks/usePolicies";
+import { useCommissions } from "@/hooks/useCommissions";
+import { useClients } from "@/hooks/useClients";
 import { 
   TrendingUp, 
   ShieldCheck, 
@@ -31,13 +33,25 @@ const fadeIn = {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [stats, setStats] = useState({
-    activeContracts: 12,
-    monthlyPremiums: 4250.50,
-    ytdCommissions: 18750.00,
-    churnRate: 2.3
-  });
-  const [loading, setLoading] = useState(false);
+  const { policies, loading: policiesLoading } = usePolicies();
+  const { commissions, loading: commissionsLoading } = useCommissions();
+  const { clients, loading: clientsLoading } = useClients();
+
+  const loading = policiesLoading || commissionsLoading || clientsLoading;
+
+  // Calculate real stats from data
+  const stats = {
+    activeContracts: policies.filter(p => p.status === 'active').length,
+    monthlyPremiums: policies
+      .filter(p => p.status === 'active')
+      .reduce((sum, p) => sum + (Number(p.premium_monthly) || 0), 0),
+    ytdCommissions: commissions
+      .filter(c => c.status === 'paid')
+      .reduce((sum, c) => sum + Number(c.amount), 0),
+    churnRate: policies.length > 0 
+      ? ((policies.filter(p => p.status === 'cancelled').length / policies.length) * 100).toFixed(1)
+      : 0
+  };
 
   const premiumsData = [
     { month: 'Jan', montant: 3800 },
