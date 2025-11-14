@@ -51,8 +51,8 @@ export default function PartnerReports() {
     company: "all",
     startDate: "",
     endDate: "",
-    year: "",
-    month: "",
+    year: "all",
+    month: "all",
     searchTerm: "",
   });
 
@@ -91,7 +91,7 @@ export default function PartnerReports() {
       }
 
       // Year filter
-      if (filters.year) {
+      if (filters.year && filters.year !== "all") {
         const policyYear = new Date(policy.start_date).getFullYear().toString();
         if (policyYear !== filters.year) {
           return false;
@@ -99,7 +99,7 @@ export default function PartnerReports() {
       }
 
       // Month filter
-      if (filters.month) {
+      if (filters.month && filters.month !== "all") {
         const policyMonth = (new Date(policy.start_date).getMonth() + 1).toString();
         if (policyMonth !== filters.month) {
           return false;
@@ -359,14 +359,14 @@ export default function PartnerReports() {
             <div className="space-y-2">
               <Label>Année</Label>
               <Select
-                value={filters.year}
-                onValueChange={(value) => setFilters({ ...filters, year: value })}
+                value={filters.year || "all"}
+                onValueChange={(value) => setFilters({ ...filters, year: value === "all" ? "" : value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Toutes" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Toutes</SelectItem>
+                  <SelectItem value="all">Toutes</SelectItem>
                   {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(
                     (year) => (
                       <SelectItem key={year} value={year.toString()}>
@@ -381,14 +381,14 @@ export default function PartnerReports() {
             <div className="space-y-2">
               <Label>Mois</Label>
               <Select
-                value={filters.month}
-                onValueChange={(value) => setFilters({ ...filters, month: value })}
+                value={filters.month || "all"}
+                onValueChange={(value) => setFilters({ ...filters, month: value === "all" ? "" : value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Tous" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tous</SelectItem>
+                  <SelectItem value="all">Tous</SelectItem>
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
                     <SelectItem key={month} value={month.toString()}>
                       {format(new Date(2000, month - 1), "MMMM", { locale: fr })}
@@ -420,7 +420,6 @@ export default function PartnerReports() {
               />
             </div>
 
-            <div className="flex items-end">
               <Button
                 variant="outline"
                 onClick={() =>
@@ -429,15 +428,14 @@ export default function PartnerReports() {
                     company: "all",
                     startDate: "",
                     endDate: "",
-                    year: "",
-                    month: "",
+                    year: "all",
+                    month: "all",
                     searchTerm: "",
                   })
                 }
               >
                 Réinitialiser
               </Button>
-            </div>
           </div>
         </CardContent>
       </Card>
