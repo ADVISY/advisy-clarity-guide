@@ -1,13 +1,23 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useClients, Client } from "@/hooks/useClients";
+import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Edit, Plus } from "lucide-react";
+import { ArrowLeft, Edit, Plus, Users } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import FamilyMemberForm from "@/components/crm/FamilyMemberForm";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const statusColors: Record<string, string> = {
   prospect: "bg-blue-500",
@@ -27,8 +37,10 @@ export default function ClientDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getClientById } = useClients();
+  const { familyMembers, loading: familyLoading } = useFamilyMembers(id);
   const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
+  const [familyFormOpen, setFamilyFormOpen] = useState(false);
 
   useEffect(() => {
     loadClient();
@@ -125,182 +137,197 @@ export default function ClientDetail() {
             </div>
           </div>
         </div>
-        <Button onClick={() => navigate(`/crm/clients/${id}/modifier`)}>
+        <Button onClick={() => navigate(`/crm/clients/${id}/edit`)}>
           <Edit className="h-4 w-4 mr-2" />
           Modifier
         </Button>
       </div>
 
-      <Tabs defaultValue="infos" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="infos">Informations</TabsTrigger>
-          <TabsTrigger value="suivis">Suivis</TabsTrigger>
-          <TabsTrigger value="propositions">Propositions</TabsTrigger>
-          <TabsTrigger value="contrats">Contrats</TabsTrigger>
-          <TabsTrigger value="messages">Messages</TabsTrigger>
-        </TabsList>
+      <div className="grid gap-6">
+        <div>
+          <Tabs defaultValue="info" className="w-full">
+            <TabsList>
+              <TabsTrigger value="info">Informations</TabsTrigger>
+              <TabsTrigger value="family">
+                <Users className="h-4 w-4 mr-2" />
+                Famille ({familyMembers.length})
+              </TabsTrigger>
+              <TabsTrigger value="contracts">Contrats</TabsTrigger>
+              <TabsTrigger value="documents">Documents</TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="infos">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informations générales</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {client.type_adresse && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Type</p>
-                    <p className="font-medium">{getTypeLabel()}</p>
+            <TabsContent value="info">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Informations personnelles</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Type</p>
+                      <p className="font-medium capitalize">{client.type_adresse || "-"}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">État civil</p>
+                      <p className="font-medium capitalize">{client.civil_status || "-"}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Nationalité</p>
+                      <p className="font-medium">{client.nationality || "-"}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Permis</p>
+                      <p className="font-medium">{client.permit_type ? `Permis ${client.permit_type}` : "-"}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Profession</p>
+                      <p className="font-medium">{client.profession || "-"}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Employeur</p>
+                      <p className="font-medium">{client.employer || "-"}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Email</p>
+                      <p className="font-medium">{client.email || "-"}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Téléphone</p>
+                      <p className="font-medium">{client.phone || "-"}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Mobile</p>
+                      <p className="font-medium">{client.mobile || "-"}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Date de naissance</p>
+                      <p className="font-medium">
+                        {client.birthdate
+                          ? format(new Date(client.birthdate), "dd MMMM yyyy", { locale: fr })
+                          : "-"}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Adresse</p>
+                      <p className="font-medium">
+                        {[
+                          client.address,
+                          [client.zip_code, client.city].filter(Boolean).join(" "),
+                          client.country,
+                        ]
+                          .filter(Boolean)
+                          .join(", ") || "-"}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">IBAN</p>
+                      <p className="font-medium">{client.iban || "-"}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Banque</p>
+                      <p className="font-medium">{client.bank_name || "-"}</p>
+                    </div>
+                    {client.assigned_agent && (
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Agent assigné</p>
+                        <p className="font-medium">
+                          {client.assigned_agent.first_name && client.assigned_agent.last_name
+                            ? `${client.assigned_agent.first_name} ${client.assigned_agent.last_name}`
+                            : client.assigned_agent.email}
+                        </p>
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Date de création</p>
+                      <p className="font-medium">
+                        {format(new Date(client.created_at), "dd MMMM yyyy 'à' HH:mm", { locale: fr })}
+                      </p>
+                    </div>
                   </div>
-                )}
-                {client.company_name && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Entreprise</p>
-                    <p className="font-medium">{client.company_name}</p>
-                  </div>
-                )}
-                {client.first_name && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Prénom</p>
-                    <p className="font-medium">{client.first_name}</p>
-                  </div>
-                )}
-                {client.last_name && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Nom</p>
-                    <p className="font-medium">{client.last_name}</p>
-                  </div>
-                )}
-                {client.email && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-medium">{client.email}</p>
-                  </div>
-                )}
-                {client.mobile && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Mobile</p>
-                    <p className="font-medium">{client.mobile}</p>
-                  </div>
-                )}
-                {client.phone && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Téléphone</p>
-                    <p className="font-medium">{client.phone}</p>
-                  </div>
-                )}
-                {client.birthdate && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Date de naissance
-                    </p>
-                    <p className="font-medium">
-                      {format(new Date(client.birthdate), "dd MMMM yyyy", {
-                        locale: fr,
-                      })}
-                    </p>
-                  </div>
-                )}
-              </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-              {client.address && (
-                <div className="pt-4 border-t">
-                  <p className="text-sm text-muted-foreground mb-2">Adresse</p>
-                  <p className="font-medium">{client.address}</p>
-                  <p className="font-medium">
-                    {client.zip_code || client.postal_code} {client.city}
-                  </p>
-                  {client.country && (
-                    <p className="font-medium">{client.country}</p>
+            <TabsContent value="family">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Membres de la famille</CardTitle>
+                  <Button onClick={() => setFamilyFormOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Ajouter un membre
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {familyLoading ? (
+                    <p className="text-muted-foreground text-center py-8">Chargement...</p>
+                  ) : familyMembers.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">
+                      Aucun membre de la famille enregistré
+                    </p>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Prénom</TableHead>
+                          <TableHead>Nom</TableHead>
+                          <TableHead>Date de naissance</TableHead>
+                          <TableHead>Relation</TableHead>
+                          <TableHead>Permis</TableHead>
+                          <TableHead>Nationalité</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {familyMembers.map((member) => (
+                          <TableRow key={member.id}>
+                            <TableCell>{member.first_name}</TableCell>
+                            <TableCell>{member.last_name}</TableCell>
+                            <TableCell>
+                              {member.birth_date
+                                ? new Date(member.birth_date).toLocaleDateString("fr-CH")
+                                : "-"}
+                            </TableCell>
+                            <TableCell className="capitalize">{member.relation_type}</TableCell>
+                            <TableCell>{member.permit_type || "-"}</TableCell>
+                            <TableCell>{member.nationality || "-"}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   )}
-                </div>
-              )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-              {client.assigned_agent && (
-                <div className="pt-4 border-t">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Agent assigné
-                  </p>
-                  <p className="font-medium">
-                    {client.assigned_agent.first_name &&
-                    client.assigned_agent.last_name
-                      ? `${client.assigned_agent.first_name} ${client.assigned_agent.last_name}`
-                      : client.assigned_agent.email}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+            <TabsContent value="contracts">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Contrats</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">Aucun contrat pour le moment</p>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-        <TabsContent value="suivis">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Suivis</CardTitle>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Nouveau suivi
-              </Button>
-            </CardHeader>
-            <CardContent>
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Aucun suivi pour cette adresse
-                </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            <TabsContent value="documents">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Documents</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">Aucun document pour le moment</p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
 
-        <TabsContent value="propositions">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Propositions</CardTitle>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Nouvelle proposition
-              </Button>
-            </CardHeader>
-            <CardContent>
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Aucune proposition pour cette adresse
-                </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="contrats">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Contrats</CardTitle>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Nouveau contrat
-              </Button>
-            </CardHeader>
-            <CardContent>
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Aucun contrat pour cette adresse
-                </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="messages">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Messages</CardTitle>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Nouveau message
-              </Button>
-            </CardHeader>
-            <CardContent>
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Aucun message pour cette adresse
-                </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <FamilyMemberForm
+        clientId={id!}
+        open={familyFormOpen}
+        onOpenChange={setFamilyFormOpen}
+      />
     </div>
   );
 }

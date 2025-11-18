@@ -163,12 +163,15 @@ export type Database = {
         Row: {
           address: string | null
           assigned_agent_id: string | null
+          bank_name: string | null
           birthdate: string | null
           city: string | null
+          civil_status: string | null
           company_name: string | null
           country: string | null
           created_at: string
           email: string | null
+          employer: string | null
           external_ref: string | null
           first_name: string | null
           iban: string | null
@@ -176,8 +179,11 @@ export type Database = {
           is_company: boolean | null
           last_name: string | null
           mobile: string | null
+          nationality: string | null
+          permit_type: string | null
           phone: string | null
           postal_code: string | null
+          profession: string | null
           status: string | null
           tags: string[] | null
           type_adresse: string
@@ -188,12 +194,15 @@ export type Database = {
         Insert: {
           address?: string | null
           assigned_agent_id?: string | null
+          bank_name?: string | null
           birthdate?: string | null
           city?: string | null
+          civil_status?: string | null
           company_name?: string | null
           country?: string | null
           created_at?: string
           email?: string | null
+          employer?: string | null
           external_ref?: string | null
           first_name?: string | null
           iban?: string | null
@@ -201,8 +210,11 @@ export type Database = {
           is_company?: boolean | null
           last_name?: string | null
           mobile?: string | null
+          nationality?: string | null
+          permit_type?: string | null
           phone?: string | null
           postal_code?: string | null
+          profession?: string | null
           status?: string | null
           tags?: string[] | null
           type_adresse?: string
@@ -213,12 +225,15 @@ export type Database = {
         Update: {
           address?: string | null
           assigned_agent_id?: string | null
+          bank_name?: string | null
           birthdate?: string | null
           city?: string | null
+          civil_status?: string | null
           company_name?: string | null
           country?: string | null
           created_at?: string
           email?: string | null
+          employer?: string | null
           external_ref?: string | null
           first_name?: string | null
           iban?: string | null
@@ -226,8 +241,11 @@ export type Database = {
           is_company?: boolean | null
           last_name?: string | null
           mobile?: string | null
+          nationality?: string | null
+          permit_type?: string | null
           phone?: string | null
           postal_code?: string | null
+          profession?: string | null
           status?: string | null
           tags?: string[] | null
           type_adresse?: string
@@ -442,6 +460,53 @@ export type Database = {
           size_bytes?: number | null
         }
         Relationships: []
+      }
+      family_members: {
+        Row: {
+          birth_date: string | null
+          client_id: string
+          created_at: string
+          first_name: string
+          id: string
+          last_name: string
+          nationality: string | null
+          permit_type: string | null
+          relation_type: string
+          updated_at: string
+        }
+        Insert: {
+          birth_date?: string | null
+          client_id: string
+          created_at?: string
+          first_name: string
+          id?: string
+          last_name: string
+          nationality?: string | null
+          permit_type?: string | null
+          relation_type: string
+          updated_at?: string
+        }
+        Update: {
+          birth_date?: string | null
+          client_id?: string
+          created_at?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          nationality?: string | null
+          permit_type?: string | null
+          relation_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_members_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       insurance_companies: {
         Row: {

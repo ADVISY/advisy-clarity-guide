@@ -23,6 +23,13 @@ export type Client = {
   status?: string | null;
   tags?: string[] | null;
   type_adresse?: string | null;
+  civil_status?: string | null;
+  permit_type?: string | null;
+  nationality?: string | null;
+  profession?: string | null;
+  employer?: string | null;
+  iban?: string | null;
+  bank_name?: string | null;
   created_at: string;
   updated_at: string;
   external_ref?: string | null;
