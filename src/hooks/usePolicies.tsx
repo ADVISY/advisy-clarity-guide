@@ -85,7 +85,7 @@ export function usePolicies() {
           .from('partners')
           .select('id')
           .eq('user_id', currentUser.id)
-          .single();
+          .maybeSingle();
         
         // Add partner_id if the user has a partner profile
         if (partnerData) {
@@ -97,7 +97,7 @@ export function usePolicies() {
         .from('policies')
         .insert([policyData])
         .select('id')
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
