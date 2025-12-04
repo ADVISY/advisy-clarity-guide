@@ -2,21 +2,15 @@ import { useNavigate } from "react-router-dom";
 import { usePolicies } from "@/hooks/usePolicies";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, FileCheck, Eye, ChevronRight, Building2, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
-const statusLabels: Record<string, string> = {
-  pending: "En attente",
-  active: "Actif",
-  expired: "Expiré",
-  cancelled: "Annulé",
-};
-
-const statusColors: Record<string, string> = {
-  pending: "bg-yellow-500",
-  active: "bg-green-500",
-  expired: "bg-gray-500",
-  cancelled: "bg-red-500",
+const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
+  pending: { label: "En attente", color: "text-amber-700", bgColor: "bg-amber-100" },
+  active: { label: "Actif", color: "text-emerald-700", bgColor: "bg-emerald-100" },
+  expired: { label: "Expiré", color: "text-slate-700", bgColor: "bg-slate-100" },
+  cancelled: { label: "Annulé", color: "text-red-700", bgColor: "bg-red-100" },
 };
 
 export default function CRMContracts() {
@@ -26,73 +20,124 @@ export default function CRMContracts() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+        <div className="relative">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20 border-t-primary" />
+          <div className="absolute inset-0 rounded-full bg-primary/10 animate-ping" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Contrats</h1>
-          <p className="text-muted-foreground">Gérez vos contrats d'assurance</p>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-primary/70 shadow-lg shadow-primary/20">
+            <FileCheck className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold">Contrats</h1>
+            <p className="text-muted-foreground">Gérez vos contrats d'assurance</p>
+          </div>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
+        <Button className="group bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/20">
+          <Plus className="h-4 w-4 mr-2 transition-transform group-hover:rotate-90" />
           Nouveau contrat
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Liste des contrats ({policies.length})</CardTitle>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: "Total", value: policies.length, color: "from-blue-500 to-blue-600" },
+          { label: "Actifs", value: policies.filter(p => p.status === 'active').length, color: "from-emerald-500 to-emerald-600" },
+          { label: "En attente", value: policies.filter(p => p.status === 'pending').length, color: "from-amber-500 to-orange-500" },
+          { label: "Expirés", value: policies.filter(p => p.status === 'expired').length, color: "from-slate-400 to-slate-500" },
+        ].map((stat) => (
+          <Card key={stat.label} className="border-0 shadow-md hover:shadow-lg transition-all duration-300 bg-card/80 backdrop-blur">
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground">{stat.label}</p>
+              <p className={cn("text-2xl font-bold bg-gradient-to-r bg-clip-text text-transparent", stat.color)}>
+                {stat.value}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Contracts List */}
+      <Card className="border-0 shadow-lg bg-card/80 backdrop-blur overflow-hidden">
+        <CardHeader className="border-b bg-muted/30">
+          <CardTitle className="flex items-center gap-2">
+            <span>Liste des contrats</span>
+            <Badge variant="secondary" className="ml-2">{policies.length}</Badge>
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {policies.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              Aucun contrat pour le moment
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+              <FileCheck className="h-16 w-16 mb-4 opacity-20" />
+              <p className="text-lg font-medium">Aucun contrat pour le moment</p>
+              <p className="text-sm">Créez votre premier contrat pour commencer</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {policies.map((policy) => {
+            <div className="divide-y divide-border/50">
+              {policies.map((policy, index) => {
                 const clientName = policy.client?.company_name || 
                   `${policy.client?.first_name || ''} ${policy.client?.last_name || ''}`.trim() || 
                   'Client inconnu';
+                const status = statusConfig[policy.status] || statusConfig.pending;
+                
                 return (
-                <div
-                  key={policy.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent"
-                >
-                  <div className="space-y-1">
-                    <p className="font-medium">{policy.product?.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {policy.product?.company?.name} - {clientName}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="font-medium">
-                        {policy.premium_monthly} CHF/mois
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Début: {new Date(policy.start_date).toLocaleDateString()}
-                      </p>
+                  <div
+                    key={policy.id}
+                    className="group flex items-center justify-between p-5 hover:bg-muted/50 transition-all duration-300 cursor-pointer"
+                    onClick={() => navigate(`/crm/clients/${policy.client_id}?tab=contracts`)}
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <FileCheck className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                          {policy.product?.name || 'Produit inconnu'}
+                        </p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Building2 className="h-3 w-3" />
+                          <span>{policy.product?.company?.name}</span>
+                          <span className="text-border">•</span>
+                          <span>{clientName}</span>
+                        </div>
+                      </div>
                     </div>
-                    <Badge
-                      variant="outline"
-                      className={`${statusColors[policy.status]} text-white`}
-                    >
-                      {statusLabels[policy.status] || policy.status}
-                    </Badge>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => navigate(`/crm/clients/${policy.client_id}?tab=contracts`)}
-                    >
-                      Voir
-                    </Button>
-                  </div>
+                    
+                    <div className="flex items-center gap-6">
+                      <div className="text-right hidden sm:block">
+                        <p className="font-bold text-lg">{policy.premium_monthly} CHF<span className="text-sm font-normal text-muted-foreground">/mois</span></p>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(policy.start_date).toLocaleDateString('fr-CH')}
+                        </div>
+                      </div>
+                      
+                      <Badge className={cn("font-medium", status.bgColor, status.color)}>
+                        {status.label}
+                      </Badge>
+                      
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/crm/clients/${policy.client_id}?tab=contracts`);
+                        }}
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </Button>
+                    </div>
                   </div>
                 );
               })}

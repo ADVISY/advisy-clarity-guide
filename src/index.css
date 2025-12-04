@@ -63,6 +63,16 @@ All colors MUST be HSL.
     --blur-glass: blur(12px);
     --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* CRM Specific Tokens */
+    --crm-sidebar: 246 50% 98%;
+    --crm-sidebar-active: 246 100% 34%;
+    --crm-card: 0 0% 100%;
+    --crm-card-hover: 246 50% 99%;
+    --crm-success: 142 76% 36%;
+    --crm-warning: 38 92% 50%;
+    --crm-info: 199 89% 48%;
+    --crm-danger: 0 84% 60%;
   }
 }
 
