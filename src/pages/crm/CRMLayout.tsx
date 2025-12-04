@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
   Users,
-  ClipboardList,
   FileText,
   FileCheck,
   DollarSign,
@@ -17,10 +16,12 @@ import {
   Menu,
   Sparkles,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import advisyLogo from "@/assets/advisy-logo.svg";
+import advisyTextLogo from "@/assets/advisy-text-logo.svg";
+import { supabase } from "@/integrations/supabase/client";
 
 const menuItems = [
   { to: "/crm", icon: LayoutDashboard, label: "Dashboard", end: true, color: "from-blue-500 to-indigo-500" },
@@ -37,6 +38,38 @@ export default function CRMLayout() {
   const { user, signOut } = useAuth();
   const { role, loading } = useUserRole();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profile, setProfile] = useState<{ first_name: string | null; last_name: string | null } | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user?.id) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', user.id)
+          .maybeSingle();
+        if (data) setProfile(data);
+      }
+    };
+    fetchProfile();
+  }, [user?.id]);
+
+  const getUserDisplayName = () => {
+    if (profile?.first_name || profile?.last_name) {
+      return `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+    }
+    return user?.email || 'Utilisateur';
+  };
+
+  const getUserInitials = () => {
+    if (profile?.first_name && profile?.last_name) {
+      return `${profile.first_name.charAt(0)}${profile.last_name.charAt(0)}`.toUpperCase();
+    }
+    if (profile?.first_name) {
+      return profile.first_name.charAt(0).toUpperCase();
+    }
+    return user?.email?.charAt(0).toUpperCase() || 'U';
+  };
 
   if (loading) {
     return (
@@ -116,24 +149,14 @@ export default function CRMLayout() {
         
         {/* Logo Section */}
         <div className="p-6 border-b border-primary/10 relative">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary to-violet-600 rounded-2xl blur-lg opacity-50" />
-              <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-xl">
-                <img src={advisyLogo} alt="Advisy" className="w-7 h-7 brightness-0 invert" />
-              </div>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-primary via-violet-600 to-primary bg-clip-text text-transparent">
-                ADVISY CRM
-              </h1>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <p className="text-xs text-muted-foreground capitalize font-medium">
-                  {role} • en ligne
-                </p>
-              </div>
-            </div>
+          <div className="flex items-center gap-3">
+            <img src={advisyTextLogo} alt="Advisy" className="h-8" />
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <p className="text-xs text-muted-foreground capitalize font-medium">
+              {role} • en ligne
+            </p>
           </div>
         </div>
 
@@ -148,13 +171,13 @@ export default function CRMLayout() {
             <div className="relative">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/30 to-violet-500/30 flex items-center justify-center">
                 <span className="text-lg font-bold text-primary">
-                  {user?.email?.charAt(0).toUpperCase()}
+                  {getUserInitials()}
                 </span>
               </div>
               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold truncate">{user?.email}</p>
+              <p className="text-sm font-semibold truncate">{getUserDisplayName()}</p>
               <p className="text-xs text-muted-foreground capitalize">{role}</p>
             </div>
           </div>
@@ -172,12 +195,7 @@ export default function CRMLayout() {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-2xl border-b border-primary/10 shadow-lg">
         <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-lg">
-              <img src={advisyLogo} alt="Advisy" className="w-6 h-6 brightness-0 invert" />
-            </div>
-            <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-violet-600 bg-clip-text text-transparent">ADVISY CRM</h1>
-          </div>
+          <img src={advisyTextLogo} alt="Advisy" className="h-6" />
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="hover:bg-primary/10 rounded-xl">
@@ -186,21 +204,14 @@ export default function CRMLayout() {
             </SheetTrigger>
             <SheetContent side="left" className="w-80 p-0 bg-white/95 backdrop-blur-2xl">
               <div className="p-6 border-b border-primary/10">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-lg">
-                    <img src={advisyLogo} alt="Advisy" className="w-7 h-7 brightness-0 invert" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-violet-600 bg-clip-text text-transparent">ADVISY CRM</h2>
-                    <p className="text-xs text-muted-foreground capitalize">{role}</p>
-                  </div>
-                </div>
+                <img src={advisyTextLogo} alt="Advisy" className="h-7" />
+                <p className="text-xs text-muted-foreground capitalize mt-2">{role}</p>
               </div>
               <nav className="p-4 overflow-y-auto max-h-[calc(100vh-200px)]">
                 <NavItems onItemClick={() => setMobileMenuOpen(false)} />
               </nav>
               <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-primary/10 bg-white/80">
-                <p className="text-sm font-medium mb-4 truncate px-2">{user?.email}</p>
+                <p className="text-sm font-medium mb-4 truncate px-2">{getUserDisplayName()}</p>
                 <Button
                   variant="outline"
                   className="w-full rounded-xl"
