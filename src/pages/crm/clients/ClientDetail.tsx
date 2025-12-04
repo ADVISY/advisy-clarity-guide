@@ -451,6 +451,22 @@ export default function ClientDetail() {
                         // Use deductible from field or parsed from notes
                         const displayDeductible = policy.deductible || franchiseFromNotes;
                         
+                        // Calculate commission and expected revenue
+                        let expectedCommission: number | null = null;
+                        let commissionFormula = '';
+                        
+                        if (category === 'health' && lcaAmount !== null) {
+                          // Complémentaires: LCA × 16
+                          expectedCommission = lcaAmount * 16;
+                          commissionFormula = `LCA ${lcaAmount.toFixed(2)} × 16`;
+                        } else if (category === 'life' && policy.premium_monthly && durationYears) {
+                          // Vie/3e pilier: mensuel × durée × 4%
+                          const monthlyAmount = Number(policy.premium_monthly);
+                          const totalContractValue = monthlyAmount * 12 * durationYears;
+                          expectedCommission = totalContractValue * 0.04;
+                          commissionFormula = `${monthlyAmount.toFixed(2)} × ${durationYears} ans × 4%`;
+                        }
+                        
                         return (
                           <div key={policy.id} className="border rounded-lg p-4 hover:bg-muted/30 transition-colors">
                             <div className="flex items-start justify-between">
@@ -505,6 +521,20 @@ export default function ClientDetail() {
                                     </p>
                                   </div>
                                 </div>
+                                {/* Commission for health */}
+                                {expectedCommission !== null && (
+                                  <div className="mt-3 pt-3 border-t border-emerald-200 dark:border-emerald-800">
+                                    <div className="flex items-center justify-between">
+                                      <div>
+                                        <p className="text-xs text-muted-foreground">Commission attendue</p>
+                                        <p className="text-xs text-muted-foreground/70">{commissionFormula}</p>
+                                      </div>
+                                      <p className="font-bold text-emerald-700 dark:text-emerald-400">
+                                        {expectedCommission.toFixed(2)} CHF
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
                             
@@ -537,6 +567,25 @@ export default function ClientDetail() {
                                     </p>
                                   </div>
                                 </div>
+                                {/* Commission and total value for life */}
+                                {expectedCommission !== null && durationYears && policy.premium_monthly && (
+                                  <div className="mt-3 pt-3 border-t border-violet-200 dark:border-violet-800">
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div>
+                                        <p className="text-xs text-muted-foreground">Valeur totale du contrat</p>
+                                        <p className="font-semibold text-violet-700 dark:text-violet-400">
+                                          {(Number(policy.premium_monthly) * 12 * durationYears).toLocaleString('fr-CH')} CHF
+                                        </p>
+                                      </div>
+                                      <div className="text-right">
+                                        <p className="text-xs text-muted-foreground">Commission attendue (4%)</p>
+                                        <p className="font-bold text-violet-700 dark:text-violet-400">
+                                          {expectedCommission.toFixed(2)} CHF
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
                             
