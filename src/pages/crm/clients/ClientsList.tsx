@@ -29,22 +29,22 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Eye, Edit, Trash2, Search } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, Search, Users, Building2, Briefcase, UserCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
-const statusColors: Record<string, string> = {
-  prospect: "bg-blue-500",
-  actif: "bg-green-500",
-  résilié: "bg-gray-500",
-  dormant: "bg-orange-500",
+const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
+  prospect: { label: "Prospect", color: "text-blue-700", bgColor: "bg-blue-100" },
+  actif: { label: "Actif", color: "text-emerald-700", bgColor: "bg-emerald-100" },
+  résilié: { label: "Résilié", color: "text-slate-700", bgColor: "bg-slate-100" },
+  dormant: { label: "Dormant", color: "text-amber-700", bgColor: "bg-amber-100" },
 };
 
-const statusLabels: Record<string, string> = {
-  prospect: "Prospect",
-  actif: "Actif",
-  résilié: "Résilié",
-  dormant: "Dormant",
-};
+const typeConfig = [
+  { value: "client", label: "Clients", icon: Users, color: "from-blue-500 to-blue-600" },
+  { value: "collaborateur", label: "Collaborateurs", icon: Briefcase, color: "from-emerald-500 to-emerald-600" },
+  { value: "partenaire", label: "Partenaires", icon: Building2, color: "from-violet-500 to-purple-600" },
+];
 
 export default function ClientsList() {
   const navigate = useNavigate();
@@ -91,73 +91,78 @@ export default function ClientsList() {
       : "Sans nom";
   };
 
+  const currentType = typeConfig.find(t => t.value === typeFilter) || typeConfig[0];
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+        <div className="relative">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20 border-t-primary" />
+          <div className="absolute inset-0 rounded-full bg-primary/10 animate-ping" />
+        </div>
       </div>
     );
   }
 
-  const typeLabels: Record<string, string> = {
-    client: "Clients",
-    collaborateur: "Collaborateurs",
-    partenaire: "Partenaires",
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Adresses</h1>
-          <p className="text-muted-foreground mt-1">
-            {filteredClients.length} adresse(s) - {typeLabels[typeFilter]}
-          </p>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-3">
+          <div className={cn("p-3 rounded-xl bg-gradient-to-br shadow-lg", currentType.color)}>
+            <currentType.icon className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold">Adresses</h1>
+            <p className="text-muted-foreground">
+              {filteredClients.length} {currentType.label.toLowerCase()}
+            </p>
+          </div>
         </div>
-        <Button onClick={() => navigate("/crm/clients/nouveau")}>
-          <Plus className="h-4 w-4 mr-2" />
+        <Button 
+          onClick={() => navigate("/crm/clients/nouveau")}
+          className="group bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/20"
+        >
+          <Plus className="h-4 w-4 mr-2 transition-transform group-hover:rotate-90" />
           Nouvelle adresse
         </Button>
       </div>
 
-      <div className="flex gap-2">
-        <Button
-          variant={typeFilter === "client" ? "default" : "outline"}
-          onClick={() => setTypeFilter("client")}
-        >
-          Clients
-        </Button>
-        <Button
-          variant={typeFilter === "collaborateur" ? "default" : "outline"}
-          onClick={() => setTypeFilter("collaborateur")}
-        >
-          Collaborateurs
-        </Button>
-        <Button
-          variant={typeFilter === "partenaire" ? "default" : "outline"}
-          onClick={() => setTypeFilter("partenaire")}
-        >
-          Partenaires
-        </Button>
+      {/* Type Filter Tabs */}
+      <div className="flex gap-2 p-1 bg-muted/50 rounded-xl w-fit">
+        {typeConfig.map((type) => (
+          <Button
+            key={type.value}
+            variant="ghost"
+            onClick={() => setTypeFilter(type.value)}
+            className={cn(
+              "rounded-lg transition-all duration-300",
+              typeFilter === type.value
+                ? "bg-card shadow-md text-foreground"
+                : "hover:bg-card/50 text-muted-foreground"
+            )}
+          >
+            <type.icon className="h-4 w-4 mr-2" />
+            {type.label}
+          </Button>
+        ))}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Recherche et filtres</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
+      {/* Search & Filters */}
+      <Card className="border-0 shadow-lg bg-card/80 backdrop-blur">
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Rechercher par nom, prénom, email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-11 h-11 bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/20"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-full sm:w-[200px] h-11 bg-muted/50 border-0">
                 <SelectValue placeholder="Statut" />
               </SelectTrigger>
               <SelectContent>
@@ -172,89 +177,103 @@ export default function ClientsList() {
         </CardContent>
       </Card>
 
-      <Card>
+      {/* Data Table */}
+      <Card className="border-0 shadow-lg bg-card/80 backdrop-blur overflow-hidden">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Nom / Entreprise</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Ville</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Agent assigné</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+              <TableRow className="bg-muted/30 hover:bg-muted/30">
+                <TableHead className="font-semibold">Nom / Entreprise</TableHead>
+                <TableHead className="font-semibold">Email</TableHead>
+                <TableHead className="font-semibold">Ville</TableHead>
+                <TableHead className="font-semibold">Statut</TableHead>
+                <TableHead className="font-semibold">Agent assigné</TableHead>
+                <TableHead className="text-right font-semibold">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredClients.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
-                    <p className="text-muted-foreground">Aucun client trouvé</p>
+                  <TableCell colSpan={6} className="text-center py-16">
+                    <UserCircle className="h-16 w-16 mx-auto mb-4 text-muted-foreground/20" />
+                    <p className="text-lg font-medium text-muted-foreground">Aucun résultat trouvé</p>
+                    <p className="text-sm text-muted-foreground">Essayez de modifier vos filtres</p>
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredClients.map((client) => (
-                  <TableRow
-                    key={client.id}
-                    className="cursor-pointer hover:bg-accent"
-                    onClick={() => navigate(`/crm/clients/${client.id}`)}
-                  >
-                    <TableCell className="font-medium">
-                      {getClientName(client)}
-                    </TableCell>
-                    <TableCell>
-                      {client.email || "—"}
-                    </TableCell>
-                    <TableCell>{client.city || "—"}</TableCell>
-                    <TableCell>
-                      {client.status && (
-                        <Badge
-                          variant="outline"
-                          className={`${statusColors[client.status]} text-white`}
-                        >
-                          {statusLabels[client.status] || client.status}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {client.assigned_agent
-                        ? `${client.assigned_agent.first_name || ""} ${
-                            client.assigned_agent.last_name || ""
-                          }`.trim() || client.assigned_agent.email
-                        : "—"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => navigate(`/crm/clients/${client.id}`)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            navigate(`/crm/clients/${client.id}/modifier`)
-                          }
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setClientToDelete(client.id);
-                            setDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                filteredClients.map((client, index) => {
+                  const status = statusConfig[client.status || 'prospect'];
+                  return (
+                    <TableRow
+                      key={client.id}
+                      className="group cursor-pointer hover:bg-muted/50 transition-all duration-200"
+                      onClick={() => navigate(`/crm/clients/${client.id}`)}
+                      style={{ animationDelay: `${index * 30}ms` }}
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                            <span className="font-bold text-primary text-sm">
+                              {getClientName(client).charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <span className="font-medium group-hover:text-primary transition-colors">
+                            {getClientName(client)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {client.email || "—"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {client.city || "—"}
+                      </TableCell>
+                      <TableCell>
+                        {client.status && (
+                          <Badge className={cn("font-medium", status?.bgColor, status?.color)}>
+                            {status?.label || client.status}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {client.assigned_agent
+                          ? `${client.assigned_agent.first_name || ""} ${client.assigned_agent.last_name || ""}`.trim() || client.assigned_agent.email
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 hover:bg-primary/10 hover:text-primary"
+                            onClick={() => navigate(`/crm/clients/${client.id}`)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 hover:bg-primary/10 hover:text-primary"
+                            onClick={() => navigate(`/crm/clients/${client.id}/modifier`)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => {
+                              setClientToDelete(client.id);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
@@ -262,7 +281,7 @@ export default function ClientsList() {
       </Card>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="border-0 shadow-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer cette adresse ?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -272,7 +291,7 @@ export default function ClientsList() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive">
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
               Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
