@@ -55,6 +55,8 @@ interface ContractFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  editMode?: boolean;
+  policyId?: string;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -103,9 +105,9 @@ const isLamalProduct = (productName: string | null | undefined): boolean => {
   return name.includes('lamal') || name.includes('base') || name.includes('obligatoire');
 };
 
-export default function ContractForm({ clientId, open, onOpenChange, onSuccess }: ContractFormProps) {
+export default function ContractForm({ clientId, open, onOpenChange, onSuccess, editMode = false, policyId }: ContractFormProps) {
   const { createDocument } = useDocuments();
-  const { createPolicy } = usePolicies();
+  const { createPolicy, updatePolicy, policies } = usePolicies();
   const { toast } = useToast();
   
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -131,9 +133,81 @@ export default function ContractForm({ clientId, open, onOpenChange, onSuccess }
   useEffect(() => {
     if (open) {
       fetchCompaniesAndProducts();
-      resetForm();
+      if (editMode && policyId) {
+        loadExistingPolicy();
+      } else {
+        resetForm();
+      }
     }
-  }, [open]);
+  }, [open, editMode, policyId]);
+
+  const loadExistingPolicy = async () => {
+    if (!policyId) return;
+    
+    setLoading(true);
+    
+    // Fetch the policy directly if not in policies list
+    let existingPolicy = policies.find(p => p.id === policyId);
+    
+    if (!existingPolicy) {
+      // Policy might not be loaded yet, fetch it directly
+      const { data } = await supabase
+        .from('policies')
+        .select(`
+          *,
+          product:insurance_products!policies_product_id_fkey (
+            id,
+            name,
+            category,
+            company_id,
+            company:insurance_companies!insurance_products_company_id_fkey (
+              name,
+              logo_url
+            )
+          )
+        `)
+        .eq('id', policyId)
+        .maybeSingle();
+      
+      if (data) {
+        existingPolicy = data as any;
+      }
+    }
+    
+    if (existingPolicy) {
+      setStartDate(existingPolicy.start_date || new Date().toISOString().split('T')[0]);
+      setStatus(existingPolicy.status || 'active');
+      setNotes(existingPolicy.notes || '');
+      
+      // Set company first
+      if (existingPolicy.product?.company_id) {
+        setSelectedCompanyId(existingPolicy.product.company_id);
+      }
+      
+      // Set selected product
+      if (existingPolicy.product) {
+        const category = existingPolicy.product.category || 'other';
+        const isLamal = category === 'health' && isLamalProduct(existingPolicy.product.name);
+        
+        if (isLamal) {
+          setLamalPremium(String(existingPolicy.premium_monthly || ''));
+          setLamalFranchise(String(existingPolicy.deductible || ''));
+        }
+        
+        setSelectedProducts([{
+          id: generateId(),
+          productId: existingPolicy.product.id,
+          name: existingPolicy.product.name || 'Produit',
+          category: category,
+          premium: String(existingPolicy.premium_monthly || ''),
+          deductible: String(existingPolicy.deductible || ''),
+          durationYears: '',
+        }]);
+      }
+    }
+    
+    setLoading(false);
+  };
 
   const resetForm = () => {
     setSelectedCompanyId("");
@@ -266,7 +340,6 @@ export default function ContractForm({ clientId, open, onOpenChange, onSuccess }
 
         if (product.category === 'health') {
           if (isLamalProduct(product.name)) {
-            // LAMal product - use global LAMal premium and franchise
             calculatedPremium = parseFloat(lamalPremium) || 0;
             deductibleValue = parseFloat(lamalFranchise) || null;
             const notesParts = [];
@@ -277,7 +350,6 @@ export default function ContractForm({ clientId, open, onOpenChange, onSuccess }
             if (notes) notesParts.push(notes);
             notesWithDetails = notesParts.join('\n');
           } else {
-            // LCA product - use individual premium
             calculatedPremium = parseFloat(product.premium) || 0;
             const notesParts = [];
             notesParts.push(`LCA: ${calculatedPremium.toFixed(2)} CHF`);
@@ -324,27 +396,33 @@ export default function ContractForm({ clientId, open, onOpenChange, onSuccess }
           product_type: product.category,
         };
 
-        const policy = await createPolicy(policyData);
+        if (editMode && policyId) {
+          // Update existing policy
+          await updatePolicy(policyId, policyData);
+        } else {
+          // Create new policy
+          const policy = await createPolicy(policyData);
 
-        // Save documents linked to each policy
-        if (documents.length > 0 && policy?.id) {
-          for (const doc of documents) {
-            await createDocument({
-              owner_id: policy.id,
-              owner_type: 'policy',
-              file_key: doc.file_key,
-              file_name: doc.file_name,
-              doc_kind: doc.doc_kind,
-              mime_type: doc.mime_type,
-              size_bytes: doc.size_bytes,
-            });
+          // Save documents linked to each policy
+          if (documents.length > 0 && policy?.id) {
+            for (const doc of documents) {
+              await createDocument({
+                owner_id: policy.id,
+                owner_type: 'policy',
+                file_key: doc.file_key,
+                file_name: doc.file_name,
+                doc_kind: doc.doc_kind,
+                mime_type: doc.mime_type,
+                size_bytes: doc.size_bytes,
+              });
+            }
           }
         }
       }
       
       toast({
-        title: "Contrats créés",
-        description: `${selectedProducts.length} contrat(s) ajouté(s) avec succès`
+        title: editMode ? "Contrat mis à jour" : "Contrats créés",
+        description: editMode ? "Le contrat a été modifié avec succès" : `${selectedProducts.length} contrat(s) ajouté(s) avec succès`
       });
 
       onOpenChange(false);
@@ -352,7 +430,7 @@ export default function ContractForm({ clientId, open, onOpenChange, onSuccess }
     } catch (error: any) {
       toast({
         title: "Erreur",
-        description: error.message || "Impossible de créer les contrats",
+        description: error.message || (editMode ? "Impossible de modifier le contrat" : "Impossible de créer les contrats"),
         variant: "destructive"
       });
     } finally {
@@ -375,8 +453,8 @@ export default function ContractForm({ clientId, open, onOpenChange, onSuccess }
       <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            Nouveaux contrats
-            {selectedProducts.length > 0 && (
+            {editMode ? "Modifier le contrat" : "Nouveaux contrats"}
+            {selectedProducts.length > 0 && !editMode && (
               <span className="text-sm font-normal text-muted-foreground">
                 ({selectedProducts.length} produit{selectedProducts.length > 1 ? 's' : ''} sélectionné{selectedProducts.length > 1 ? 's' : ''})
               </span>

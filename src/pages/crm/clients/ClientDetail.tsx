@@ -67,6 +67,8 @@ export default function ClientDetail() {
   const [loading, setLoading] = useState(true);
   const [familyFormOpen, setFamilyFormOpen] = useState(false);
   const [contractFormOpen, setContractFormOpen] = useState(false);
+  const [editContractOpen, setEditContractOpen] = useState(false);
+  const [editPolicyId, setEditPolicyId] = useState<string | null>(null);
   const [clientDocuments, setClientDocuments] = useState<Document[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(false);
 
@@ -472,7 +474,7 @@ export default function ClientDetail() {
                         }
                         
                         return (
-                          <div key={policy.id} className="border rounded-lg p-4 hover:bg-muted/30 transition-colors">
+                            <div key={policy.id} className="border rounded-lg p-4 hover:bg-muted/30 transition-colors">
                             <div className="flex items-start justify-between">
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2">
@@ -488,11 +490,24 @@ export default function ClientDetail() {
                                   {policy.product?.company?.name || 'Compagnie inconnue'} • {policy.policy_number || 'Sans numéro'}
                                 </p>
                               </div>
-                              <div className="text-right text-sm">
-                                <p className="text-muted-foreground">Début</p>
-                                <p className="font-medium">
-                                  {policy.start_date ? format(new Date(policy.start_date), "dd.MM.yyyy") : "-"}
-                                </p>
+                              <div className="flex items-start gap-4">
+                                <div className="text-right text-sm">
+                                  <p className="text-muted-foreground">Début</p>
+                                  <p className="font-medium">
+                                    {policy.start_date ? format(new Date(policy.start_date), "dd.MM.yyyy") : "-"}
+                                  </p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => {
+                                    setEditPolicyId(policy.id);
+                                    setEditContractOpen(true);
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
                               </div>
                             </div>
                             
@@ -812,6 +827,25 @@ export default function ClientDetail() {
           loadDocuments();
         }}
       />
+
+      {/* Edit Contract Form */}
+      {editPolicyId && (
+        <ContractForm
+          clientId={id!}
+          open={editContractOpen}
+          onOpenChange={(open) => {
+            setEditContractOpen(open);
+            if (!open) setEditPolicyId(null);
+          }}
+          onSuccess={() => {
+            fetchPolicies();
+            loadDocuments();
+            setEditPolicyId(null);
+          }}
+          editMode={true}
+          policyId={editPolicyId}
+        />
+      )}
     </div>
   );
 }
