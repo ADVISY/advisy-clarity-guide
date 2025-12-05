@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePolicies } from "@/hooks/usePolicies";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,8 +17,13 @@ const statusConfig: Record<string, { label: string; color: string; bgColor: stri
 
 export default function CRMContracts() {
   const navigate = useNavigate();
-  const { policies, loading } = usePolicies();
+  const { policies, loading, fetchPolicies } = usePolicies();
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Rafraîchir les données à chaque montage du composant
+  useEffect(() => {
+    fetchPolicies();
+  }, []);
 
   // Filter policies based on search query
   const filteredPolicies = policies.filter(policy => {
