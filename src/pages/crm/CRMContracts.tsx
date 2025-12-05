@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePolicies } from "@/hooks/usePolicies";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, FileCheck, Eye, ChevronRight, Building2, Calendar } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Plus, FileCheck, Eye, ChevronRight, Building2, Calendar, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +18,25 @@ const statusConfig: Record<string, { label: string; color: string; bgColor: stri
 export default function CRMContracts() {
   const navigate = useNavigate();
   const { policies, loading } = usePolicies();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Filter policies based on search query
+  const filteredPolicies = policies.filter(policy => {
+    if (!searchQuery.trim()) return true;
+    const search = searchQuery.toLowerCase();
+    const clientName = policy.client?.company_name || 
+      `${policy.client?.first_name || ''} ${policy.client?.last_name || ''}`.trim();
+    const productName = policy.product?.name || '';
+    const companyName = policy.product?.company?.name || policy.company_name || '';
+    const policyNumber = policy.policy_number || '';
+    
+    return (
+      clientName.toLowerCase().includes(search) ||
+      productName.toLowerCase().includes(search) ||
+      companyName.toLowerCase().includes(search) ||
+      policyNumber.toLowerCase().includes(search)
+    );
+  });
 
   if (loading) {
     return (
@@ -69,21 +90,36 @@ export default function CRMContracts() {
       {/* Contracts List */}
       <Card className="border-0 shadow-lg bg-card/80 backdrop-blur overflow-hidden">
         <CardHeader className="border-b bg-muted/30">
-          <CardTitle className="flex items-center gap-2">
-            <span>Liste des contrats</span>
-            <Badge variant="secondary" className="ml-2">{policies.length}</Badge>
-          </CardTitle>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <CardTitle className="flex items-center gap-2">
+              <span>Liste des contrats</span>
+              <Badge variant="secondary" className="ml-2">{filteredPolicies.length}</Badge>
+            </CardTitle>
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher un contrat..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
-          {policies.length === 0 ? (
+          {filteredPolicies.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <FileCheck className="h-16 w-16 mb-4 opacity-20" />
-              <p className="text-lg font-medium">Aucun contrat pour le moment</p>
-              <p className="text-sm">Créez votre premier contrat pour commencer</p>
+              <p className="text-lg font-medium">
+                {searchQuery ? "Aucun contrat trouvé" : "Aucun contrat pour le moment"}
+              </p>
+              <p className="text-sm">
+                {searchQuery ? "Essayez une autre recherche" : "Créez votre premier contrat pour commencer"}
+              </p>
             </div>
           ) : (
             <div className="divide-y divide-border/50">
-              {policies.map((policy, index) => {
+              {filteredPolicies.map((policy, index) => {
                 const clientName = policy.client?.company_name || 
                   `${policy.client?.first_name || ''} ${policy.client?.last_name || ''}`.trim() || 
                   'Client inconnu';
