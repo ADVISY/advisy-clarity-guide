@@ -9,6 +9,9 @@ export type Commission = {
   partner_id?: string | null;
   amount: number;
   status: string;
+  type?: string | null;
+  date?: string | null;
+  total_amount?: number | null;
   period_month?: number | null;
   period_year?: number | null;
   paid_at?: string | null;
@@ -34,16 +37,16 @@ export function useCommissions() {
           policy:policies!policy_id (
             id,
             policy_number,
+            client_id,
             product:insurance_products!product_id (
               name,
               category
             ),
             client:clients!client_id (
-              company_name,
-              profile:profiles!user_id (
-                first_name,
-                last_name
-              )
+              id,
+              first_name,
+              last_name,
+              company_name
             )
           )
         `)
