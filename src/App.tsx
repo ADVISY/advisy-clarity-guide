@@ -81,7 +81,7 @@ const App = () => (
             <Route path="clients" element={<CRMClients />} />
             <Route path="clients/nouveau" element={<ClientForm />} />
             <Route path="clients/:id" element={<ClientDetail />} />
-            <Route path="clients/:id/modifier" element={<ClientForm />} />
+            <Route path="clients/:id/edit" element={<ClientForm />} />
             <Route path="suivis" element={<CRMSuivis />} />
             <Route path="propositions" element={<CRMPropositions />} />
             <Route path="contrats" element={<CRMContracts />} />
