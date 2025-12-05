@@ -253,42 +253,51 @@ export default function ContractForm({ clientId, open, onOpenChange, onSuccess, 
   };
 
   const toggleProductSelection = (product: Product) => {
-    if (!product || !product.id) {
-      console.warn('Invalid product passed to toggleProductSelection');
-      return;
-    }
+    if (!product?.id) return;
     
-    try {
-      const isSelected = selectedProducts.some(sp => sp && sp.productId === product.id);
+    const productId = product.id;
+    const productName = product.name || 'Produit';
+    const productCategory = product.category || 'other';
+    
+    setSelectedProducts(prev => {
+      const currentList = prev || [];
+      const existingIndex = currentList.findIndex(sp => sp?.productId === productId);
       
-      if (isSelected) {
-        setSelectedProducts(prev => prev.filter(sp => sp && sp.productId !== product.id));
+      if (existingIndex >= 0) {
+        // Remove product
+        return currentList.filter((_, index) => index !== existingIndex);
       } else {
+        // Add product
         const newProduct: SelectedProduct = {
-          id: generateId(),
-          productId: product.id,
-          name: product.name || 'Produit sans nom',
-          category: product.category || 'other',
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+          productId: productId,
+          name: productName,
+          category: productCategory,
           premium: "",
           deductible: "",
           durationYears: "",
         };
-        setSelectedProducts(prev => [...prev, newProduct]);
+        return [...currentList, newProduct];
       }
-    } catch (error) {
-      console.error('Error toggling product selection:', error);
-    }
+    });
   };
 
   const updateSelectedProduct = (id: string, updates: Partial<SelectedProduct>) => {
     if (!id) return;
-    try {
-      setSelectedProducts(prev => prev.map(sp => 
-        sp && sp.id === id ? { ...sp, ...updates } : sp
-      ));
-    } catch (error) {
-      console.error('Error updating product:', error);
-    }
+    setSelectedProducts(prev => {
+      const currentList = prev || [];
+      return currentList.map(sp => {
+        if (sp?.id === id) {
+          return { ...sp, ...updates };
+        }
+        return sp;
+      });
+    });
+  };
+
+  const removeSelectedProduct = (id: string) => {
+    if (!id) return;
+    setSelectedProducts(prev => (prev || []).filter(sp => sp?.id !== id));
   };
 
   const handleCompanyChange = (companyId: string) => {
@@ -301,20 +310,15 @@ export default function ContractForm({ clientId, open, onOpenChange, onSuccess, 
 
   // Categorize selected products safely
   const categorizedSelection = useMemo(() => {
-    try {
-      const safeProducts = (selectedProducts || []).filter(p => p && p.id && p.category);
-      const health = safeProducts.filter(p => p.category === 'health');
-      const life = safeProducts.filter(p => p.category === 'life');
-      const other = safeProducts.filter(p => !['health', 'life'].includes(p.category || ''));
-      
-      const healthLamal = health.filter(p => p.name && isLamalProduct(p.name));
-      const healthLca = health.filter(p => !p.name || !isLamalProduct(p.name));
-      
-      return { healthLamal, healthLca, life, other, health };
-    } catch (error) {
-      console.error('Error categorizing products:', error);
-      return { healthLamal: [], healthLca: [], life: [], other: [], health: [] };
-    }
+    const safeProducts = (selectedProducts || []).filter(p => p?.id && p?.category);
+    const health = safeProducts.filter(p => p.category === 'health');
+    const life = safeProducts.filter(p => p.category === 'life');
+    const other = safeProducts.filter(p => p.category !== 'health' && p.category !== 'life');
+    
+    const healthLamal = health.filter(p => p.name && isLamalProduct(p.name));
+    const healthLca = health.filter(p => !isLamalProduct(p.name || ''));
+    
+    return { healthLamal, healthLca, life, other, health };
   }, [selectedProducts]);
 
   // Calculate totals safely
@@ -466,22 +470,17 @@ export default function ContractForm({ clientId, open, onOpenChange, onSuccess, 
     }
   };
 
-  const groupedProducts = (): Record<string, Product[]> => {
-    try {
-      const products = getProductsForCompany();
-      const grouped: Record<string, Product[]> = {};
-      products.forEach(p => {
-        if (!p) return;
-        const category = p.category || 'other';
-        if (!grouped[category]) grouped[category] = [];
-        grouped[category].push(p);
-      });
-      return grouped;
-    } catch (error) {
-      console.error('Error grouping products:', error);
-      return {};
+  const groupedProducts = useMemo(() => {
+    const products = getProductsForCompany();
+    const grouped: Record<string, Product[]> = {};
+    for (const p of products) {
+      if (!p?.id) continue;
+      const category = p.category || 'other';
+      if (!grouped[category]) grouped[category] = [];
+      grouped[category].push(p);
     }
-  };
+    return grouped;
+  }, [selectedCompanyId, allProducts, productSearch]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -572,7 +571,7 @@ export default function ContractForm({ clientId, open, onOpenChange, onSuccess, 
                   </div>
                   <ScrollArea className="flex-1">
                     <div className="space-y-4 pr-2">
-                      {Object.entries(groupedProducts()).map(([category, products]) => {
+                      {Object.entries(groupedProducts).map(([category, products]) => {
                         if (!products || !Array.isArray(products)) return null;
                         return (
                           <div key={category}>
@@ -614,7 +613,7 @@ export default function ContractForm({ clientId, open, onOpenChange, onSuccess, 
                           </div>
                         );
                       })}
-                      {Object.keys(groupedProducts()).length === 0 && (
+                      {Object.keys(groupedProducts).length === 0 && (
                         <p className="text-sm text-muted-foreground text-center py-4">
                           Aucun produit trouvé
                         </p>
@@ -715,7 +714,7 @@ export default function ContractForm({ clientId, open, onOpenChange, onSuccess, 
                                             type="button"
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => setSelectedProducts(prev => prev.filter(sp => sp && sp.id !== product.id))}
+                                            onClick={() => removeSelectedProduct(product.id)}
                                             className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                                           >
                                             <X className="h-4 w-4" />
@@ -762,7 +761,7 @@ export default function ContractForm({ clientId, open, onOpenChange, onSuccess, 
                                           type="button"
                                           variant="ghost"
                                           size="sm"
-                                          onClick={() => setSelectedProducts(prev => prev.filter(sp => sp && sp.id !== product.id))}
+                                          onClick={() => removeSelectedProduct(product.id)}
                                           className="h-6 w-6 p-0 text-destructive"
                                         >
                                           <X className="h-4 w-4" />
@@ -838,7 +837,7 @@ export default function ContractForm({ clientId, open, onOpenChange, onSuccess, 
                                           type="button"
                                           variant="ghost"
                                           size="sm"
-                                          onClick={() => setSelectedProducts(prev => prev.filter(sp => sp && sp.id !== product.id))}
+                                          onClick={() => removeSelectedProduct(product.id)}
                                           className="h-6 w-6 p-0 text-destructive"
                                         >
                                           <X className="h-4 w-4" />
