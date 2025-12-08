@@ -6,7 +6,7 @@ export interface Agent {
   id: string;
   first_name: string | null;
   last_name: string | null;
-  email: string;
+  email: string | null;
 }
 
 export function useAgents() {
@@ -19,26 +19,11 @@ export function useAgents() {
       try {
         setLoading(true);
         
-        // Récupérer les IDs des utilisateurs avec rôle agent ou manager
-        const { data: roleData, error: roleError } = await supabase
-          .from('user_roles')
-          .select('user_id')
-          .in('role', ['agent', 'manager', 'admin']);
-
-        if (roleError) throw roleError;
-
-        const userIds = roleData.map(r => r.user_id);
-
-        if (userIds.length === 0) {
-          setAgents([]);
-          return;
-        }
-
-        // Récupérer les profils correspondants
+        // Récupérer les collaborateurs depuis la table clients (type_adresse = 'collaborateur')
         const { data, error } = await supabase
-          .from('profiles')
+          .from('clients')
           .select('id, first_name, last_name, email')
-          .in('id', userIds)
+          .eq('type_adresse', 'collaborateur')
           .order('first_name', { ascending: true });
 
         if (error) throw error;
