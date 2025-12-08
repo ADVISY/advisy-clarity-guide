@@ -434,11 +434,8 @@ const Connexion = () => {
           <img 
             src={advisyLogo} 
             alt="Advisy" 
-            className="h-24 sm:h-32 mx-auto mb-4"
+            className="h-24 sm:h-32 mx-auto"
           />
-          <h1 className="text-2xl font-bold text-foreground">
-            Espace sécurisé Advisy
-          </h1>
         </div>
 
         <div className="max-w-xl w-full bg-card rounded-xl shadow-lg border p-6 sm:p-8">
