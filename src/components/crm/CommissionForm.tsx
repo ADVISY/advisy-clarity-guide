@@ -395,7 +395,7 @@ export default function CommissionForm({ open, onOpenChange, onSuccess }: Commis
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[400px] p-0" align="start">
-                  <Command>
+                  <Command shouldFilter={false}>
                     <CommandInput 
                       placeholder="Rechercher un client..." 
                       value={searchQuery}
