@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import advisyLogo from "@/assets/advisy-logo.svg";
 import { supabase } from "@/integrations/supabase/client";
+import { NotificationBell } from "@/components/crm/NotificationBell";
 
 const menuItems = [
   { to: "/crm", icon: LayoutDashboard, label: "Dashboard", end: true, color: "from-blue-500 to-indigo-500" },
@@ -137,12 +138,13 @@ export default function CRMLayout() {
         <aside className="hidden lg:flex flex-col bg-card border-r border-border">
           {/* Logo Section */}
           <div className="w-72 p-6 border-b border-border">
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-between">
               <img 
                 src={advisyLogo} 
                 alt="Advisy" 
                 className="h-14 object-contain"
               />
+              <NotificationBell />
             </div>
             <div className="flex items-center justify-center gap-2 mt-3">
               <div className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -231,12 +233,14 @@ export default function CRMLayout() {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border">
         <div className="flex items-center justify-between p-4">
           <img src={advisyLogo} alt="Advisy" className="h-10 object-contain" />
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
             <SheetContent side="left" className="w-80 p-0">
               <div className="p-6 border-b border-border flex flex-col items-center">
                 <img src={advisyLogo} alt="Advisy" className="h-14 object-contain" />
@@ -258,6 +262,7 @@ export default function CRMLayout() {
               </div>
             </SheetContent>
           </Sheet>
+          </div>
         </div>
       </div>
 

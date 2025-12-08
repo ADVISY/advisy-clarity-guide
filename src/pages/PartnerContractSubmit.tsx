@@ -246,6 +246,42 @@ const PartnerContractSubmit = () => {
         });
       }
 
+      // Create notifications for backoffice users
+      const { data: backofficeUsers } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'backoffice');
+
+      if (backofficeUsers && backofficeUsers.length > 0) {
+        const notifications = backofficeUsers.map(bo => ({
+          user_id: bo.user_id,
+          kind: 'new_contract',
+          title: 'Nouveau contrat déposé',
+          message: `${clientFirstName} ${clientLastName} - ${formType} par ${partnerName}`,
+          payload: { client_id: client.id, form_type: formType, partner: partnerName }
+        }));
+
+        await supabase.from('notifications').insert(notifications);
+      }
+
+      // Also notify admins
+      const { data: adminUsers } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'admin');
+
+      if (adminUsers && adminUsers.length > 0) {
+        const adminNotifications = adminUsers.map(admin => ({
+          user_id: admin.user_id,
+          kind: 'new_contract',
+          title: 'Nouveau contrat déposé',
+          message: `${clientFirstName} ${clientLastName} - ${formType} par ${partnerName}`,
+          payload: { client_id: client.id, form_type: formType, partner: partnerName }
+        }));
+
+        await supabase.from('notifications').insert(adminNotifications);
+      }
+
       toast({
         title: "Contrat déposé avec succès",
         description: "Votre proposition de contrat a été envoyée à Advisy pour traitement.",
