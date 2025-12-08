@@ -13,7 +13,7 @@ export type CommissionPart = {
     id: string;
     first_name: string | null;
     last_name: string | null;
-    email: string;
+    email: string | null;
   };
 };
 
@@ -29,7 +29,7 @@ export function useCommissionParts() {
         .from('commission_part_agent')
         .select(`
           *,
-          agent:profiles!agent_id (
+          agent:clients!agent_id (
             id,
             first_name,
             last_name,
