@@ -13,6 +13,7 @@ import SignaturePad from "./SignaturePad";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useCrmEmails } from "@/hooks/useCrmEmails";
 import advisyLogo from "@/assets/advisy-logo.png";
 
 interface MandatGestionFormProps {
@@ -68,6 +69,7 @@ export default function MandatGestionForm({ client, onSaved }: MandatGestionForm
   const mandatRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { sendMandatSignedEmail } = useCrmEmails();
 
   const getClientName = () => {
     if (client.company_name) return client.company_name;
@@ -201,9 +203,15 @@ export default function MandatGestionForm({ client, onSaved }: MandatGestionForm
 
       if (docError) throw docError;
 
+      // Send mandat signed email with account creation
+      if (client.email) {
+        const clientName = `${client.first_name || ''} ${client.last_name || ''}`.trim() || 'Client';
+        await sendMandatSignedEmail(client.email, clientName);
+      }
+
       toast({
         title: "Mandat enregistré",
-        description: "Le mandat de gestion signé a été sauvegardé dans les documents du client."
+        description: "Le mandat de gestion signé a été sauvegardé et un email avec les identifiants a été envoyé au client."
       });
 
       // Callback pour rafraîchir la liste des documents

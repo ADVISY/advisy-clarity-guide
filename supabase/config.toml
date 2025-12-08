@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.create-user-account]
 verify_jwt = false
+
+[functions.verify-partner-email]
+verify_jwt = false
+
+[functions.send-crm-email]
+verify_jwt = true
