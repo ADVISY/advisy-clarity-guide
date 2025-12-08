@@ -300,7 +300,7 @@ export type Database = {
             foreignKeyName: "commission_part_agent_agent_id_fkey"
             columns: ["agent_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {
