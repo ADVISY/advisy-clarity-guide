@@ -62,7 +62,32 @@ export function useClients() {
 
       if (error) throw error;
 
-      setClients((data as any) || []);
+      // Fetch assigned agents info separately (since they're in the same table)
+      const clientsData = (data as any) || [];
+      const agentIds = [...new Set(clientsData.filter((c: any) => c.assigned_agent_id).map((c: any) => c.assigned_agent_id))];
+      
+      let agentsMap: Record<string, any> = {};
+      if (agentIds.length > 0) {
+        const { data: agentsData } = await supabase
+          .from('clients' as any)
+          .select('id, first_name, last_name, email')
+          .in('id', agentIds);
+        
+        if (agentsData) {
+          agentsMap = (agentsData as any[]).reduce((acc, agent) => {
+            acc[agent.id] = agent;
+            return acc;
+          }, {} as Record<string, any>);
+        }
+      }
+
+      // Map assigned agents to clients
+      const clientsWithAgents = clientsData.map((client: any) => ({
+        ...client,
+        assigned_agent: client.assigned_agent_id ? agentsMap[client.assigned_agent_id] || null : null
+      }));
+
+      setClients(clientsWithAgents);
     } catch (error: any) {
       toast({
         title: "Erreur",
