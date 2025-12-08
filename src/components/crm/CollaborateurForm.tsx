@@ -109,7 +109,16 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
     e.preventDefault();
     setLoading(true);
     
-    const success = await onSubmit(formData);
+    // Clean data before submit - convert empty strings to null for optional fields
+    const cleanedData: CollaborateurFormData = {
+      ...formData,
+      hire_date: formData.hire_date || undefined,
+      manager_id: formData.manager_id || null,
+      mobile: formData.mobile || undefined,
+      profession: formData.profession || undefined,
+    };
+    
+    const success = await onSubmit(cleanedData);
     
     setLoading(false);
     if (success) {
