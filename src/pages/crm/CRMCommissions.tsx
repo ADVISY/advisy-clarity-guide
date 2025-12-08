@@ -9,7 +9,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { DollarSign, TrendingUp, Wallet, PiggyBank, Search, MoreHorizontal, CheckCircle, Clock, AlertCircle, Eye, Trash2, Loader2, Plus, Users, ChevronDown, ChevronRight, Percent } from "lucide-react";
+import { DollarSign, TrendingUp, Wallet, PiggyBank, Search, MoreHorizontal, CheckCircle, Clock, AlertCircle, Eye, Trash2, Loader2, Plus, Users, ChevronDown, ChevronRight, Percent, Pencil } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useCommissions, Commission } from "@/hooks/useCommissions";
 import { useCommissionParts, CommissionPart } from "@/hooks/useCommissionParts";
@@ -33,7 +34,7 @@ const typeConfig: Record<string, { label: string; color: string }> = {
 
 export default function CRMCommissions() {
   const navigate = useNavigate();
-  const { commissions, loading, fetchCommissions, markAsPaid, deleteCommission } = useCommissions();
+  const { commissions, loading, fetchCommissions, markAsPaid, deleteCommission, updateCommission } = useCommissions();
   const { fetchCommissionParts, addCommissionPart, updateCommissionPart, deleteCommissionPart } = useCommissionParts();
   const { agents } = useAgents();
   
@@ -54,6 +55,16 @@ export default function CRMCommissions() {
   const [selectedCommissionForPart, setSelectedCommissionForPart] = useState<Commission | null>(null);
   const [newPartAgentId, setNewPartAgentId] = useState("");
   const [newPartRate, setNewPartRate] = useState<number>(0);
+  
+  // Edit commission dialog state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingCommission, setEditingCommission] = useState<Commission | null>(null);
+  const [editAmount, setEditAmount] = useState<number>(0);
+  const [editType, setEditType] = useState<string>("acquisition");
+  const [editStatus, setEditStatus] = useState<string>("due");
+  const [editDate, setEditDate] = useState<string>("");
+  const [editNotes, setEditNotes] = useState<string>("");
+  const [savingEdit, setSavingEdit] = useState(false);
   const [savingPart, setSavingPart] = useState(false);
 
   useEffect(() => {
@@ -107,6 +118,39 @@ export default function CRMCommissions() {
     if (success) {
       const parts = await fetchCommissionParts(commissionId);
       setCommissionParts(prev => ({ ...prev, [commissionId]: parts }));
+    }
+  };
+
+  // Handle edit commission
+  const handleOpenEditDialog = (commission: Commission) => {
+    setEditingCommission(commission);
+    setEditAmount(Number(commission.amount) || 0);
+    setEditType(commission.type || "acquisition");
+    setEditStatus(commission.status || "due");
+    setEditDate(commission.date || "");
+    setEditNotes(commission.notes || "");
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingCommission) return;
+    
+    setSavingEdit(true);
+    try {
+      await updateCommission(editingCommission.id, {
+        amount: editAmount,
+        total_amount: editAmount,
+        type: editType,
+        status: editStatus,
+        date: editDate || null,
+        notes: editNotes || null,
+      });
+      setEditDialogOpen(false);
+      setEditingCommission(null);
+    } catch (error) {
+      console.error("Error updating commission:", error);
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -491,6 +535,10 @@ export default function CRMCommissions() {
                                       </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
+                                      <DropdownMenuItem onClick={() => handleOpenEditDialog(commission)}>
+                                        <Pencil className="h-4 w-4 mr-2" />
+                                        Modifier
+                                      </DropdownMenuItem>
                                       <DropdownMenuItem onClick={() => handleOpenAddPartDialog(commission)}>
                                         <Users className="h-4 w-4 mr-2" />
                                         Ajouter un collaborateur
@@ -669,6 +717,109 @@ export default function CRMCommissions() {
                   disabled={!newPartAgentId || newPartRate <= 0 || savingPart}
                 >
                   {savingPart ? "Enregistrement..." : "Ajouter"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Commission Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Modifier la commission</DialogTitle>
+          </DialogHeader>
+          
+          {editingCommission && (
+            <div className="space-y-4">
+              {/* Policy info (read-only) */}
+              <div className="p-3 bg-muted rounded-lg text-sm">
+                <p className="text-muted-foreground">Contrat</p>
+                <p className="font-medium">
+                  {editingCommission.policy?.product?.name || '-'}
+                  {editingCommission.policy?.policy_number && (
+                    <span className="ml-2 font-mono text-xs text-muted-foreground">
+                      ({editingCommission.policy.policy_number})
+                    </span>
+                  )}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {editingCommission.policy?.client?.company_name || 
+                   `${editingCommission.policy?.client?.first_name || ''} ${editingCommission.policy?.client?.last_name || ''}`.trim()}
+                </p>
+              </div>
+              
+              {/* Amount */}
+              <div className="space-y-2">
+                <Label>Montant (CHF)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={editAmount}
+                  onChange={(e) => setEditAmount(Number(e.target.value))}
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                {/* Type */}
+                <div className="space-y-2">
+                  <Label>Type</Label>
+                  <Select value={editType} onValueChange={setEditType}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="acquisition">Acquisition</SelectItem>
+                      <SelectItem value="renewal">Renouvellement</SelectItem>
+                      <SelectItem value="bonus">Bonus</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {/* Status */}
+                <div className="space-y-2">
+                  <Label>Statut</Label>
+                  <Select value={editStatus} onValueChange={setEditStatus}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="due">À payer</SelectItem>
+                      <SelectItem value="pending">En attente</SelectItem>
+                      <SelectItem value="paid">Payée</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              {/* Date */}
+              <div className="space-y-2">
+                <Label>Date</Label>
+                <Input
+                  type="date"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                />
+              </div>
+              
+              {/* Notes */}
+              <div className="space-y-2">
+                <Label>Notes</Label>
+                <Textarea
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  placeholder="Notes sur cette commission..."
+                  rows={2}
+                />
+              </div>
+              
+              <div className="flex justify-end gap-3 pt-4">
+                <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                  Annuler
+                </Button>
+                <Button onClick={handleSaveEdit} disabled={savingEdit || editAmount <= 0}>
+                  {savingEdit ? "Enregistrement..." : "Enregistrer"}
                 </Button>
               </div>
             </div>
