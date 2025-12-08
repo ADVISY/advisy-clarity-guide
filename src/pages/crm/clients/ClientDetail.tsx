@@ -1201,60 +1201,90 @@ export default function ClientDetail() {
                                   <div className="flex items-center justify-center py-4">
                                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
                                   </div>
-                                ) : parts.length === 0 ? (
-                                  <div className="text-center py-6 border-2 border-dashed rounded-lg bg-background">
-                                    <UserCircle className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-                                    <p className="text-sm text-muted-foreground">Aucune répartition définie</p>
-                                    <p className="text-xs text-muted-foreground/70 mt-1">
-                                      Ajoutez des parts depuis la page Commissions
-                                    </p>
-                                  </div>
                                 ) : (
                                   <div className="space-y-2">
-                                    {parts.map((part) => {
-                                      const agentName = part.agent?.first_name && part.agent?.last_name
-                                        ? `${part.agent.first_name} ${part.agent.last_name}`
-                                        : part.agent?.email || 'Agent inconnu';
-                                      
+                                    {/* Advisy part (remaining) */}
+                                    {(() => {
+                                      const advisyRate = Math.max(0, 100 - totalAssigned);
+                                      const advisyAmount = (Number(commission.amount) * advisyRate) / 100;
                                       return (
-                                        <div 
-                                          key={part.id} 
-                                          className="flex items-center justify-between p-3 rounded-lg bg-background border"
-                                        >
+                                        <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border-2 border-primary/20">
                                           <div className="flex items-center gap-3">
-                                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                              <UserCircle className="h-6 w-6 text-primary" />
+                                            <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
+                                              <span className="text-primary-foreground font-bold text-sm">A</span>
                                             </div>
                                             <div>
-                                              <p className="font-medium">{agentName}</p>
-                                              <p className="text-xs text-muted-foreground">{part.agent?.email}</p>
+                                              <p className="font-semibold text-primary">Advisy</p>
+                                              <p className="text-xs text-muted-foreground">Part de l'entreprise</p>
                                             </div>
                                           </div>
-                                          <div className="flex items-center gap-4">
-                                            <div className="text-right">
-                                              <p className="font-semibold text-emerald-600">
-                                                {new Intl.NumberFormat('fr-CH', { style: 'currency', currency: 'CHF' })
-                                                  .format(Number(part.amount))}
-                                              </p>
-                                              <p className="text-xs text-muted-foreground">
-                                                {part.rate}% de la commission
-                                              </p>
-                                            </div>
-                                            <Button
-                                              variant="ghost"
-                                              size="sm"
-                                              onClick={async () => {
-                                                await deleteCommissionPart(part.id);
-                                                const updatedParts = parts.filter(p => p.id !== part.id);
-                                                setCommissionParts(prev => ({ ...prev, [commission.id]: updatedParts }));
-                                              }}
-                                            >
-                                              <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
+                                          <div className="text-right">
+                                            <p className="font-bold text-primary text-lg">
+                                              {new Intl.NumberFormat('fr-CH', { style: 'currency', currency: 'CHF' })
+                                                .format(advisyAmount)}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                              {advisyRate}% de la commission
+                                            </p>
                                           </div>
                                         </div>
                                       );
-                                    })}
+                                    })()}
+                                    
+                                    {/* Agent parts */}
+                                    {parts.length === 0 ? (
+                                      <div className="text-center py-4 border-2 border-dashed rounded-lg bg-background">
+                                        <p className="text-sm text-muted-foreground">Aucun collaborateur assigné</p>
+                                        <p className="text-xs text-muted-foreground/70 mt-1">
+                                          100% revient à Advisy
+                                        </p>
+                                      </div>
+                                    ) : (
+                                      parts.map((part) => {
+                                        const agentName = part.agent?.first_name && part.agent?.last_name
+                                          ? `${part.agent.first_name} ${part.agent.last_name}`
+                                          : part.agent?.email || 'Agent inconnu';
+                                        
+                                        return (
+                                          <div 
+                                            key={part.id} 
+                                            className="flex items-center justify-between p-3 rounded-lg bg-background border"
+                                          >
+                                            <div className="flex items-center gap-3">
+                                              <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                                                <UserCircle className="h-6 w-6 text-muted-foreground" />
+                                              </div>
+                                              <div>
+                                                <p className="font-medium">{agentName}</p>
+                                                <p className="text-xs text-muted-foreground">{part.agent?.email}</p>
+                                              </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                              <div className="text-right">
+                                                <p className="font-semibold text-emerald-600">
+                                                  {new Intl.NumberFormat('fr-CH', { style: 'currency', currency: 'CHF' })
+                                                    .format(Number(part.amount))}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                  {part.rate}% de la commission
+                                                </p>
+                                              </div>
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={async () => {
+                                                  await deleteCommissionPart(part.id);
+                                                  const updatedParts = parts.filter(p => p.id !== part.id);
+                                                  setCommissionParts(prev => ({ ...prev, [commission.id]: updatedParts }));
+                                                }}
+                                              >
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        );
+                                      })
+                                    )}
                                   </div>
                                 )}
                               </div>
