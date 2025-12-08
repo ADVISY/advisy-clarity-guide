@@ -323,55 +323,65 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="commission_rate">Commission générale (%)</Label>
-                  <Input
-                    id="commission_rate"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.5"
-                    value={formData.commission_rate}
-                    onChange={(e) => setFormData(prev => ({ ...prev, commission_rate: Number(e.target.value) }))}
-                  />
-                </div>
+              {/* Personal commissions - Agent */}
+              <div className="p-4 border border-primary/20 bg-primary/5 rounded-lg space-y-4">
+                <p className="text-sm font-medium flex items-center gap-2 text-primary">
+                  <User className="h-4 w-4" />
+                  Commissions personnelles (Agent)
+                </p>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="commission_rate">Commission générale (%)</Label>
+                    <Input
+                      id="commission_rate"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.5"
+                      value={formData.commission_rate}
+                      onChange={(e) => setFormData(prev => ({ ...prev, commission_rate: Number(e.target.value) }))}
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="commission_rate_lca" className="text-blue-600">Commission LCA (%)</Label>
-                  <Input
-                    id="commission_rate_lca"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.5"
-                    value={formData.commission_rate_lca}
-                    onChange={(e) => setFormData(prev => ({ ...prev, commission_rate_lca: Number(e.target.value) }))}
-                    className="border-blue-200 focus:border-blue-500"
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="commission_rate_lca" className="text-blue-600">Commission LCA (%)</Label>
+                    <Input
+                      id="commission_rate_lca"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.5"
+                      value={formData.commission_rate_lca}
+                      onChange={(e) => setFormData(prev => ({ ...prev, commission_rate_lca: Number(e.target.value) }))}
+                      className="border-blue-200 focus:border-blue-500"
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="commission_rate_vie" className="text-emerald-600">Commission VIE (%)</Label>
-                  <Input
-                    id="commission_rate_vie"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.5"
-                    value={formData.commission_rate_vie}
-                    onChange={(e) => setFormData(prev => ({ ...prev, commission_rate_vie: Number(e.target.value) }))}
-                    className="border-emerald-200 focus:border-emerald-500"
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="commission_rate_vie" className="text-emerald-600">Commission VIE (%)</Label>
+                    <Input
+                      id="commission_rate_vie"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.5"
+                      value={formData.commission_rate_vie}
+                      onChange={(e) => setFormData(prev => ({ ...prev, commission_rate_vie: Number(e.target.value) }))}
+                      className="border-emerald-200 focus:border-emerald-500"
+                    />
+                  </div>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Taux appliqués sur les affaires personnelles de ce collaborateur
+                </p>
               </div>
 
               {/* Manager commission rates - only show if this person is a manager */}
-              {(formData.profession === 'manager' || formData.profession === 'direction') && (
+              {(formData.profession?.toLowerCase() === 'manager' || formData.profession?.toLowerCase() === 'direction') && (
                 <div className="p-4 border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 rounded-lg space-y-4">
                   <p className="text-sm font-medium flex items-center gap-2 text-amber-700 dark:text-amber-400">
                     <Users className="h-4 w-4" />
-                    Commission sur l'équipe (Manager)
+                    Commissions équipe (Manager)
                   </p>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -406,7 +416,7 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Pourcentage de la commission totale reversé au manager sur les affaires de son équipe
+                    Pourcentage automatiquement ajouté aux commissions quand un membre de son équipe signe un contrat
                   </p>
                 </div>
               )}
