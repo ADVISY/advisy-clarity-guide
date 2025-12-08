@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
 import advisyLogo from "@/assets/advisy-logo.svg";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 type View = "choice" | "client" | "team" | "team-login";
 
@@ -289,6 +290,7 @@ const ResetPasswordForm = ({ email, setEmail, loading, onSubmit, onBack }: Reset
 
 const Connexion = () => {
   const [view, setView] = useState<View>("choice");
+  const [loginType, setLoginType] = useState<"client" | "team">("client");
   const [isSignUp, setIsSignUp] = useState(false);
   const [isResetPassword, setIsResetPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -300,11 +302,27 @@ const Connexion = () => {
   const { signIn, signUp, resetPassword, user } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if already logged in
+  // Redirect based on role if already logged in
   useEffect(() => {
-    if (user) {
-      navigate("/crm");
-    }
+    const checkRoleAndRedirect = async () => {
+      if (user) {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        const role = roleData?.role || 'client';
+        
+        if (role === 'client') {
+          navigate("/espace-client");
+        } else {
+          navigate("/crm");
+        }
+      }
+    };
+    
+    checkRoleAndRedirect();
   }, [user, navigate]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -404,7 +422,7 @@ const Connexion = () => {
             title: "Inscription réussie",
             description: "Vous êtes maintenant connecté à votre espace.",
           });
-          navigate("/crm");
+          // Redirect will happen via useEffect
         }
       } else {
         const { error } = await signIn(email, password);
@@ -420,7 +438,7 @@ const Connexion = () => {
             title: "Connexion réussie",
             description: "Bienvenue sur votre espace Advisy.",
           });
-          navigate("/crm");
+          // Redirect will happen via useEffect based on role
         }
       }
     } catch (error: any) {
@@ -482,7 +500,7 @@ const Connexion = () => {
         return (
           <TeamChoiceScreen
             onBack={() => setView("choice")}
-            onCRMLogin={() => setView("team-login")}
+            onCRMLogin={() => { setLoginType("team"); setView("team-login"); }}
           />
         );
       case "team-login":
@@ -509,8 +527,8 @@ const Connexion = () => {
       default:
         return (
           <ChoiceScreen
-            onClientClick={() => { resetForm(); setView("client"); }}
-            onTeamClick={() => { resetForm(); setView("team"); }}
+            onClientClick={() => { resetForm(); setLoginType("client"); setView("client"); }}
+            onTeamClick={() => { resetForm(); setLoginType("team"); setView("team"); }}
           />
         );
     }
