@@ -129,7 +129,7 @@ export default function CommissionForm({ open, onOpenChange, onSuccess }: Commis
   };
 
   const handleAddPart = () => {
-    if (!selectedAgentId || newPartRate <= 0 || newPartRate > remainingRate) return;
+    if (!selectedAgentId) return;
     
     const agent = agents.find(a => a.id === selectedAgentId);
     if (!agent) return;
@@ -139,11 +139,25 @@ export default function CommissionForm({ open, onOpenChange, onSuccess }: Commis
       return;
     }
 
+    // Get agent's rate based on product type, or use newPartRate if no default rate
+    let agentRate = newPartRate;
+    if (agentRate <= 0) {
+      if (isLCA && agent.commission_rate_lca) {
+        agentRate = agent.commission_rate_lca;
+      } else if (isVIE && agent.commission_rate_vie) {
+        agentRate = agent.commission_rate_vie;
+      } else if (agent.commission_rate) {
+        agentRate = agent.commission_rate;
+      }
+    }
+    
+    if (agentRate <= 0 || agentRate > remainingRate) return;
+
     const newPart: PartAgent = {
       agent_id: selectedAgentId,
       agent_name: getAgentName(agent),
-      rate: newPartRate,
-      amount: (totalAmount * newPartRate) / 100,
+      rate: agentRate,
+      amount: (totalAmount * agentRate) / 100,
       isManager: false
     };
 
@@ -161,7 +175,7 @@ export default function CommissionForm({ open, onOpenChange, onSuccess }: Commis
       }
       
       if (managerRate > 0) {
-        const totalRateWithManager = newPartRate + managerRate;
+        const totalRateWithManager = agentRate + managerRate;
         if (totalRateWithManager <= remainingRate) {
           const managerPart: PartAgent = {
             agent_id: manager.id,
