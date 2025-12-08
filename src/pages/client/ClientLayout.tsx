@@ -2,20 +2,8 @@ import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
 import { 
   Home, 
   FileText, 
@@ -24,9 +12,10 @@ import {
   User, 
   Bell,
   LogOut,
-  Moon,
-  Sun,
-  Menu
+  ChevronRight,
+  Phone,
+  Mail,
+  HelpCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import advisyLogo from "@/assets/advisy-logo.svg";
@@ -46,8 +35,8 @@ export default function ClientLayout() {
   const { toast } = useToast();
   const [user, setUser] = useState<any>(null);
   const [clientData, setClientData] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -59,6 +48,27 @@ export default function ClientLayout() {
       }
       
       setUser(session.user);
+      
+      // Check user role
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+      
+      const role = roleData?.role || 'client';
+      setUserRole(role);
+      
+      // If not a client, redirect to CRM
+      if (role !== 'client') {
+        toast({
+          title: "Accès refusé",
+          description: "Cet espace est réservé aux clients.",
+          variant: "destructive",
+        });
+        navigate("/crm");
+        return;
+      }
       
       // Fetch client data
       const { data: clientRecord } = await supabase
@@ -83,7 +93,7 @@ export default function ClientLayout() {
     });
     
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, toast]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -92,11 +102,6 @@ export default function ClientLayout() {
       description: "Vous avez été déconnecté avec succès",
     });
     navigate("/");
-  };
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    document.documentElement.classList.toggle('dark');
   };
 
   const getInitials = () => {
@@ -122,89 +127,100 @@ export default function ClientLayout() {
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-muted/30">
-        <Sidebar className="border-r bg-background">
-          <SidebarHeader className="p-4 border-b">
+    <div className="min-h-screen flex bg-background">
+      {/* Sidebar - Clean design matching the reference image */}
+      <aside className="w-72 bg-card border-r flex flex-col">
+        {/* Logo */}
+        <div className="p-6 border-b">
+          <div className="flex items-center gap-3">
+            <img src={advisyLogo} alt="Advisy" className="h-10" />
+          </div>
+        </div>
+        
+        {/* User Card */}
+        <div className="p-4">
+          <div className="bg-primary/5 rounded-xl p-4">
             <div className="flex items-center gap-3">
-              <img src={advisyLogo} alt="Advisy" className="h-8 w-8" />
-              <span className="font-semibold text-lg text-primary">Advisy</span>
-            </div>
-          </SidebarHeader>
-          
-          <SidebarContent className="p-2">
-            <SidebarMenu>
-              {menuItems.map((item) => {
-                const isActive = location.pathname === item.path;
-                return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      onClick={() => navigate(item.path)}
-                      className={cn(
-                        "w-full justify-start gap-3 px-3 py-2.5 rounded-lg transition-colors",
-                        isActive 
-                          ? "bg-primary/10 text-primary font-medium" 
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      )}
-                    >
-                      <item.icon className="h-5 w-5" />
-                      <span>{item.title}</span>
-                      {item.title === "Notifications" && (
-                        <span className="ml-auto h-2 w-2 rounded-full bg-destructive" />
-                      )}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarContent>
-          
-          <SidebarFooter className="p-4 border-t space-y-4">
-            {/* Dark mode toggle */}
-            <div className="flex items-center justify-between px-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                {darkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-                <span>Mode sombre</span>
-              </div>
-              <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
-            </div>
-            
-            {/* User info */}
-            <div className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
-              <Avatar className="h-10 w-10">
-                <AvatarFallback className="bg-primary/10 text-primary font-medium">
+              <Avatar className="h-12 w-12 border-2 border-primary/20">
+                <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-lg">
                   {getInitials()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{getDisplayName()}</p>
-                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                <p className="font-semibold text-foreground truncate">{getDisplayName()}</p>
+                <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
               </div>
             </div>
-            
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive"
-              onClick={handleLogout}
-            >
-              <LogOut className="h-4 w-4" />
-              Déconnexion
-            </Button>
-          </SidebarFooter>
-        </Sidebar>
-        
-        <main className="flex-1 overflow-auto">
-          <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b px-6 py-4 flex items-center gap-4">
-            <SidebarTrigger className="lg:hidden">
-              <Menu className="h-5 w-5" />
-            </SidebarTrigger>
-          </header>
-          
-          <div className="p-6">
-            <Outlet context={{ user, clientData }} />
           </div>
-        </main>
-      </div>
-    </SidebarProvider>
+        </div>
+        
+        {/* Navigation Menu */}
+        <nav className="flex-1 p-4 space-y-1">
+          {menuItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <button
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all",
+                  isActive 
+                    ? "bg-primary text-primary-foreground shadow-md" 
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+                <span className="font-medium">{item.title}</span>
+                {item.title === "Notifications" && (
+                  <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] text-white font-bold">
+                    2
+                  </span>
+                )}
+                {isActive && <ChevronRight className="ml-auto h-4 w-4" />}
+              </button>
+            );
+          })}
+        </nav>
+        
+        {/* Contact Section */}
+        <div className="p-4 border-t">
+          <div className="bg-muted/50 rounded-xl p-4 space-y-3">
+            <p className="text-sm font-medium text-foreground flex items-center gap-2">
+              <HelpCircle className="h-4 w-4 text-primary" />
+              Besoin d'aide ?
+            </p>
+            <div className="space-y-2 text-sm">
+              <a href="tel:+41225555555" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+                <Phone className="h-4 w-4" />
+                +41 22 555 55 55
+              </a>
+              <a href="mailto:contact@advisy.ch" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+                <Mail className="h-4 w-4" />
+                contact@advisy.ch
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        {/* Logout */}
+        <div className="p-4 border-t">
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            onClick={handleLogout}
+          >
+            <LogOut className="h-5 w-5" />
+            Déconnexion
+          </Button>
+        </div>
+      </aside>
+      
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto">
+        <div className="p-8">
+          <Outlet context={{ user, clientData }} />
+        </div>
+      </main>
+    </div>
   );
 }
