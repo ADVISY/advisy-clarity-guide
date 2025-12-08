@@ -78,13 +78,14 @@ serve(async (req) => {
         }
       )
     } else {
+      // Return 200 with success: false to avoid error handling issues
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Email not found as collaborateur'
+          message: 'Email not found as collaborateur'
         }),
         { 
-          status: 404,
+          status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )
