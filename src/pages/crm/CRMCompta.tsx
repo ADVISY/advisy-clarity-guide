@@ -224,6 +224,7 @@ export default function CRMCompta() {
     let totalCommissions = 0;
     let totalAgentAmount = 0;
     let commissionsCount = 0;
+    let reserveRate = selectedAgentForPreview?.reserve_rate || 0;
 
     decompteData.forEach(({ commission, parts }) => {
       totalCommissions += Number(commission.amount) || 0;
@@ -241,7 +242,10 @@ export default function CRMCompta() {
       }
     });
 
-    return { totalCommissions, totalAgentAmount, commissionsCount };
+    const reserveAmount = (totalAgentAmount * reserveRate) / 100;
+    const netAmount = totalAgentAmount - reserveAmount;
+
+    return { totalCommissions, totalAgentAmount, commissionsCount, reserveRate, reserveAmount, netAmount };
   }, [decompteData, selectedAgentForPreview]);
 
   return (
@@ -423,19 +427,42 @@ export default function CRMCompta() {
                 <h2 className="text-lg font-semibold text-primary mb-2">Collaborateur</h2>
                 <p className="font-medium text-lg">{getCollaborateurName(selectedAgentForPreview)}</p>
                 <p className="text-muted-foreground">{selectedAgentForPreview.email}</p>
+                {previewTotals.reserveRate > 0 && (
+                  <p className="text-orange-600 text-sm mt-2">
+                    Compte de réserve: {previewTotals.reserveRate}%
+                  </p>
+                )}
               </div>
             )}
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className={`grid gap-4 mb-6 ${previewTotals.reserveRate > 0 ? 'grid-cols-4' : 'grid-cols-2'}`}>
               <div className="bg-muted/50 p-4 rounded-xl text-center">
                 <p className="text-2xl font-bold text-primary">{previewTotals.commissionsCount}</p>
                 <p className="text-sm text-muted-foreground">Commissions</p>
               </div>
-              <div className="bg-emerald-50 p-4 rounded-xl text-center">
-                <p className="text-2xl font-bold text-emerald-600">{formatCurrency(previewTotals.totalAgentAmount)}</p>
-                <p className="text-sm text-muted-foreground">Total à percevoir</p>
+              <div className="bg-blue-50 p-4 rounded-xl text-center">
+                <p className="text-2xl font-bold text-blue-600">{formatCurrency(previewTotals.totalAgentAmount)}</p>
+                <p className="text-sm text-muted-foreground">Total brut</p>
               </div>
+              {previewTotals.reserveRate > 0 && (
+                <>
+                  <div className="bg-orange-50 p-4 rounded-xl text-center">
+                    <p className="text-2xl font-bold text-orange-600">-{formatCurrency(previewTotals.reserveAmount)}</p>
+                    <p className="text-sm text-muted-foreground">Réserve ({previewTotals.reserveRate}%)</p>
+                  </div>
+                  <div className="bg-emerald-50 p-4 rounded-xl text-center">
+                    <p className="text-2xl font-bold text-emerald-600">{formatCurrency(previewTotals.netAmount)}</p>
+                    <p className="text-sm text-muted-foreground">Net à percevoir</p>
+                  </div>
+                </>
+              )}
+              {previewTotals.reserveRate === 0 && (
+                <div className="bg-emerald-50 p-4 rounded-xl text-center">
+                  <p className="text-2xl font-bold text-emerald-600">{formatCurrency(previewTotals.totalAgentAmount)}</p>
+                  <p className="text-sm text-muted-foreground">Total à percevoir</p>
+                </div>
+              )}
             </div>
 
             {/* Commissions Table */}
