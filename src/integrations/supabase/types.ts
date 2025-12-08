@@ -194,6 +194,7 @@ export type Database = {
           phone: string | null
           postal_code: string | null
           profession: string | null
+          reserve_rate: number | null
           status: string | null
           tags: string[] | null
           type_adresse: string
@@ -236,6 +237,7 @@ export type Database = {
           phone?: string | null
           postal_code?: string | null
           profession?: string | null
+          reserve_rate?: number | null
           status?: string | null
           tags?: string[] | null
           type_adresse?: string
@@ -278,6 +280,7 @@ export type Database = {
           phone?: string | null
           postal_code?: string | null
           profession?: string | null
+          reserve_rate?: number | null
           status?: string | null
           tags?: string[] | null
           type_adresse?: string

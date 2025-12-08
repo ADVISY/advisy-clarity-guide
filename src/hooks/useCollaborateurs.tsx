@@ -26,6 +26,8 @@ export interface Collaborateur {
   // Manager commission rates (what the manager earns from team)
   manager_commission_rate_lca: number | null;
   manager_commission_rate_vie: number | null;
+  // Reserve account
+  reserve_rate: number | null;
 }
 
 export type CollaborateurFormData = {
@@ -48,6 +50,8 @@ export type CollaborateurFormData = {
   // Manager commission rates
   manager_commission_rate_lca?: number;
   manager_commission_rate_vie?: number;
+  // Reserve account
+  reserve_rate?: number;
 };
 
 export function useCollaborateurs() {
@@ -61,7 +65,7 @@ export function useCollaborateurs() {
       
       const { data, error } = await supabase
         .from('clients')
-        .select('id, first_name, last_name, email, mobile, status, profession, created_at, commission_rate, commission_rate_lca, commission_rate_vie, fixed_salary, bonus_rate, contract_type, work_percentage, hire_date, manager_id, manager_commission_rate_lca, manager_commission_rate_vie')
+        .select('id, first_name, last_name, email, mobile, status, profession, created_at, commission_rate, commission_rate_lca, commission_rate_vie, fixed_salary, bonus_rate, contract_type, work_percentage, hire_date, manager_id, manager_commission_rate_lca, manager_commission_rate_vie, reserve_rate')
         .eq('type_adresse', 'collaborateur')
         .order('first_name', { ascending: true });
 
