@@ -57,18 +57,22 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
-    const { email, password, role, collaborateurId, firstName, lastName } = await req.json();
+    const { email, password, role, collaborateurId, clientId, firstName, lastName } = await req.json();
+
+    // Determine if this is a collaborateur or client account creation
+    const targetId = collaborateurId || clientId;
+    const isClientAccount = !!clientId;
 
     // Validate inputs
-    if (!email || !password || !role || !collaborateurId) {
+    if (!email || !password || !role || !targetId) {
       return new Response(
-        JSON.stringify({ error: "Email, mot de passe, rôle et collaborateur sont requis" }),
+        JSON.stringify({ error: "Email, mot de passe, rôle et ID sont requis" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // Validate role
-    const validRoles = ["admin", "manager", "agent", "backoffice", "compta"];
+    const validRoles = ["admin", "manager", "agent", "backoffice", "compta", "client"];
     if (!validRoles.includes(role)) {
       return new Response(
         JSON.stringify({ error: "Rôle invalide" }),
@@ -76,24 +80,29 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if collaborateur exists and doesn't already have a user_id
-    const { data: collaborateur, error: collabError } = await supabaseAdmin
+    // Check if the record exists and doesn't already have a user_id
+    let query = supabaseAdmin
       .from("clients")
-      .select("id, user_id, first_name, last_name")
-      .eq("id", collaborateurId)
-      .eq("type_adresse", "collaborateur")
-      .single();
+      .select("id, user_id, first_name, last_name, email")
+      .eq("id", targetId);
+    
+    // Only filter by type_adresse for collaborateurs
+    if (!isClientAccount) {
+      query = query.eq("type_adresse", "collaborateur");
+    }
 
-    if (collabError || !collaborateur) {
+    const { data: targetRecord, error: targetError } = await query.single();
+
+    if (targetError || !targetRecord) {
       return new Response(
-        JSON.stringify({ error: "Collaborateur non trouvé" }),
+        JSON.stringify({ error: isClientAccount ? "Client non trouvé" : "Collaborateur non trouvé" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    if (collaborateur.user_id) {
+    if (targetRecord.user_id) {
       return new Response(
-        JSON.stringify({ error: "Ce collaborateur a déjà un compte utilisateur" }),
+        JSON.stringify({ error: isClientAccount ? "Ce client a déjà un compte utilisateur" : "Ce collaborateur a déjà un compte utilisateur" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -104,8 +113,8 @@ Deno.serve(async (req) => {
       password,
       email_confirm: true, // Auto-confirm email
       user_metadata: {
-        first_name: firstName || collaborateur.first_name,
-        last_name: lastName || collaborateur.last_name,
+        first_name: firstName || targetRecord.first_name,
+        last_name: lastName || targetRecord.last_name,
       },
     });
 
@@ -133,16 +142,16 @@ Deno.serve(async (req) => {
         .upsert({ user_id: userId, role }, { onConflict: "user_id" });
     }
 
-    // Link the user to the collaborateur
+    // Link the user to the client/collaborateur record
     const { error: linkError } = await supabaseAdmin
       .from("clients")
       .update({ user_id: userId })
-      .eq("id", collaborateurId);
+      .eq("id", targetId);
 
     if (linkError) {
-      console.error("Error linking collaborateur:", linkError);
+      console.error("Error linking record:", linkError);
       return new Response(
-        JSON.stringify({ error: "Compte créé mais erreur lors de la liaison au collaborateur" }),
+        JSON.stringify({ error: "Compte créé mais erreur lors de la liaison" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
