@@ -5,18 +5,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Settings, User, Building2, Package, Percent, UserPlus, Moon, Sun, 
-  Palette, Save, Pencil, Trash2, Plus, Shield, Eye, EyeOff, Check
+  Settings, User, Building2, Package, Percent, Moon, Sun, 
+  Palette, Save, Pencil, Trash2, Plus, Shield, Eye, EyeOff, Check,
+  Users, UserCheck, AlertCircle, Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Couleurs disponibles pour le thème
 const themeColors = [
@@ -30,8 +32,28 @@ const themeColors = [
   { id: "indigo", label: "Indigo", color: "hsl(239, 84%, 67%)", class: "bg-indigo-500" },
 ];
 
+const roleLabels: Record<string, string> = {
+  admin: "Administrateur",
+  manager: "Manager",
+  agent: "Agent",
+  backoffice: "Backoffice",
+  compta: "Comptabilité",
+  client: "Client",
+  partner: "Partenaire",
+};
+
+const roleBadgeColors: Record<string, string> = {
+  admin: "bg-red-500",
+  manager: "bg-blue-500",
+  agent: "bg-green-500",
+  backoffice: "bg-orange-500",
+  compta: "bg-purple-500",
+  client: "bg-gray-500",
+  partner: "bg-teal-500",
+};
+
 export default function CRMParametres() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [activeTab, setActiveTab] = useState("profil");
   
   // Profil
@@ -75,14 +97,19 @@ export default function CRMParametres() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [selectedColor, setSelectedColor] = useState("blue");
 
-  // Nouvel utilisateur
-  const [isAddingUser, setIsAddingUser] = useState(false);
-  const [newUser, setNewUser] = useState({
+  // Gestion des comptes
+  const [userAccounts, setUserAccounts] = useState<any[]>([]);
+  const [collaborateurs, setCollaborateurs] = useState<any[]>([]);
+  const [isAddingAccount, setIsAddingAccount] = useState(false);
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [newAccount, setNewAccount] = useState({
     email: "",
-    firstName: "",
-    lastName: "",
+    password: "",
+    confirmPassword: "",
     role: "agent",
+    collaborateurId: "",
   });
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   // Charger les données
   useEffect(() => {
@@ -90,6 +117,8 @@ export default function CRMParametres() {
     loadCompanies();
     loadProducts();
     loadSettings();
+    loadUserAccounts();
+    loadCollaborateurs();
   }, [user]);
 
   const loadProfile = async () => {
@@ -123,7 +152,6 @@ export default function CRMParametres() {
   };
 
   const loadSettings = () => {
-    // Charger depuis localStorage
     const saved = localStorage.getItem("crm_settings");
     if (saved) {
       const settings = JSON.parse(saved);
@@ -132,11 +160,65 @@ export default function CRMParametres() {
       setDefaultRates(settings.defaultRates || defaultRates);
     }
     
-    // Appliquer le thème
     if (localStorage.getItem("crm_dark_mode") === "true") {
       setIsDarkMode(true);
       document.documentElement.classList.add("dark");
     }
+  };
+
+  const loadUserAccounts = async () => {
+    // Get all user accounts with their roles and linked collaborateurs
+    const { data: roles, error } = await supabase
+      .from("user_roles")
+      .select(`
+        id,
+        user_id,
+        role,
+        created_at,
+        profiles:user_id (
+          id,
+          email,
+          first_name,
+          last_name
+        )
+      `)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error loading user accounts:", error);
+      return;
+    }
+
+    // Get linked collaborateurs
+    const { data: linkedCollabs } = await supabase
+      .from("clients")
+      .select("id, user_id, first_name, last_name")
+      .eq("type_adresse", "collaborateur")
+      .not("user_id", "is", null);
+
+    const collabMap = new Map();
+    linkedCollabs?.forEach(c => {
+      collabMap.set(c.user_id, c);
+    });
+
+    const accounts = roles?.map(r => ({
+      ...r,
+      collaborateur: collabMap.get(r.user_id) || null,
+    })) || [];
+
+    setUserAccounts(accounts);
+  };
+
+  const loadCollaborateurs = async () => {
+    // Get collaborateurs without linked user accounts
+    const { data } = await supabase
+      .from("clients")
+      .select("id, first_name, last_name, email")
+      .eq("type_adresse", "collaborateur")
+      .is("user_id", null)
+      .order("last_name");
+    
+    setCollaborateurs(data || []);
   };
 
   const saveSettings = () => {
@@ -302,17 +384,69 @@ export default function CRMParametres() {
     }
   };
 
-  // Ajouter un utilisateur (invitation)
-  const handleInviteUser = async () => {
-    if (!newUser.email.trim()) {
+  // Créer un compte utilisateur
+  const handleCreateAccount = async () => {
+    // Validations
+    if (!newAccount.email.trim()) {
       toast.error("L'email est requis");
       return;
     }
-    // Note: L'invitation nécessite des fonctions admin côté serveur
-    // Pour l'instant, on affiche un message
-    toast.info("Fonctionnalité d'invitation en cours de développement. Contactez un administrateur.");
-    setIsAddingUser(false);
-    setNewUser({ email: "", firstName: "", lastName: "", role: "agent" });
+    if (!newAccount.password || newAccount.password.length < 8) {
+      toast.error("Le mot de passe doit contenir au moins 8 caractères");
+      return;
+    }
+    if (newAccount.password !== newAccount.confirmPassword) {
+      toast.error("Les mots de passe ne correspondent pas");
+      return;
+    }
+    if (!newAccount.collaborateurId) {
+      toast.error("Veuillez sélectionner un collaborateur");
+      return;
+    }
+
+    setIsCreatingAccount(true);
+
+    try {
+      const selectedCollab = collaborateurs.find(c => c.id === newAccount.collaborateurId);
+      
+      const response = await supabase.functions.invoke("create-user-account", {
+        body: {
+          email: newAccount.email,
+          password: newAccount.password,
+          role: newAccount.role,
+          collaborateurId: newAccount.collaborateurId,
+          firstName: selectedCollab?.first_name,
+          lastName: selectedCollab?.last_name,
+        },
+      });
+
+      if (response.error) {
+        toast.error(response.error.message || "Erreur lors de la création du compte");
+        return;
+      }
+
+      if (response.data?.error) {
+        toast.error(response.data.error);
+        return;
+      }
+
+      toast.success("Compte créé avec succès");
+      setIsAddingAccount(false);
+      setNewAccount({
+        email: "",
+        password: "",
+        confirmPassword: "",
+        role: "agent",
+        collaborateurId: "",
+      });
+      loadUserAccounts();
+      loadCollaborateurs();
+    } catch (error: any) {
+      console.error("Error creating account:", error);
+      toast.error("Erreur lors de la création du compte");
+    } finally {
+      setIsCreatingAccount(false);
+    }
   };
 
   const productCategories = [
@@ -339,10 +473,14 @@ export default function CRMParametres() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-5 w-full max-w-2xl">
+        <TabsList className="grid grid-cols-6 w-full max-w-3xl">
           <TabsTrigger value="profil" className="gap-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">Profil</span>
+          </TabsTrigger>
+          <TabsTrigger value="comptes" className="gap-2">
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Comptes</span>
           </TabsTrigger>
           <TabsTrigger value="compagnies" className="gap-2">
             <Building2 className="h-4 w-4" />
@@ -480,79 +618,222 @@ export default function CRMParametres() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
 
-          {/* Ajouter un utilisateur */}
+        {/* GESTION DES COMPTES */}
+        <TabsContent value="comptes" className="space-y-6 mt-6">
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Workflow de création d'un compte :</strong><br />
+              1. Créez d'abord la fiche du collaborateur dans <strong>Collaborateurs</strong><br />
+              2. Revenez ici pour créer le compte utilisateur en le liant au collaborateur
+            </AlertDescription>
+          </Alert>
+
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <UserPlus className="h-5 w-5" />
-                  Utilisateurs
+                  <UserCheck className="h-5 w-5" />
+                  Comptes utilisateurs
                 </CardTitle>
-                <Button size="sm" onClick={() => setIsAddingUser(true)}>
+                <Button size="sm" onClick={() => setIsAddingAccount(true)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Ajouter
+                  Créer un compte
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
-              {isAddingUser ? (
-                <div className="space-y-4 max-w-md">
-                  <div className="space-y-2">
-                    <Label>Email</Label>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Utilisateur</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Rôle</TableHead>
+                    <TableHead>Collaborateur lié</TableHead>
+                    <TableHead>Créé le</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {userAccounts.map(account => (
+                    <TableRow key={account.id}>
+                      <TableCell>
+                        <span className="font-medium">
+                          {account.profiles?.first_name} {account.profiles?.last_name}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {account.profiles?.email}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={cn("text-white", roleBadgeColors[account.role] || "bg-gray-500")}>
+                          {roleLabels[account.role] || account.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {account.collaborateur ? (
+                          <span className="text-sm">
+                            {account.collaborateur.first_name} {account.collaborateur.last_name}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm">
+                        {new Date(account.created_at).toLocaleDateString("fr-CH")}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {userAccounts.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                        Aucun compte utilisateur
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Dialog de création de compte */}
+          <Dialog open={isAddingAccount} onOpenChange={setIsAddingAccount}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Créer un compte utilisateur</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Collaborateur *</Label>
+                  <Select 
+                    value={newAccount.collaborateurId}
+                    onValueChange={(v) => {
+                      const collab = collaborateurs.find(c => c.id === v);
+                      setNewAccount({ 
+                        ...newAccount, 
+                        collaborateurId: v,
+                        email: collab?.email || newAccount.email
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner un collaborateur..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {collaborateurs.length === 0 ? (
+                        <div className="p-2 text-sm text-muted-foreground text-center">
+                          Aucun collaborateur disponible.<br />
+                          Créez d'abord une fiche collaborateur.
+                        </div>
+                      ) : (
+                        collaborateurs.map(c => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.first_name} {c.last_name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Seuls les collaborateurs sans compte apparaissent ici
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Email *</Label>
+                  <Input 
+                    type="email"
+                    value={newAccount.email}
+                    onChange={(e) => setNewAccount({ ...newAccount, email: e.target.value })}
+                    placeholder="email@exemple.com"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Mot de passe *</Label>
+                  <div className="relative">
                     <Input 
-                      type="email"
-                      value={newUser.email}
-                      onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                      type={showNewPassword ? "text" : "password"}
+                      value={newAccount.password}
+                      onChange={(e) => setNewAccount({ ...newAccount, password: e.target.value })}
+                      placeholder="Minimum 8 caractères"
                     />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Prénom</Label>
-                      <Input 
-                        value={newUser.firstName}
-                        onChange={(e) => setNewUser({ ...newUser, firstName: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Nom</Label>
-                      <Input 
-                        value={newUser.lastName}
-                        onChange={(e) => setNewUser({ ...newUser, lastName: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Rôle</Label>
-                    <Select value={newUser.role} onValueChange={(v) => setNewUser({ ...newUser, role: v })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="admin">Administrateur</SelectItem>
-                        <SelectItem value="manager">Manager</SelectItem>
-                        <SelectItem value="agent">Agent</SelectItem>
-                        <SelectItem value="backoffice">Backoffice</SelectItem>
-                        <SelectItem value="compta">Comptabilité</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button onClick={handleInviteUser}>
-                      Inviter
-                    </Button>
-                    <Button variant="outline" onClick={() => setIsAddingUser(false)}>
-                      Annuler
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                    >
+                      {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Invitez de nouveaux utilisateurs à rejoindre votre CRM.
-                </p>
-              )}
-            </CardContent>
-          </Card>
+
+                <div className="space-y-2">
+                  <Label>Confirmer le mot de passe *</Label>
+                  <Input 
+                    type={showNewPassword ? "text" : "password"}
+                    value={newAccount.confirmPassword}
+                    onChange={(e) => setNewAccount({ ...newAccount, confirmPassword: e.target.value })}
+                    placeholder="Confirmer le mot de passe"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Rôle *</Label>
+                  <Select 
+                    value={newAccount.role}
+                    onValueChange={(v) => setNewAccount({ ...newAccount, role: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Administrateur</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="agent">Agent</SelectItem>
+                      <SelectItem value="backoffice">Backoffice</SelectItem>
+                      <SelectItem value="compta">Comptabilité</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Alert className="bg-muted">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="text-xs">
+                    <strong>Accès par rôle :</strong><br />
+                    • <strong>Admin</strong> : Accès complet au CRM<br />
+                    • <strong>Manager</strong> : Ses adresses + équipe (sans Compta/Commissions)<br />
+                    • <strong>Agent</strong> : Uniquement ses propres adresses et contrats
+                  </AlertDescription>
+                </Alert>
+
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    onClick={handleCreateAccount} 
+                    disabled={isCreatingAccount || collaborateurs.length === 0}
+                    className="flex-1"
+                  >
+                    {isCreatingAccount ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Création...
+                      </>
+                    ) : (
+                      <>
+                        <UserCheck className="h-4 w-4 mr-2" />
+                        Créer le compte
+                      </>
+                    )}
+                  </Button>
+                  <Button variant="outline" onClick={() => setIsAddingAccount(false)}>
+                    Annuler
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* COMPAGNIES */}
