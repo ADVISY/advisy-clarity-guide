@@ -247,7 +247,7 @@ export default function DecommissionForm({ open, onOpenChange, onSuccess }: Deco
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[500px] p-0" align="start">
-                <Command>
+                <Command shouldFilter={false}>
                   <CommandInput 
                     placeholder="Rechercher une commission..." 
                     value={searchQuery}
