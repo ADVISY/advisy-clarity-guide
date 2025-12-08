@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Edit, Plus, Users, FileCheck, FileText, Download, Trash2, Upload, Eye, ClipboardList, Clock, CheckCircle2, AlertCircle, MoreHorizontal, XCircle, RotateCcw, Calendar, DollarSign, ChevronDown, ChevronRight, UserCircle, Percent, FileSignature, Mail } from "lucide-react";
+import { ArrowLeft, Edit, Plus, Users, FileCheck, FileText, Download, Trash2, Upload, Eye, ClipboardList, Clock, CheckCircle2, AlertCircle, MoreHorizontal, XCircle, RotateCcw, Calendar, DollarSign, ChevronDown, ChevronRight, UserCircle, Percent, FileSignature, Mail, UserPlus } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +38,16 @@ import DocumentUpload, { docKindOptions } from "@/components/crm/DocumentUpload"
 import ReserveAccountCard from "@/components/crm/ReserveAccountCard";
 import MandatGestionForm from "@/components/crm/MandatGestionForm";
 import SendEmailDialog from "@/components/crm/SendEmailDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -107,6 +117,9 @@ export default function ClientDetail() {
   const [expandedCommissions, setExpandedCommissions] = useState<Record<string, boolean>>({});
   const [commissionParts, setCommissionParts] = useState<Record<string, CommissionPart[]>>({});
   const [loadingParts, setLoadingParts] = useState<Record<string, boolean>>({});
+  const [creatingClientAccount, setCreatingClientAccount] = useState(false);
+  const [clientAccountDialogOpen, setClientAccountDialogOpen] = useState(false);
+  const [clientPassword, setClientPassword] = useState("");
 
   // Filter policies for this client
   const clientPolicies = policies.filter(p => p.client_id === id);
@@ -201,6 +214,52 @@ export default function ClientDetail() {
         description: "Impossible d'ouvrir le document",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleCreateClientAccount = async () => {
+    if (!client || !client.email || !clientPassword) {
+      toast({
+        title: "Erreur",
+        description: "Email du client et mot de passe requis",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setCreatingClientAccount(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Non authentifié");
+
+      const response = await supabase.functions.invoke('create-user-account', {
+        body: {
+          email: client.email,
+          password: clientPassword,
+          role: 'client',
+          clientId: client.id,
+          firstName: client.first_name,
+          lastName: client.last_name,
+        },
+      });
+
+      if (response.error) throw response.error;
+
+      toast({
+        title: "Compte créé",
+        description: `Compte client créé pour ${client.email}`,
+      });
+      setClientAccountDialogOpen(false);
+      setClientPassword("");
+      loadClient(); // Reload to get updated user_id
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de créer le compte",
+        variant: "destructive",
+      });
+    } finally {
+      setCreatingClientAccount(false);
     }
   };
 
@@ -303,6 +362,23 @@ export default function ClientDetail() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Bouton créer compte client - uniquement si pas de user_id et type client */}
+          {client.type_adresse === 'client' && !client.user_id && client.email && (
+            <Button 
+              variant="outline" 
+              onClick={() => setClientAccountDialogOpen(true)}
+              className="gap-2"
+            >
+              <UserPlus className="h-4 w-4" />
+              Créer espace client
+            </Button>
+          )}
+          {client.user_id && client.type_adresse === 'client' && (
+            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+              <CheckCircle2 className="h-3 w-3 mr-1" />
+              Espace client actif
+            </Badge>
+          )}
           <SendEmailDialog
             clientEmail={client.email || ""}
             clientName={getClientName()}
@@ -314,6 +390,45 @@ export default function ClientDetail() {
           </Button>
         </div>
       </div>
+
+      {/* Dialog pour créer un compte client */}
+      <Dialog open={clientAccountDialogOpen} onOpenChange={setClientAccountDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Créer un espace client</DialogTitle>
+            <DialogDescription>
+              Créer un compte pour permettre à {getClientName()} d'accéder à son espace client Advisy.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input value={client.email || ""} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="clientPassword">Mot de passe temporaire</Label>
+              <Input
+                id="clientPassword"
+                type="password"
+                value={clientPassword}
+                onChange={(e) => setClientPassword(e.target.value)}
+                placeholder="Minimum 6 caractères"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setClientAccountDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleCreateClientAccount} 
+              disabled={creatingClientAccount || clientPassword.length < 6}
+            >
+              {creatingClientAccount ? "Création..." : "Créer le compte"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid gap-6">
         <div>
