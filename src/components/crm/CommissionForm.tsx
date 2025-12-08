@@ -18,7 +18,7 @@ import { useClients, Client } from "@/hooks/useClients";
 import { usePolicies } from "@/hooks/usePolicies";
 import { useCommissions } from "@/hooks/useCommissions";
 import { useCommissionParts } from "@/hooks/useCommissionParts";
-import { useAgents, Agent } from "@/hooks/useAgents";
+import { useCollaborateursCommission, Collaborateur } from "@/hooks/useCollaborateursCommission";
 
 const commissionSchema = z.object({
   policy_id: z.string().min(1, "Veuillez sélectionner un contrat"),
@@ -50,7 +50,7 @@ export default function CommissionForm({ open, onOpenChange, onSuccess }: Commis
   const { policies, fetchPolicies } = usePolicies();
   const { createCommission } = useCommissions();
   const { addMultipleParts } = useCommissionParts();
-  const { agents, getManagerForAgent } = useAgents();
+  const { collaborateurs: agents, getManagerForCollaborateur: getManagerForAgent } = useCollaborateursCommission();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [clientOpen, setClientOpen] = useState(false);
@@ -118,8 +118,8 @@ export default function CommissionForm({ open, onOpenChange, onSuccess }: Commis
     return `${client.first_name || ''} ${client.last_name || ''}`.trim() || 'Sans nom';
   };
 
-  const getAgentName = (agent: Agent) => {
-    return `${agent.first_name || ''} ${agent.last_name || ''}`.trim() || agent.email;
+  const getAgentName = (agent: Collaborateur) => {
+    return `${agent.first_name || ''} ${agent.last_name || ''}`.trim() || agent.email || 'Inconnu';
   };
 
   const handleSelectClient = (client: Client) => {
