@@ -101,6 +101,66 @@ export default function CommissionForm({ open, onOpenChange, onSuccess }: Commis
     })));
   }, [totalAmount]);
 
+  // Auto-add assigned agent and manager when policy is selected
+  useEffect(() => {
+    if (!selectedClient || !selectedPolicyId || commissionParts.length > 0) return;
+    
+    // Get client's assigned agent
+    const assignedAgentId = selectedClient.assigned_agent_id;
+    if (!assignedAgentId) return;
+    
+    const agent = agents.find(a => a.id === assignedAgentId);
+    if (!agent) return;
+    
+    // Determine rate based on product type
+    let agentRate = 0;
+    if (isLCA && agent.commission_rate_lca) {
+      agentRate = agent.commission_rate_lca;
+    } else if (isVIE && agent.commission_rate_vie) {
+      agentRate = agent.commission_rate_vie;
+    } else if (agent.commission_rate) {
+      agentRate = agent.commission_rate;
+    }
+    
+    if (agentRate <= 0) return;
+    
+    const partsToAdd: PartAgent[] = [];
+    
+    // Add agent part
+    partsToAdd.push({
+      agent_id: agent.id,
+      agent_name: getAgentName(agent),
+      rate: agentRate,
+      amount: (totalAmount * agentRate) / 100,
+      isManager: false
+    });
+    
+    // Add manager part if exists
+    const manager = getManagerForAgent(agent.id);
+    if (manager) {
+      let managerRate = 0;
+      if (isLCA && agent.manager_commission_rate_lca) {
+        managerRate = agent.manager_commission_rate_lca;
+      } else if (isVIE && agent.manager_commission_rate_vie) {
+        managerRate = agent.manager_commission_rate_vie;
+      }
+      
+      if (managerRate > 0) {
+        partsToAdd.push({
+          agent_id: manager.id,
+          agent_name: `${getAgentName(manager)} (Manager)`,
+          rate: managerRate,
+          amount: (totalAmount * managerRate) / 100,
+          isManager: true
+        });
+      }
+    }
+    
+    if (partsToAdd.length > 0) {
+      setCommissionParts(partsToAdd);
+    }
+  }, [selectedPolicyId, selectedClient, agents, isLCA, isVIE]);
+
   const filteredClients = clients.filter(client => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
