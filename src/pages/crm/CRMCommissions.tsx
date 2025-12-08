@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { DollarSign, TrendingUp, Wallet, PiggyBank, Search, MoreHorizontal, CheckCircle, Clock, AlertCircle, Eye, Trash2, Loader2, Plus, Users, ChevronDown, ChevronRight, Percent, Pencil } from "lucide-react";
+import { DollarSign, TrendingUp, Wallet, PiggyBank, Search, MoreHorizontal, CheckCircle, Clock, AlertCircle, Eye, Trash2, Loader2, Plus, Users, ChevronDown, ChevronRight, Percent, Pencil, MinusCircle } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useCommissions, Commission } from "@/hooks/useCommissions";
@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import CommissionForm from "@/components/crm/CommissionForm";
+import DecommissionForm from "@/components/crm/DecommissionForm";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   due: { label: "À payer", color: "bg-amber-100 text-amber-800", icon: Clock },
@@ -31,6 +32,7 @@ const typeConfig: Record<string, { label: string; color: string }> = {
   renewal: { label: "Renouvellement", color: "bg-cyan-100 text-cyan-800" },
   bonus: { label: "Bonus", color: "bg-pink-100 text-pink-800" },
   gestion: { label: "Gestion", color: "bg-emerald-100 text-emerald-800" },
+  decommission: { label: "Décommission", color: "bg-red-100 text-red-800" },
 };
 
 export default function CRMCommissions() {
@@ -60,6 +62,7 @@ export default function CRMCommissions() {
   // Edit commission dialog state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingCommission, setEditingCommission] = useState<Commission | null>(null);
+  const [decommissionFormOpen, setDecommissionFormOpen] = useState(false);
   const [editAmount, setEditAmount] = useState<number>(0);
   const [editType, setEditType] = useState<string>("acquisition");
   const [editStatus, setEditStatus] = useState<string>("due");
@@ -294,10 +297,16 @@ export default function CRMCommissions() {
             </h1>
             <p className="text-muted-foreground">Suivez vos commissions et répartitions</p>
           </div>
-          <Button onClick={() => setCommissionFormOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Nouvelle commission
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setDecommissionFormOpen(true)} variant="outline" className="gap-2 border-destructive text-destructive hover:bg-destructive/10">
+              <MinusCircle className="h-4 w-4" />
+              Décommission
+            </Button>
+            <Button onClick={() => setCommissionFormOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nouvelle commission
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -833,6 +842,13 @@ export default function CRMCommissions() {
       <CommissionForm
         open={commissionFormOpen}
         onOpenChange={setCommissionFormOpen}
+        onSuccess={fetchCommissions}
+      />
+
+      {/* Decommission Form */}
+      <DecommissionForm
+        open={decommissionFormOpen}
+        onOpenChange={setDecommissionFormOpen}
         onSuccess={fetchCommissions}
       />
     </div>
