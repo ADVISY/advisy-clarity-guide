@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, User, Wallet, Briefcase } from "lucide-react";
-import { Collaborateur, CollaborateurFormData } from "@/hooks/useCollaborateurs";
+import { Loader2, User, Wallet, Briefcase, Users } from "lucide-react";
+import { Collaborateur, CollaborateurFormData, useCollaborateurs } from "@/hooks/useCollaborateurs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface CollaborateurFormProps {
@@ -32,6 +32,7 @@ const contractTypeOptions = [
 ];
 
 export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit }: CollaborateurFormProps) {
+  const { collaborateurs } = useCollaborateurs();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<CollaborateurFormData>({
     first_name: "",
@@ -40,6 +41,7 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
     mobile: "",
     profession: "",
     status: "actif",
+    manager_id: null,
     commission_rate: 0,
     commission_rate_lca: 0,
     commission_rate_vie: 0,
@@ -47,8 +49,15 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
     bonus_rate: 0,
     contract_type: "cdi",
     work_percentage: 100,
-    hire_date: ""
+    hire_date: "",
+    manager_commission_rate_lca: 0,
+    manager_commission_rate_vie: 0,
   });
+
+  // Filter managers (collaborateurs with profession "manager" or "direction")
+  const availableManagers = collaborateurs.filter(
+    c => c.id !== collaborateur?.id && (c.profession === 'manager' || c.profession === 'direction')
+  );
 
   useEffect(() => {
     if (collaborateur) {
@@ -59,6 +68,7 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
         mobile: collaborateur.mobile || "",
         profession: collaborateur.profession || "",
         status: collaborateur.status || "actif",
+        manager_id: collaborateur.manager_id || null,
         commission_rate: collaborateur.commission_rate || 0,
         commission_rate_lca: collaborateur.commission_rate_lca || 0,
         commission_rate_vie: collaborateur.commission_rate_vie || 0,
@@ -66,7 +76,9 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
         bonus_rate: collaborateur.bonus_rate || 0,
         contract_type: collaborateur.contract_type || "cdi",
         work_percentage: collaborateur.work_percentage || 100,
-        hire_date: collaborateur.hire_date || ""
+        hire_date: collaborateur.hire_date || "",
+        manager_commission_rate_lca: collaborateur.manager_commission_rate_lca || 0,
+        manager_commission_rate_vie: collaborateur.manager_commission_rate_vie || 0,
       });
     } else {
       setFormData({
@@ -76,6 +88,7 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
         mobile: "",
         profession: "",
         status: "actif",
+        manager_id: null,
         commission_rate: 0,
         commission_rate_lca: 0,
         commission_rate_vie: 0,
@@ -83,7 +96,9 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
         bonus_rate: 0,
         contract_type: "cdi",
         work_percentage: 100,
-        hire_date: ""
+        hire_date: "",
+        manager_commission_rate_lca: 0,
+        manager_commission_rate_vie: 0,
       });
     }
   }, [collaborateur, open]);
@@ -208,6 +223,33 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
                   </Select>
                 </div>
               </div>
+
+              {/* Manager Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="manager_id" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Manager attitré
+                </Label>
+                <Select
+                  value={formData.manager_id || "none"}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, manager_id: value === "none" ? null : value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Aucun manager" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Aucun manager</SelectItem>
+                    {availableManagers.map(manager => (
+                      <SelectItem key={manager.id} value={manager.id}>
+                        {manager.first_name} {manager.last_name} ({manager.profession})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Le manager reçoit une commission sur les affaires de son équipe
+                </p>
+              </div>
             </TabsContent>
 
             {/* Tab: Contrat */}
@@ -313,6 +355,51 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
                 </div>
               </div>
 
+              {/* Manager commission rates - only show if this person is a manager */}
+              {(formData.profession === 'manager' || formData.profession === 'direction') && (
+                <div className="p-4 border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 rounded-lg space-y-4">
+                  <p className="text-sm font-medium flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                    <Users className="h-4 w-4" />
+                    Commission sur l'équipe (Manager)
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="manager_commission_rate_lca" className="text-blue-600">
+                        Commission équipe LCA (%)
+                      </Label>
+                      <Input
+                        id="manager_commission_rate_lca"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.5"
+                        value={formData.manager_commission_rate_lca}
+                        onChange={(e) => setFormData(prev => ({ ...prev, manager_commission_rate_lca: Number(e.target.value) }))}
+                        className="border-blue-200 focus:border-blue-500"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="manager_commission_rate_vie" className="text-emerald-600">
+                        Commission équipe VIE (%)
+                      </Label>
+                      <Input
+                        id="manager_commission_rate_vie"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.5"
+                        value={formData.manager_commission_rate_vie}
+                        onChange={(e) => setFormData(prev => ({ ...prev, manager_commission_rate_vie: Number(e.target.value) }))}
+                        className="border-emerald-200 focus:border-emerald-500"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Pourcentage de la commission totale reversé au manager sur les affaires de son équipe
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="bonus_rate">Taux de bonus (%)</Label>
                 <Input
@@ -338,6 +425,14 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
                   <span className="font-medium text-blue-600">{formData.commission_rate_lca}%</span>
                   <span className="text-emerald-600">Commission VIE (3e pilier):</span>
                   <span className="font-medium text-emerald-600">{formData.commission_rate_vie}%</span>
+                  {(formData.profession === 'manager' || formData.profession === 'direction') && (
+                    <>
+                      <span className="text-amber-600">Commission équipe LCA:</span>
+                      <span className="font-medium text-amber-600">{formData.manager_commission_rate_lca}%</span>
+                      <span className="text-amber-600">Commission équipe VIE:</span>
+                      <span className="font-medium text-amber-600">{formData.manager_commission_rate_vie}%</span>
+                    </>
+                  )}
                   <span className="text-muted-foreground">Bonus:</span>
                   <span className="font-medium">{formData.bonus_rate}%</span>
                 </div>

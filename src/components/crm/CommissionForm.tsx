@@ -36,6 +36,7 @@ interface PartAgent {
   agent_name: string;
   rate: number;
   amount: number;
+  isManager?: boolean;
 }
 
 interface CommissionFormProps {
@@ -49,7 +50,7 @@ export default function CommissionForm({ open, onOpenChange, onSuccess }: Commis
   const { policies, fetchPolicies } = usePolicies();
   const { createCommission } = useCommissions();
   const { addMultipleParts } = useCommissionParts();
-  const { agents } = useAgents();
+  const { agents, getManagerForAgent } = useAgents();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [clientOpen, setClientOpen] = useState(false);
@@ -142,10 +143,39 @@ export default function CommissionForm({ open, onOpenChange, onSuccess }: Commis
       agent_id: selectedAgentId,
       agent_name: getAgentName(agent),
       rate: newPartRate,
-      amount: (totalAmount * newPartRate) / 100
+      amount: (totalAmount * newPartRate) / 100,
+      isManager: false
     };
 
-    setCommissionParts(prev => [...prev, newPart]);
+    let partsToAdd: PartAgent[] = [newPart];
+
+    // Auto-add manager commission if agent has a manager
+    const manager = getManagerForAgent(selectedAgentId);
+    if (manager && !commissionParts.some(p => p.agent_id === manager.id)) {
+      // Calculate manager's rate based on product type
+      let managerRate = 0;
+      if (isLCA && manager.manager_commission_rate_lca) {
+        managerRate = manager.manager_commission_rate_lca;
+      } else if (isVIE && manager.manager_commission_rate_vie) {
+        managerRate = manager.manager_commission_rate_vie;
+      }
+      
+      if (managerRate > 0) {
+        const totalRateWithManager = newPartRate + managerRate;
+        if (totalRateWithManager <= remainingRate) {
+          const managerPart: PartAgent = {
+            agent_id: manager.id,
+            agent_name: `${getAgentName(manager)} (Manager)`,
+            rate: managerRate,
+            amount: (totalAmount * managerRate) / 100,
+            isManager: true
+          };
+          partsToAdd.push(managerPart);
+        }
+      }
+    }
+
+    setCommissionParts(prev => [...prev, ...partsToAdd]);
     setSelectedAgentId("");
     setNewPartRate(0);
   };
@@ -440,10 +470,20 @@ export default function CommissionForm({ open, onOpenChange, onSuccess }: Commis
                     {commissionParts.map((part) => (
                       <div 
                         key={part.agent_id} 
-                        className="flex items-center gap-3 p-3 border rounded-lg bg-card"
+                        className={cn(
+                          "flex items-center gap-3 p-3 border rounded-lg",
+                          part.isManager 
+                            ? "bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800" 
+                            : "bg-card"
+                        )}
                       >
                         <div className="flex-1">
-                          <p className="font-medium">{part.agent_name}</p>
+                          <p className={cn("font-medium", part.isManager && "text-amber-700 dark:text-amber-400")}>
+                            {part.agent_name}
+                          </p>
+                          {part.isManager && (
+                            <p className="text-xs text-amber-600">Commission équipe automatique</p>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           <Input
