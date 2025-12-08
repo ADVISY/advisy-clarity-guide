@@ -185,6 +185,9 @@ export type Database = {
           id: string
           is_company: boolean | null
           last_name: string | null
+          manager_commission_rate_lca: number | null
+          manager_commission_rate_vie: number | null
+          manager_id: string | null
           mobile: string | null
           nationality: string | null
           permit_type: string | null
@@ -224,6 +227,9 @@ export type Database = {
           id?: string
           is_company?: boolean | null
           last_name?: string | null
+          manager_commission_rate_lca?: number | null
+          manager_commission_rate_vie?: number | null
+          manager_id?: string | null
           mobile?: string | null
           nationality?: string | null
           permit_type?: string | null
@@ -263,6 +269,9 @@ export type Database = {
           id?: string
           is_company?: boolean | null
           last_name?: string | null
+          manager_commission_rate_lca?: number | null
+          manager_commission_rate_vie?: number | null
+          manager_id?: string | null
           mobile?: string | null
           nationality?: string | null
           permit_type?: string | null
@@ -283,6 +292,13 @@ export type Database = {
             columns: ["assigned_agent_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {

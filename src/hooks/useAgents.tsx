@@ -7,9 +7,13 @@ export interface Agent {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
+  profession: string | null;
   commission_rate: number | null;
   commission_rate_lca: number | null;
   commission_rate_vie: number | null;
+  manager_id: string | null;
+  manager_commission_rate_lca: number | null;
+  manager_commission_rate_vie: number | null;
 }
 
 export function useAgents() {
@@ -25,7 +29,7 @@ export function useAgents() {
         // Récupérer les collaborateurs depuis la table clients (type_adresse = 'collaborateur')
         const { data, error } = await supabase
           .from('clients')
-          .select('id, first_name, last_name, email, commission_rate, commission_rate_lca, commission_rate_vie')
+          .select('id, first_name, last_name, email, profession, commission_rate, commission_rate_lca, commission_rate_vie, manager_id, manager_commission_rate_lca, manager_commission_rate_vie')
           .eq('type_adresse', 'collaborateur')
           .order('first_name', { ascending: true });
 
@@ -45,5 +49,12 @@ export function useAgents() {
     fetchAgents();
   }, []);
 
-  return { agents, loading };
+  // Helper to get manager for an agent
+  const getManagerForAgent = (agentId: string): Agent | null => {
+    const agent = agents.find(a => a.id === agentId);
+    if (!agent || !agent.manager_id) return null;
+    return agents.find(a => a.id === agent.manager_id) || null;
+  };
+
+  return { agents, loading, getManagerForAgent };
 }

@@ -11,6 +11,9 @@ export interface Collaborateur {
   status: string | null;
   profession: string | null;
   created_at: string;
+  // Manager
+  manager_id: string | null;
+  manager?: Collaborateur | null;
   // Financial fields
   commission_rate: number | null;
   commission_rate_lca: number | null;
@@ -20,6 +23,9 @@ export interface Collaborateur {
   contract_type: string | null;
   work_percentage: number | null;
   hire_date: string | null;
+  // Manager commission rates (what the manager earns from team)
+  manager_commission_rate_lca: number | null;
+  manager_commission_rate_vie: number | null;
 }
 
 export type CollaborateurFormData = {
@@ -29,6 +35,7 @@ export type CollaborateurFormData = {
   mobile?: string;
   profession?: string;
   status?: string;
+  manager_id?: string | null;
   // Financial fields
   commission_rate?: number;
   commission_rate_lca?: number;
@@ -38,6 +45,9 @@ export type CollaborateurFormData = {
   contract_type?: string;
   work_percentage?: number;
   hire_date?: string;
+  // Manager commission rates
+  manager_commission_rate_lca?: number;
+  manager_commission_rate_vie?: number;
 };
 
 export function useCollaborateurs() {
@@ -51,12 +61,21 @@ export function useCollaborateurs() {
       
       const { data, error } = await supabase
         .from('clients')
-        .select('id, first_name, last_name, email, mobile, status, profession, created_at, commission_rate, commission_rate_lca, commission_rate_vie, fixed_salary, bonus_rate, contract_type, work_percentage, hire_date')
+        .select('id, first_name, last_name, email, mobile, status, profession, created_at, commission_rate, commission_rate_lca, commission_rate_vie, fixed_salary, bonus_rate, contract_type, work_percentage, hire_date, manager_id, manager_commission_rate_lca, manager_commission_rate_vie')
         .eq('type_adresse', 'collaborateur')
         .order('first_name', { ascending: true });
 
       if (error) throw error;
-      setCollaborateurs(data || []);
+      
+      // Fetch manager info for each collaborator that has one
+      const collaborateursWithManager = (data || []).map(collab => {
+        const manager = collab.manager_id 
+          ? data?.find(c => c.id === collab.manager_id) || null
+          : null;
+        return { ...collab, manager };
+      });
+      
+      setCollaborateurs(collaborateursWithManager);
     } catch (error: any) {
       toast({
         title: "Erreur",
