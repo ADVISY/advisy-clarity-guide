@@ -7,6 +7,9 @@ export interface Agent {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
+  commission_rate: number | null;
+  commission_rate_lca: number | null;
+  commission_rate_vie: number | null;
 }
 
 export function useAgents() {
@@ -22,7 +25,7 @@ export function useAgents() {
         // Récupérer les collaborateurs depuis la table clients (type_adresse = 'collaborateur')
         const { data, error } = await supabase
           .from('clients')
-          .select('id, first_name, last_name, email')
+          .select('id, first_name, last_name, email, commission_rate, commission_rate_lca, commission_rate_vie')
           .eq('type_adresse', 'collaborateur')
           .order('first_name', { ascending: true });
 

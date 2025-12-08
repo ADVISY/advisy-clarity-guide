@@ -41,6 +41,8 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
     profession: "",
     status: "actif",
     commission_rate: 0,
+    commission_rate_lca: 0,
+    commission_rate_vie: 0,
     fixed_salary: 0,
     bonus_rate: 0,
     contract_type: "cdi",
@@ -58,6 +60,8 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
         profession: collaborateur.profession || "",
         status: collaborateur.status || "actif",
         commission_rate: collaborateur.commission_rate || 0,
+        commission_rate_lca: collaborateur.commission_rate_lca || 0,
+        commission_rate_vie: collaborateur.commission_rate_vie || 0,
         fixed_salary: collaborateur.fixed_salary || 0,
         bonus_rate: collaborateur.bonus_rate || 0,
         contract_type: collaborateur.contract_type || "cdi",
@@ -73,6 +77,8 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
         profession: "",
         status: "actif",
         commission_rate: 0,
+        commission_rate_lca: 0,
+        commission_rate_vie: 0,
         fixed_salary: 0,
         bonus_rate: 0,
         contract_type: "cdi",
@@ -264,9 +270,9 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="commission_rate">Taux de commission (%)</Label>
+                  <Label htmlFor="commission_rate">Commission générale (%)</Label>
                   <Input
                     id="commission_rate"
                     type="number"
@@ -279,17 +285,46 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="bonus_rate">Taux de bonus (%)</Label>
+                  <Label htmlFor="commission_rate_lca" className="text-blue-600">Commission LCA (%)</Label>
                   <Input
-                    id="bonus_rate"
+                    id="commission_rate_lca"
                     type="number"
                     min="0"
                     max="100"
                     step="0.5"
-                    value={formData.bonus_rate}
-                    onChange={(e) => setFormData(prev => ({ ...prev, bonus_rate: Number(e.target.value) }))}
+                    value={formData.commission_rate_lca}
+                    onChange={(e) => setFormData(prev => ({ ...prev, commission_rate_lca: Number(e.target.value) }))}
+                    className="border-blue-200 focus:border-blue-500"
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="commission_rate_vie" className="text-emerald-600">Commission VIE (%)</Label>
+                  <Input
+                    id="commission_rate_vie"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.5"
+                    value={formData.commission_rate_vie}
+                    onChange={(e) => setFormData(prev => ({ ...prev, commission_rate_vie: Number(e.target.value) }))}
+                    className="border-emerald-200 focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bonus_rate">Taux de bonus (%)</Label>
+                <Input
+                  id="bonus_rate"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  value={formData.bonus_rate}
+                  onChange={(e) => setFormData(prev => ({ ...prev, bonus_rate: Number(e.target.value) }))}
+                  className="w-1/3"
+                />
               </div>
 
               <div className="p-4 bg-muted/50 rounded-lg space-y-2">
@@ -297,8 +332,12 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <span className="text-muted-foreground">Salaire fixe:</span>
                   <span className="font-medium">{formData.fixed_salary?.toLocaleString('fr-CH')} CHF/mois</span>
-                  <span className="text-muted-foreground">Commission:</span>
-                  <span className="font-medium">{formData.commission_rate}% des affaires</span>
+                  <span className="text-muted-foreground">Commission générale:</span>
+                  <span className="font-medium">{formData.commission_rate}%</span>
+                  <span className="text-blue-600">Commission LCA:</span>
+                  <span className="font-medium text-blue-600">{formData.commission_rate_lca}%</span>
+                  <span className="text-emerald-600">Commission VIE (3e pilier):</span>
+                  <span className="font-medium text-emerald-600">{formData.commission_rate_vie}%</span>
                   <span className="text-muted-foreground">Bonus:</span>
                   <span className="font-medium">{formData.bonus_rate}%</span>
                 </div>

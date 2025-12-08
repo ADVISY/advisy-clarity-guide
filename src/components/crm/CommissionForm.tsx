@@ -72,6 +72,13 @@ export default function CommissionForm({ open, onOpenChange, onSuccess }: Commis
       notes: "",
     },
   });
+  
+  // Get commission type from selected policy (LCA or VIE)
+  const selectedPolicyId = form.watch("policy_id");
+  const selectedPolicy = policies.find(p => p.id === selectedPolicyId);
+  const productCategory = selectedPolicy?.product?.category?.toLowerCase() || "";
+  const isLCA = productCategory.includes("health") || productCategory.includes("santé") || productCategory.includes("lca");
+  const isVIE = productCategory.includes("life") || productCategory.includes("vie") || productCategory.includes("3e pilier") || productCategory.includes("pilier");
 
   const totalAmount = form.watch("amount") || 0;
   const totalAssignedRate = commissionParts.reduce((sum, p) => sum + p.rate, 0);
@@ -472,14 +479,41 @@ export default function CommissionForm({ open, onOpenChange, onSuccess }: Commis
                   <div className="flex items-end gap-3 pt-2 border-t">
                     <div className="flex-1">
                       <Label className="text-xs mb-1.5 block">Collaborateur</Label>
-                      <Select value={selectedAgentId} onValueChange={setSelectedAgentId}>
+                      <Select 
+                        value={selectedAgentId} 
+                        onValueChange={(agentId) => {
+                          setSelectedAgentId(agentId);
+                          // Auto-fill rate based on agent's configured rates
+                          const agent = agents.find(a => a.id === agentId);
+                          if (agent) {
+                            let defaultRate = agent.commission_rate || 0;
+                            // Use specific rate based on product type
+                            if (isLCA && agent.commission_rate_lca) {
+                              defaultRate = agent.commission_rate_lca;
+                            } else if (isVIE && agent.commission_rate_vie) {
+                              defaultRate = agent.commission_rate_vie;
+                            }
+                            // Cap at remaining rate
+                            setNewPartRate(Math.min(defaultRate, remainingRate));
+                          }
+                        }}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Sélectionner..." />
                         </SelectTrigger>
                         <SelectContent>
                           {availableAgents.map((agent) => (
                             <SelectItem key={agent.id} value={agent.id}>
-                              {getAgentName(agent)}
+                              <div className="flex items-center justify-between w-full">
+                                <span>{getAgentName(agent)}</span>
+                                {(isLCA && agent.commission_rate_lca) ? (
+                                  <span className="text-xs text-blue-600 ml-2">({agent.commission_rate_lca}% LCA)</span>
+                                ) : (isVIE && agent.commission_rate_vie) ? (
+                                  <span className="text-xs text-emerald-600 ml-2">({agent.commission_rate_vie}% VIE)</span>
+                                ) : agent.commission_rate ? (
+                                  <span className="text-xs text-muted-foreground ml-2">({agent.commission_rate}%)</span>
+                                ) : null}
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
