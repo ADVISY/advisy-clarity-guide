@@ -169,6 +169,8 @@ export type Database = {
           city: string | null
           civil_status: string | null
           commission_rate: number | null
+          commission_rate_lca: number | null
+          commission_rate_vie: number | null
           company_name: string | null
           contract_type: string | null
           country: string | null
@@ -206,6 +208,8 @@ export type Database = {
           city?: string | null
           civil_status?: string | null
           commission_rate?: number | null
+          commission_rate_lca?: number | null
+          commission_rate_vie?: number | null
           company_name?: string | null
           contract_type?: string | null
           country?: string | null
@@ -243,6 +247,8 @@ export type Database = {
           city?: string | null
           civil_status?: string | null
           commission_rate?: number | null
+          commission_rate_lca?: number | null
+          commission_rate_vie?: number | null
           company_name?: string | null
           contract_type?: string | null
           country?: string | null
