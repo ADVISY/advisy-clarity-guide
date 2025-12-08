@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, User, Wallet, Briefcase, Users } from "lucide-react";
+import { Loader2, User, Wallet, Briefcase, Users, PiggyBank } from "lucide-react";
 import { Collaborateur, CollaborateurFormData, useCollaborateurs } from "@/hooks/useCollaborateurs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -52,6 +52,7 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
     hire_date: "",
     manager_commission_rate_lca: 0,
     manager_commission_rate_vie: 0,
+    reserve_rate: 0,
   });
 
   // Filter managers (collaborateurs with profession "manager" or "direction") - case insensitive
@@ -81,6 +82,7 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
         hire_date: collaborateur.hire_date || "",
         manager_commission_rate_lca: collaborateur.manager_commission_rate_lca || 0,
         manager_commission_rate_vie: collaborateur.manager_commission_rate_vie || 0,
+        reserve_rate: collaborateur.reserve_rate || 0,
       });
     } else {
       setFormData({
@@ -101,6 +103,7 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
         hire_date: "",
         manager_commission_rate_lca: 0,
         manager_commission_rate_vie: 0,
+        reserve_rate: 0,
       });
     }
   }, [collaborateur, open]);
@@ -421,18 +424,42 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="bonus_rate">Taux de bonus (%)</Label>
-                <Input
-                  id="bonus_rate"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.5"
-                  value={formData.bonus_rate}
-                  onChange={(e) => setFormData(prev => ({ ...prev, bonus_rate: Number(e.target.value) }))}
-                  className="w-1/3"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bonus_rate">Taux de bonus (%)</Label>
+                  <Input
+                    id="bonus_rate"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.5"
+                    value={formData.bonus_rate}
+                    onChange={(e) => setFormData(prev => ({ ...prev, bonus_rate: Number(e.target.value) }))}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="reserve_rate" className="flex items-center gap-2">
+                    <PiggyBank className="h-4 w-4 text-orange-500" />
+                    Compte de réserve (%)
+                  </Label>
+                  <Select
+                    value={String(formData.reserve_rate || 0)}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, reserve_rate: Number(value) }))}
+                  >
+                    <SelectTrigger className="border-orange-200 focus:border-orange-500">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">0% - Pas de réserve</SelectItem>
+                      <SelectItem value="10">10% - Réserve standard</SelectItem>
+                      <SelectItem value="20">20% - Réserve élevée</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Pourcentage retenu sur chaque commission en cas de décommissionnement
+                  </p>
+                </div>
               </div>
 
               <div className="p-4 bg-muted/50 rounded-lg space-y-2">
@@ -456,6 +483,8 @@ export function CollaborateurForm({ open, onOpenChange, collaborateur, onSubmit 
                   )}
                   <span className="text-muted-foreground">Bonus:</span>
                   <span className="font-medium">{formData.bonus_rate}%</span>
+                  <span className="text-orange-600">Compte de réserve:</span>
+                  <span className="font-medium text-orange-600">{formData.reserve_rate}%</span>
                 </div>
               </div>
             </TabsContent>
