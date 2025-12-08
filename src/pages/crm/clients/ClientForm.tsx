@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useClients } from "@/hooks/useClients";
 import { useAgents } from "@/hooks/useAgents";
+import { useCrmEmails } from "@/hooks/useCrmEmails";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,6 +59,7 @@ export default function ClientForm() {
   const navigate = useNavigate();
   const { createClient, updateClient, getClientById } = useClients();
   const { agents, loading: agentsLoading, getManagerForAgent } = useAgents();
+  const { sendWelcomeEmail } = useCrmEmails();
   const [loading, setLoading] = useState(false);
   const [tagsInput, setTagsInput] = useState("");
   const [selectedManager, setSelectedManager] = useState<{ id: string; name: string } | null>(null);
@@ -198,6 +200,11 @@ export default function ClientForm() {
     } else {
       const { data: newClient, error } = await createClient(clientData);
       if (!error && newClient) {
+        // Send welcome email for new clients (not collaborateurs/partenaires)
+        if (clientData.type_adresse === "client" && clientData.email) {
+          const clientName = `${clientData.first_name} ${clientData.last_name}`.trim();
+          sendWelcomeEmail(clientData.email, clientName);
+        }
         navigate(`/crm/clients/${newClient.id}`);
       }
     }
