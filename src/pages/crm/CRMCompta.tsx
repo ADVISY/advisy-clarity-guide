@@ -41,11 +41,6 @@ export default function CRMCompta() {
   const [selectedAgentForPreview, setSelectedAgentForPreview] = useState<Collaborateur | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
-  // Debug logging
-  console.log("CRMCompta - collaborateurs:", collaborateurs.length, "loadingCollaborateurs:", loadingCollaborateurs);
-  console.log("CRMCompta - selectedCollaborateur:", selectedCollaborateur);
-  console.log("CRMCompta - dateDebut:", dateDebut, "dateFin:", dateFin);
-
   // Filter commissions by date range
   const filteredCommissions = useMemo(() => {
     if (!dateDebut || !dateFin) return [];
