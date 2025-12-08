@@ -39,6 +39,15 @@ import CRMParametres from "./pages/crm/CRMParametres";
 import CRMCompagnies from "./pages/crm/CRMCompagnies";
 import CRMCompta from "./pages/crm/CRMCompta";
 
+// Client Portal
+import ClientLayout from "./pages/client/ClientLayout";
+import ClientDashboard from "./pages/client/ClientDashboard";
+import ClientContracts from "./pages/client/ClientContracts";
+import ClientDocuments from "./pages/client/ClientDocuments";
+import ClientMessages from "./pages/client/ClientMessages";
+import ClientNotifications from "./pages/client/ClientNotifications";
+import ClientProfile from "./pages/client/ClientProfile";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -94,6 +103,16 @@ const App = () => (
             <Route path="parametres" element={<CRMParametres />} />
             <Route path="compagnies" element={<CRMCompagnies />} />
             <Route path="compta" element={<CRMCompta />} />
+          </Route>
+          
+          {/* Client Portal Routes */}
+          <Route path="/espace-client" element={<ClientLayout />}>
+            <Route index element={<ClientDashboard />} />
+            <Route path="contrats" element={<ClientContracts />} />
+            <Route path="documents" element={<ClientDocuments />} />
+            <Route path="messages" element={<ClientMessages />} />
+            <Route path="notifications" element={<ClientNotifications />} />
+            <Route path="profil" element={<ClientProfile />} />
           </Route>
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
