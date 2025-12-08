@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { 
   Users, FileText, DollarSign, TrendingUp, 
-  MessageSquare, Loader2, BarChart3
+  MessageSquare, Loader2, BarChart3, Heart, Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMemo, useState } from "react";
@@ -21,6 +21,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Legend,
 } from "recharts";
 
 export default function CRMDashboard() {
@@ -124,28 +125,120 @@ export default function CRMDashboard() {
     }));
   }, [recentActivities]);
 
-  // Monthly contracts data for chart
-  const monthlyContracts = useMemo(() => {
+  // Monthly LCA vs VIE contracts data
+  const monthlyLcaVie = useMemo(() => {
     const currentYear = new Date().getFullYear();
-    const months = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 
-                    'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+    const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 
+                    'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
     
     const data = months.map((month) => ({
       month,
-      value: 0,
+      lca: 0,
+      vie: 0,
     }));
 
     policies.forEach(p => {
       const date = new Date(p.created_at);
       if (date.getFullYear() === currentYear) {
-        data[date.getMonth()].value += 1;
+        const productType = (p.product_type || '').toLowerCase();
+        // LCA = complementary health (Maladie complémentaire)
+        if (productType.includes('lca') || productType.includes('complémentaire') || productType.includes('maladie')) {
+          data[date.getMonth()].lca += 1;
+        }
+        // VIE = 3e pilier / life insurance
+        if (productType.includes('vie') || productType.includes('3') || productType.includes('pilier')) {
+          data[date.getMonth()].vie += 1;
+        }
       }
     });
 
     return data;
   }, [policies]);
 
+  // Contracts by manager/team
+  const contractsByManager = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
+    
+    // Get all managers (collaborators who have other collaborators assigned to them)
+    const managers = clients.filter(c => c.type_adresse === 'collaborateur' && c.manager_id === null);
+    
+    // Get all collaborators with their managers
+    const collaborators = clients.filter(c => c.type_adresse === 'collaborateur');
+    
+    // Build manager → team members map
+    const managerTeams: { [managerId: string]: string[] } = {};
+    managers.forEach(m => {
+      managerTeams[m.id] = [m.id]; // include manager themselves
+    });
+    collaborators.forEach(c => {
+      if (c.manager_id && managerTeams[c.manager_id]) {
+        managerTeams[c.manager_id].push(c.id);
+      }
+    });
+
+    // Count contracts per manager/team
+    const result = managers.map(manager => {
+      const teamMemberIds = managerTeams[manager.id] || [manager.id];
+      
+      let monthCount = 0;
+      let yearCount = 0;
+      
+      policies.forEach(p => {
+        const policyClient = clients.find(c => c.id === p.client_id);
+        // Check if the policy's assigned agent is in this manager's team
+        if (policyClient?.assigned_agent_id && teamMemberIds.includes(policyClient.assigned_agent_id)) {
+          const date = new Date(p.created_at);
+          if (date.getFullYear() === currentYear) {
+            yearCount++;
+            if (date.getMonth() === currentMonth) {
+              monthCount++;
+            }
+          }
+        }
+      });
+
+      return {
+        name: `${manager.first_name || ''} ${manager.last_name || ''}`.trim() || 'Manager',
+        mois: monthCount,
+        annee: yearCount,
+      };
+    }).filter(m => m.mois > 0 || m.annee > 0);
+
+    return result;
+  }, [clients, policies]);
+
+  // Financial summary
+  const financialSummary = useMemo(() => {
+    const collaborators = clients.filter(c => c.type_adresse === 'collaborateur');
+    
+    // Total commissions received (CA)
+    const totalCommissions = commissions.reduce((sum, c) => sum + (c.amount || 0), 0);
+    
+    // Total salaries
+    const totalSalaries = collaborators.reduce((sum, c) => sum + (c.fixed_salary || 0), 0);
+    
+    // Social charges (Swiss rates: AVS 5.05%, AC 1.1%, LPP ~7%, AANP 0.5% = ~13.65%)
+    const socialChargesRate = 0.1365;
+    const socialCharges = totalSalaries * socialChargesRate;
+    
+    // Total charges
+    const totalCharges = totalSalaries + socialCharges;
+    
+    // Benefit = CA - Charges
+    const benefit = totalCommissions - totalCharges;
+
+    return {
+      ca: totalCommissions,
+      salaries: totalSalaries,
+      socialCharges,
+      totalCharges,
+      benefit,
+    };
+  }, [clients, commissions]);
+
   const currentYear = new Date().getFullYear();
+  const currentMonthName = format(new Date(), 'MMMM yyyy', { locale: fr });
 
   return (
     <div className="space-y-6">
@@ -172,45 +265,35 @@ export default function CRMDashboard() {
       )}
 
       {!loading && (
-        <>
-          {/* Main 3-column layout */}
-          <div className={cn("grid gap-6", isAdmin ? "lg:grid-cols-[1fr_400px]" : "")}>
-            
-            {/* Main Column - Chart */}
+        <div className="space-y-6">
+          {/* Row 1: LCA/VIE Chart + Team Performance */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* LCA vs VIE Chart */}
             <Card className="border shadow-sm bg-card">
               <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4 text-emerald-500" />
-                    <CardTitle className="text-sm font-semibold">Statistiques des contrats signés</CardTitle>
-                    <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 text-xs font-medium">
-                      {currentYear}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">Mes contrats</span>
-                    <Switch 
-                      checked={showMyContracts} 
-                      onCheckedChange={setShowMyContracts}
-                    />
-                  </div>
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-sm font-semibold">Affaires LCA vs VIE</CardTitle>
+                  <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-xs font-medium">
+                    {currentYear}
+                  </span>
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="h-[350px]">
+                <div className="h-[280px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={monthlyContracts} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
+                    <BarChart data={monthlyLcaVie} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                       <XAxis 
                         dataKey="month" 
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                        tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
                       />
                       <YAxis 
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                        tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
                       />
                       <Tooltip 
                         contentStyle={{
@@ -219,41 +302,158 @@ export default function CRMDashboard() {
                           borderRadius: '8px',
                           boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                         }}
-                        labelStyle={{ fontWeight: 600, marginBottom: 4 }}
-                        formatter={(value: number) => [`${value} Contrats`, `Signé ${currentYear}`]}
                         cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
                       />
+                      <Legend 
+                        wrapperStyle={{ paddingTop: '10px' }}
+                        formatter={(value) => <span className="text-xs">{value === 'lca' ? 'Maladie (LCA)' : '3e Pilier (VIE)'}</span>}
+                      />
                       <Bar 
-                        dataKey="value" 
-                        fill="hsl(142 76% 45%)"
+                        dataKey="lca" 
+                        name="lca"
+                        fill="hsl(340 82% 52%)"
                         radius={[4, 4, 0, 0]}
-                        maxBarSize={50}
+                        maxBarSize={30}
+                      />
+                      <Bar 
+                        dataKey="vie" 
+                        name="vie"
+                        fill="hsl(217 91% 60%)"
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={30}
                       />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
+                {/* Legend summary */}
+                <div className="flex justify-center gap-6 mt-2 pt-2 border-t">
+                  <div className="flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-rose-500" />
+                    <span className="text-sm font-medium">LCA: {monthlyLcaVie.reduce((s, m) => s + m.lca, 0)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-blue-500" />
+                    <span className="text-sm font-medium">VIE: {monthlyLcaVie.reduce((s, m) => s + m.vie, 0)}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-                {/* Summary stats below chart */}
+            {/* Contracts by Manager/Team */}
+            <Card className="border shadow-sm bg-card">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-violet-500" />
+                  <CardTitle className="text-sm font-semibold">Contrats par équipe</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                {contractsByManager.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground text-sm">
+                    Aucune donnée d'équipe disponible
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-2 text-xs font-medium text-muted-foreground pb-2 border-b">
+                      <span>Manager</span>
+                      <span className="text-center">Ce mois</span>
+                      <span className="text-center">Cette année</span>
+                    </div>
+                    {contractsByManager.map((manager, i) => (
+                      <div key={i} className="grid grid-cols-3 gap-2 items-center py-2 hover:bg-muted/30 rounded-lg px-2 transition-colors">
+                        <span className="text-sm font-medium truncate">{manager.name}</span>
+                        <div className="text-center">
+                          <span className="inline-flex items-center justify-center w-10 h-8 rounded-lg bg-violet-100 text-violet-700 font-bold text-sm">
+                            {manager.mois}
+                          </span>
+                        </div>
+                        <div className="text-center">
+                          <span className="inline-flex items-center justify-center w-10 h-8 rounded-lg bg-emerald-100 text-emerald-700 font-bold text-sm">
+                            {manager.annee}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Row 2: Financial Summary + Recent Activities */}
+          <div className={cn("grid gap-6", isAdmin ? "lg:grid-cols-[1fr_400px]" : "")}>
+            {/* Financial Summary */}
+            <Card className="border shadow-sm bg-card">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-amber-500" />
+                  <CardTitle className="text-sm font-semibold">Résumé financier</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                  {/* CA */}
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
+                    <p className="text-xs opacity-80 mb-1">Chiffre d'affaires</p>
+                    <p className="text-xl font-bold">{formatCurrency(financialSummary.ca)}</p>
+                    <p className="text-[10px] opacity-70">CHF</p>
+                  </div>
+                  
+                  {/* Salaries */}
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                    <p className="text-xs opacity-80 mb-1">Salaires</p>
+                    <p className="text-xl font-bold">{formatCurrency(financialSummary.salaries)}</p>
+                    <p className="text-[10px] opacity-70">CHF/mois</p>
+                  </div>
+                  
+                  {/* Social charges */}
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+                    <p className="text-xs opacity-80 mb-1">Charges sociales</p>
+                    <p className="text-xl font-bold">{formatCurrency(financialSummary.socialCharges)}</p>
+                    <p className="text-[10px] opacity-70">~13.65%</p>
+                  </div>
+                  
+                  {/* Total charges */}
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-rose-500 to-rose-600 text-white">
+                    <p className="text-xs opacity-80 mb-1">Total charges</p>
+                    <p className="text-xl font-bold">{formatCurrency(financialSummary.totalCharges)}</p>
+                    <p className="text-[10px] opacity-70">CHF</p>
+                  </div>
+                  
+                  {/* Benefit */}
+                  <div className={cn(
+                    "p-4 rounded-xl text-white",
+                    financialSummary.benefit >= 0 
+                      ? "bg-gradient-to-br from-green-500 to-green-600" 
+                      : "bg-gradient-to-br from-red-500 to-red-600"
+                  )}>
+                    <p className="text-xs opacity-80 mb-1">Bénéfice</p>
+                    <p className="text-xl font-bold">{formatCurrency(financialSummary.benefit)}</p>
+                    <p className="text-[10px] opacity-70">CA - Charges</p>
+                  </div>
+                </div>
+
+                {/* Summary stats */}
                 <div className="grid grid-cols-4 gap-3 mt-4 pt-4 border-t">
-                  <div className="text-center p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-                    <Users className="h-5 w-5 mx-auto mb-1 opacity-80" />
+                  <div className="text-center p-3 rounded-xl bg-muted/50">
+                    <Users className="h-5 w-5 mx-auto mb-1 text-blue-500" />
                     <p className="text-lg font-bold">{companyTotals.clientsCount}</p>
-                    <p className="text-[10px] opacity-80">Clients</p>
+                    <p className="text-[10px] text-muted-foreground">Clients</p>
                   </div>
-                  <div className="text-center p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
-                    <FileText className="h-5 w-5 mx-auto mb-1 opacity-80" />
+                  <div className="text-center p-3 rounded-xl bg-muted/50">
+                    <FileText className="h-5 w-5 mx-auto mb-1 text-emerald-500" />
                     <p className="text-lg font-bold">{companyTotals.contractsCount}</p>
-                    <p className="text-[10px] opacity-80">Contrats</p>
+                    <p className="text-[10px] text-muted-foreground">Contrats</p>
                   </div>
-                  <div className="text-center p-3 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white">
-                    <DollarSign className="h-5 w-5 mx-auto mb-1 opacity-80" />
+                  <div className="text-center p-3 rounded-xl bg-muted/50">
+                    <DollarSign className="h-5 w-5 mx-auto mb-1 text-amber-500" />
                     <p className="text-lg font-bold">{formatCurrency(companyTotals.totalCommissions)}</p>
-                    <p className="text-[10px] opacity-80">Commissions</p>
+                    <p className="text-[10px] text-muted-foreground">Commissions</p>
                   </div>
-                  <div className="text-center p-3 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white">
-                    <TrendingUp className="h-5 w-5 mx-auto mb-1 opacity-80" />
+                  <div className="text-center p-3 rounded-xl bg-muted/50">
+                    <TrendingUp className="h-5 w-5 mx-auto mb-1 text-violet-500" />
                     <p className="text-lg font-bold">{formatCurrency(companyTotals.totalPremiumsMonthly)}</p>
-                    <p className="text-[10px] opacity-80">Primes/mois</p>
+                    <p className="text-[10px] text-muted-foreground">Primes/mois</p>
                   </div>
                 </div>
               </CardContent>
@@ -269,7 +469,7 @@ export default function CRMDashboard() {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                  <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
                     {groupedActivities.length === 0 ? (
                       <p className="text-sm text-muted-foreground text-center py-8">
                         Aucune activité récente
@@ -320,7 +520,7 @@ export default function CRMDashboard() {
               </Card>
             )}
           </div>
-        </>
+        </div>
       )}
     </div>
   );
