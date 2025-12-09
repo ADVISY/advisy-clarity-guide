@@ -695,11 +695,11 @@ const handler = async (req: Request): Promise<Response> => {
 
         createdUserId = newUser?.user?.id || null;
 
-        // Assign 'client' role
+        // Assign 'client' role (ignore if already exists from trigger)
         if (createdUserId) {
           const { error: roleError } = await supabaseAdmin
             .from('user_roles')
-            .insert({ user_id: createdUserId, role: 'client' });
+            .upsert({ user_id: createdUserId, role: 'client' }, { onConflict: 'user_id,role' });
 
           if (roleError) {
             console.error("Error assigning role:", roleError);
@@ -729,9 +729,38 @@ const handler = async (req: Request): Promise<Response> => {
 
         console.log(`User account created for ${clientEmail}`);
       } else {
-        console.log(`User already exists for ${clientEmail}, skipping account creation`);
+        console.log(`User already exists for ${clientEmail}, resetting password`);
+        
+        // Reset password for existing user so they receive new credentials
+        const newTemporaryPassword = generateTemporaryPassword();
+        const { error: resetError } = await supabaseAdmin.auth.admin.updateUserById(
+          existingUser.id,
+          { password: newTemporaryPassword }
+        );
+
+        if (resetError) {
+          console.error("Error resetting password:", resetError);
+        } else {
+          console.log(`Password reset for existing user ${clientEmail}`);
+        }
+
+        // Link client record if not already linked
+        const { data: clientRecord } = await supabaseAdmin
+          .from('clients')
+          .select('id, user_id')
+          .eq('email', clientEmail)
+          .single();
+
+        if (clientRecord && !clientRecord.user_id) {
+          await supabaseAdmin
+            .from('clients')
+            .update({ user_id: existingUser.id })
+            .eq('id', clientRecord.id);
+        }
+
         emailData = {
           ...emailData,
+          temporaryPassword: newTemporaryPassword,
           clientEmail,
           loginUrl: `${Deno.env.get("SITE_URL") || "https://e-advisy.ch"}/connexion`,
         };
