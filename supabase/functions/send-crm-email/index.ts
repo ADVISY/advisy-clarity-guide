@@ -78,11 +78,24 @@ const getEmailWrapper = (content: string) => `
     
     .logo-container {
       margin-bottom: 20px;
+      display: inline-block;
+    }
+    
+    .logo-text {
+      font-size: 36px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -1px;
+    }
+    
+    .logo-dot {
+      color: #7C3AED;
     }
     
     .logo {
       width: 160px;
       height: auto;
+      background: transparent;
     }
     
     .header-title {
@@ -319,7 +332,7 @@ const getEmailWrapper = (content: string) => `
       
       <!-- Signature & Footer -->
       <div class="footer">
-        <img src="https://e-advisy.ch/advisy-logo.png" alt="Advisy" class="footer-logo" />
+        <div class="logo-text" style="font-size: 24px; color: #1800AD; margin-bottom: 12px;">advisy<span class="logo-dot">.</span></div>
         <p class="footer-text">
           <strong>Advisy Sàrl</strong><br>
           Votre partenaire assurance en Suisse romande
@@ -353,7 +366,7 @@ const getEmailContent = (type: string, clientName: string, data?: EmailData) => 
         html: getEmailWrapper(`
           <div class="header">
             <div class="logo-container">
-              <img src="https://e-advisy.ch/advisy-logo.png" alt="Advisy" class="logo" />
+              <div class="logo-text">advisy<span class="logo-dot">.</span></div>
             </div>
             <h1 class="header-title">Bienvenue chez Advisy !</h1>
             <p class="header-subtitle">Votre nouveau partenaire assurance en Suisse</p>
@@ -390,7 +403,7 @@ const getEmailContent = (type: string, clientName: string, data?: EmailData) => 
         html: getEmailWrapper(`
           <div class="header">
             <div class="logo-container">
-              <img src="https://e-advisy.ch/advisy-logo.png" alt="Advisy" class="logo" />
+              <div class="logo-text">advisy<span class="logo-dot">.</span></div>
             </div>
             <h1 class="header-title">Contrat signé avec succès ✓</h1>
             <p class="header-subtitle">Félicitations pour votre nouvelle couverture</p>
@@ -427,7 +440,7 @@ const getEmailContent = (type: string, clientName: string, data?: EmailData) => 
         html: getEmailWrapper(`
           <div class="header">
             <div class="logo-container">
-              <img src="https://e-advisy.ch/advisy-logo.png" alt="Advisy" class="logo" />
+              <div class="logo-text">advisy<span class="logo-dot">.</span></div>
             </div>
             <h1 class="header-title">Mandat de gestion activé</h1>
             <p class="header-subtitle">Votre espace client personnel est prêt</p>
@@ -479,7 +492,7 @@ const getEmailContent = (type: string, clientName: string, data?: EmailData) => 
         html: getEmailWrapper(`
           <div class="header">
             <div class="logo-container">
-              <img src="https://e-advisy.ch/advisy-logo.png" alt="Advisy" class="logo" />
+              <div class="logo-text">advisy<span class="logo-dot">.</span></div>
             </div>
             <h1 class="header-title">Votre compte est prêt !</h1>
             <p class="header-subtitle">Connectez-vous à votre espace personnel</p>
@@ -518,7 +531,7 @@ const getEmailContent = (type: string, clientName: string, data?: EmailData) => 
         html: getEmailWrapper(`
           <div class="header">
             <div class="logo-container">
-              <img src="https://e-advisy.ch/advisy-logo.png" alt="Advisy" class="logo" />
+              <div class="logo-text">advisy<span class="logo-dot">.</span></div>
             </div>
             <h1 class="header-title">Comment allez-vous ?</h1>
             <p class="header-subtitle">Votre conseiller Advisy pense à vous</p>
@@ -561,7 +574,7 @@ const getEmailContent = (type: string, clientName: string, data?: EmailData) => 
         html: getEmailWrapper(`
           <div class="header">
             <div class="logo-container">
-              <img src="https://e-advisy.ch/advisy-logo.png" alt="Advisy" class="logo" />
+              <div class="logo-text">advisy<span class="logo-dot">.</span></div>
             </div>
             <h1 class="header-title">Offre Spéciale 🎁</h1>
             <p class="header-subtitle">Des économies exclusives pour nos clients</p>
@@ -604,7 +617,7 @@ const getEmailContent = (type: string, clientName: string, data?: EmailData) => 
         html: getEmailWrapper(`
           <div class="header">
             <div class="logo-container">
-              <img src="https://e-advisy.ch/advisy-logo.png" alt="Advisy" class="logo" />
+              <div class="logo-text">advisy<span class="logo-dot">.</span></div>
             </div>
             <h1 class="header-title">Notification</h1>
           </div>
