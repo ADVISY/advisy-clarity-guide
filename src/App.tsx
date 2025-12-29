@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth";
+import { TenantProvider } from "./contexts/TenantContext";
 import Connexion from "./pages/Connexion";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -53,56 +54,58 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            {/* Redirect root to login */}
-            <Route path="/" element={<Navigate to="/connexion" replace />} />
-            
-            {/* Login Page */}
-            <Route path="/connexion" element={<Connexion />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            
-            {/* CRM Routes */}
-            <Route path="/crm" element={<ProtectedRoute><CRMLayout /></ProtectedRoute>}>
-              <Route index element={<CRMDashboard />} />
-              <Route path="clients" element={<CRMClients />} />
-              <Route path="clients/nouveau" element={<ClientForm />} />
-              <Route path="clients/:id" element={<ClientDetail />} />
-              <Route path="clients/:id/edit" element={<ClientForm />} />
-              <Route path="suivis" element={<CRMSuivis />} />
-              <Route path="propositions" element={<CRMPropositions />} />
-              <Route path="contrats" element={<CRMContracts />} />
-              <Route path="commissions" element={<CRMCommissions />} />
-              <Route path="collaborateurs" element={<CRMCollaborateurs />} />
-              <Route path="rapports" element={<CRMRapports />} />
-              <Route path="parametres" element={<CRMParametres />} />
-              <Route path="compagnies" element={<CRMCompagnies />} />
-              <Route path="compta" element={<CRMCompta />} />
-            </Route>
-            
-            {/* KING Platform Routes */}
-            <Route path="/king" element={<ProtectedRoute><KingLayout /></ProtectedRoute>}>
-              <Route index element={<KingDashboard />} />
-              <Route path="tenants" element={<KingTenants />} />
-              <Route path="wizard" element={<KingWizard />} />
-              <Route path="users" element={<KingUsers />} />
-              <Route path="security" element={<KingSecurity />} />
-              <Route path="settings" element={<KingSettings />} />
-            </Route>
-            
-            {/* Client Portal Routes */}
-            <Route path="/espace-client" element={<ClientLayout />}>
-              <Route index element={<ClientDashboard />} />
-              <Route path="contrats" element={<ClientContracts />} />
-              <Route path="documents" element={<ClientDocuments />} />
-              <Route path="sinistres" element={<ClientClaims />} />
-              <Route path="messages" element={<ClientMessages />} />
-              <Route path="notifications" element={<ClientNotifications />} />
-              <Route path="profil" element={<ClientProfile />} />
-            </Route>
-            
-            {/* Catch-all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <TenantProvider>
+            <Routes>
+              {/* Redirect root to login */}
+              <Route path="/" element={<Navigate to="/connexion" replace />} />
+              
+              {/* Login Page */}
+              <Route path="/connexion" element={<Connexion />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              
+              {/* CRM Routes */}
+              <Route path="/crm" element={<ProtectedRoute><CRMLayout /></ProtectedRoute>}>
+                <Route index element={<CRMDashboard />} />
+                <Route path="clients" element={<CRMClients />} />
+                <Route path="clients/nouveau" element={<ClientForm />} />
+                <Route path="clients/:id" element={<ClientDetail />} />
+                <Route path="clients/:id/edit" element={<ClientForm />} />
+                <Route path="suivis" element={<CRMSuivis />} />
+                <Route path="propositions" element={<CRMPropositions />} />
+                <Route path="contrats" element={<CRMContracts />} />
+                <Route path="commissions" element={<CRMCommissions />} />
+                <Route path="collaborateurs" element={<CRMCollaborateurs />} />
+                <Route path="rapports" element={<CRMRapports />} />
+                <Route path="parametres" element={<CRMParametres />} />
+                <Route path="compagnies" element={<CRMCompagnies />} />
+                <Route path="compta" element={<CRMCompta />} />
+              </Route>
+              
+              {/* KING Platform Routes */}
+              <Route path="/king" element={<ProtectedRoute><KingLayout /></ProtectedRoute>}>
+                <Route index element={<KingDashboard />} />
+                <Route path="tenants" element={<KingTenants />} />
+                <Route path="wizard" element={<KingWizard />} />
+                <Route path="users" element={<KingUsers />} />
+                <Route path="security" element={<KingSecurity />} />
+                <Route path="settings" element={<KingSettings />} />
+              </Route>
+              
+              {/* Client Portal Routes */}
+              <Route path="/espace-client" element={<ClientLayout />}>
+                <Route index element={<ClientDashboard />} />
+                <Route path="contrats" element={<ClientContracts />} />
+                <Route path="documents" element={<ClientDocuments />} />
+                <Route path="sinistres" element={<ClientClaims />} />
+                <Route path="messages" element={<ClientMessages />} />
+                <Route path="notifications" element={<ClientNotifications />} />
+                <Route path="profil" element={<ClientProfile />} />
+              </Route>
+              
+              {/* Catch-all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </TenantProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
