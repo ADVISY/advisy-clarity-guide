@@ -4,15 +4,21 @@ import { usePolicies } from "@/hooks/usePolicies";
 import { useCommissions } from "@/hooks/useCommissions";
 import { usePerformance } from "@/hooks/usePerformance";
 import { useCommissionParts } from "@/hooks/useCommissionParts";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { 
   Users, FileText, DollarSign, TrendingUp, 
-  MessageSquare, Loader2, BarChart3, Heart, Shield
+  MessageSquare, Loader2, BarChart3, Heart, Shield,
+  Trophy, Star, Crown, Target, Zap, Award,
+  Calendar, Filter, ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMemo, useState, useEffect } from "react";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isWithinInterval, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   BarChart,
@@ -23,32 +29,272 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  LineChart,
+  Line,
+  ComposedChart,
+  Area,
 } from "recharts";
 
+type PeriodFilter = 'week' | 'month' | 'quarter' | 'year';
+
 export default function CRMDashboard() {
+  const { user } = useAuth();
   const { role, isAdmin, isManager, isAgent, isPartner, isClient } = useUserRole();
+  const { can, dashboardScope, commissionScope, isLoading: permissionsLoading } = usePermissions();
   const { clients, loading: clientsLoading } = useClients();
   const { policies, loading: policiesLoading } = usePolicies();
   const { commissions, loading: commissionsLoading } = useCommissions();
-  const { loading: performanceLoading, companyTotals } = usePerformance();
-  const { fetchAllParts } = useCommissionParts();
+  const { loading: performanceLoading, companyTotals, myPerformance, myTeam, individualPerformance, teamPerformance } = usePerformance();
+  const { fetchAllParts, fetchPartsForAgent } = useCommissionParts();
 
-  const [showMyContracts, setShowMyContracts] = useState(false);
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('month');
+  const [productFilter, setProductFilter] = useState<string>('all');
+  const [agentFilter, setAgentFilter] = useState<string>('all');
   const [allCommissionParts, setAllCommissionParts] = useState<any[]>([]);
+  const [myCommissionParts, setMyCommissionParts] = useState<any[]>([]);
   const [partsLoading, setPartsLoading] = useState(true);
 
-  // Fetch all commission parts on mount
+  // Get current user's collaborator record
+  const myCollaborator = useMemo(() => {
+    if (!user) return null;
+    return clients.find(c => c.user_id === user.id && c.type_adresse === 'collaborateur');
+  }, [clients, user]);
+
+  // Fetch commission parts based on role
   useEffect(() => {
     const loadParts = async () => {
       setPartsLoading(true);
-      const parts = await fetchAllParts();
-      setAllCommissionParts(parts);
+      
+      if (dashboardScope === 'global' || commissionScope === 'all') {
+        const parts = await fetchAllParts();
+        setAllCommissionParts(parts);
+        setMyCommissionParts(parts);
+      } else if (myCollaborator) {
+        const parts = await fetchPartsForAgent(myCollaborator.id);
+        setMyCommissionParts(parts);
+        
+        if (dashboardScope === 'team' && myTeam) {
+          // Get team members' parts too
+          const teamParts = [...parts];
+          for (const member of myTeam.teamMembers) {
+            const memberParts = await fetchPartsForAgent(member.id);
+            teamParts.push(...memberParts);
+          }
+          setAllCommissionParts(teamParts);
+        } else {
+          setAllCommissionParts(parts);
+        }
+      }
+      
       setPartsLoading(false);
     };
-    loadParts();
-  }, []);
+    
+    if (!clientsLoading && !permissionsLoading) {
+      loadParts();
+    }
+  }, [dashboardScope, commissionScope, myCollaborator, myTeam, clientsLoading, permissionsLoading]);
 
-  const loading = clientsLoading || policiesLoading || commissionsLoading || performanceLoading || partsLoading;
+  const loading = clientsLoading || policiesLoading || commissionsLoading || performanceLoading || partsLoading || permissionsLoading;
+
+  // Period date range
+  const periodRange = useMemo(() => {
+    const now = new Date();
+    switch (periodFilter) {
+      case 'week':
+        return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
+      case 'month':
+        return { start: startOfMonth(now), end: endOfMonth(now) };
+      case 'quarter':
+        const quarterStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+        const quarterEnd = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3 + 3, 0);
+        return { start: quarterStart, end: quarterEnd };
+      case 'year':
+        return { start: new Date(now.getFullYear(), 0, 1), end: new Date(now.getFullYear(), 11, 31) };
+      default:
+        return { start: startOfMonth(now), end: endOfMonth(now) };
+    }
+  }, [periodFilter]);
+
+  // Filter policies based on scope and filters
+  const filteredPolicies = useMemo(() => {
+    let filtered = policies;
+
+    // Filter by dashboard scope
+    if (dashboardScope === 'personal' && myCollaborator) {
+      const myClientIds = clients.filter(c => c.assigned_agent_id === myCollaborator.id).map(c => c.id);
+      filtered = filtered.filter(p => myClientIds.includes(p.client_id));
+    } else if (dashboardScope === 'team' && myTeam) {
+      const teamMemberIds = [myCollaborator?.id, ...myTeam.teamMembers.map(m => m.id)].filter(Boolean);
+      const teamClientIds = clients.filter(c => teamMemberIds.includes(c.assigned_agent_id)).map(c => c.id);
+      filtered = filtered.filter(p => teamClientIds.includes(p.client_id));
+    }
+
+    // Filter by agent
+    if (agentFilter !== 'all') {
+      const agentClientIds = clients.filter(c => c.assigned_agent_id === agentFilter).map(c => c.id);
+      filtered = filtered.filter(p => agentClientIds.includes(p.client_id));
+    }
+
+    // Filter by product type
+    if (productFilter !== 'all') {
+      filtered = filtered.filter(p => {
+        const type = (p.product_type || '').toLowerCase();
+        if (productFilter === 'lca') return type.includes('lca') || type.includes('maladie') || type.includes('complémentaire');
+        if (productFilter === 'vie') return type.includes('vie') || type.includes('pilier') || type.includes('3');
+        return true;
+      });
+    }
+
+    return filtered;
+  }, [policies, dashboardScope, myCollaborator, myTeam, clients, agentFilter, productFilter]);
+
+  // Period filtered policies
+  const periodPolicies = useMemo(() => {
+    return filteredPolicies.filter(p => {
+      const date = new Date(p.created_at);
+      return isWithinInterval(date, periodRange);
+    });
+  }, [filteredPolicies, periodRange]);
+
+  // Calculate CA using specified rules: LCA * 16, VIE * 5%
+  const calculateCA = useMemo(() => {
+    let lcaTotal = 0;
+    let vieTotal = 0;
+
+    periodPolicies.forEach(p => {
+      const type = (p.product_type || '').toLowerCase();
+      const yearlyPremium = p.premium_yearly || (p.premium_monthly || 0) * 12;
+
+      if (type.includes('vie') || type.includes('pilier') || type.includes('3')) {
+        // VIE: volume * 5%
+        vieTotal += yearlyPremium * 0.05;
+      } else {
+        // LCA: montant * 16 (assuming it's monthly premium * 16)
+        const monthlyPremium = p.premium_monthly || (p.premium_yearly || 0) / 12;
+        lcaTotal += monthlyPremium * 16;
+      }
+    });
+
+    return { lca: lcaTotal, vie: vieTotal, total: lcaTotal + vieTotal };
+  }, [periodPolicies]);
+
+  // KPI Stats
+  const kpiStats = useMemo(() => {
+    const activeContracts = filteredPolicies.filter(p => p.status === 'active').length;
+    const periodContracts = periodPolicies.length;
+    const lcaContracts = periodPolicies.filter(p => {
+      const type = (p.product_type || '').toLowerCase();
+      return type.includes('lca') || type.includes('maladie') || type.includes('complémentaire');
+    }).length;
+    const vieContracts = periodPolicies.filter(p => {
+      const type = (p.product_type || '').toLowerCase();
+      return type.includes('vie') || type.includes('pilier') || type.includes('3');
+    }).length;
+
+    // Personal commission from parts
+    const myCommission = myCommissionParts.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const confirmedCommission = myCommissionParts.filter(p => p.status === 'paid').reduce((sum, p) => sum + (p.amount || 0), 0);
+    const estimatedCommission = myCommissionParts.filter(p => p.status !== 'paid').reduce((sum, p) => sum + (p.amount || 0), 0);
+
+    return {
+      activeContracts,
+      periodContracts,
+      lcaContracts,
+      vieContracts,
+      caEstimated: calculateCA.total,
+      myCommission,
+      confirmedCommission,
+      estimatedCommission,
+    };
+  }, [filteredPolicies, periodPolicies, myCommissionParts, calculateCA]);
+
+  // Top 5 performers (photos only, no numbers for gamification)
+  const topPerformers = useMemo(() => {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+
+    // Calculate contracts per agent for current month
+    const agentScores = individualPerformance.map(agent => {
+      const agentClientIds = clients.filter(c => c.assigned_agent_id === agent.id).map(c => c.id);
+      const monthContracts = policies.filter(p => {
+        const date = new Date(p.created_at);
+        return agentClientIds.includes(p.client_id) && 
+               date.getMonth() === currentMonth && 
+               date.getFullYear() === currentYear;
+      }).length;
+
+      return {
+        ...agent,
+        monthContracts,
+        initials: agent.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+      };
+    }).filter(a => a.monthContracts > 0);
+
+    return agentScores.sort((a, b) => b.monthContracts - a.monthContracts).slice(0, 5);
+  }, [individualPerformance, clients, policies]);
+
+  // Employee of the month (highest contracts)
+  const employeeOfMonth = topPerformers[0] || null;
+
+  // Manager of the month
+  const managerOfMonth = useMemo(() => {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+
+    const managerScores = teamPerformance.map(team => {
+      const teamMemberIds = [team.managerId, ...team.teamMembers.map(m => m.id)];
+      const teamClientIds = clients.filter(c => teamMemberIds.includes(c.assigned_agent_id)).map(c => c.id);
+      const monthContracts = policies.filter(p => {
+        const date = new Date(p.created_at);
+        return teamClientIds.includes(p.client_id) && 
+               date.getMonth() === currentMonth && 
+               date.getFullYear() === currentYear;
+      }).length;
+
+      return {
+        name: team.managerName,
+        id: team.managerId,
+        monthContracts,
+        initials: team.managerName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+      };
+    }).filter(m => m.monthContracts > 0);
+
+    return managerScores.sort((a, b) => b.monthContracts - a.monthContracts)[0] || null;
+  }, [teamPerformance, clients, policies]);
+
+  // Monthly chart data with CA trend
+  const monthlyChartData = useMemo(() => {
+    const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+    const currentYear = new Date().getFullYear();
+
+    return months.map((month, i) => {
+      const monthPolicies = filteredPolicies.filter(p => {
+        const date = new Date(p.created_at);
+        return date.getFullYear() === currentYear && date.getMonth() === i;
+      });
+
+      let lca = 0;
+      let vie = 0;
+      let caLca = 0;
+      let caVie = 0;
+
+      monthPolicies.forEach(p => {
+        const type = (p.product_type || '').toLowerCase();
+        const yearlyPremium = p.premium_yearly || (p.premium_monthly || 0) * 12;
+        const monthlyPremium = p.premium_monthly || (p.premium_yearly || 0) / 12;
+
+        if (type.includes('vie') || type.includes('pilier') || type.includes('3')) {
+          vie++;
+          caVie += yearlyPremium * 0.05;
+        } else {
+          lca++;
+          caLca += monthlyPremium * 16;
+        }
+      });
+
+      return { month, lca, vie, total: lca + vie, ca: Math.round(caLca + caVie) };
+    });
+  }, [filteredPolicies]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('fr-CH', { 
@@ -58,214 +304,34 @@ export default function CRMDashboard() {
     }).format(value);
   };
 
-  // All CRM activities for admin (contracts, clients, commissions)
-  const recentActivities = useMemo(() => {
-    const activities: { 
-      id: string;
-      type: 'contract' | 'client' | 'commission';
-      title: string;
-      description: string;
-      date: Date;
-      color: string;
-      icon: 'contract' | 'client' | 'commission';
-    }[] = [];
-
-    // Add policies/contracts
-    policies.forEach(policy => {
-      const client = clients.find(c => c.id === policy.client_id);
-      const clientName = client ? `${client.first_name || ''} ${client.last_name || ''}`.trim() : 'Client';
-      activities.push({
-        id: `policy-${policy.id}`,
-        type: 'contract',
-        title: 'Nouveau contrat',
-        description: `${clientName} - ${policy.product_type || policy.company_name || 'Assurance'}`,
-        date: new Date(policy.created_at),
-        color: 'emerald',
-        icon: 'contract',
-      });
-    });
-
-    // Add clients
-    clients.forEach(client => {
-      const name = `${client.first_name || ''} ${client.last_name || ''}`.trim() || client.company_name || 'Client';
-      const typeLabel = client.type_adresse === 'collaborateur' ? 'Collaborateur' : 
-                        client.type_adresse === 'partenaire' ? 'Partenaire' : 'Client';
-      activities.push({
-        id: `client-${client.id}`,
-        type: 'client',
-        title: `Nouveau ${typeLabel.toLowerCase()}`,
-        description: name,
-        date: new Date(client.created_at),
-        color: 'blue',
-        icon: 'client',
-      });
-    });
-
-    // Add commissions
-    commissions.forEach(commission => {
-      const policy = policies.find(p => p.id === commission.policy_id);
-      const client = policy ? clients.find(c => c.id === policy.client_id) : null;
-      const clientName = client ? `${client.first_name || ''} ${client.last_name || ''}`.trim() : 'Client';
-      activities.push({
-        id: `commission-${commission.id}`,
-        type: 'commission',
-        title: 'Commission enregistrée',
-        description: `${clientName} - ${commission.amount?.toFixed(2) || '0'} CHF`,
-        date: new Date(commission.created_at),
-        color: 'amber',
-        icon: 'commission',
-      });
-    });
-
-    return activities
-      .sort((a, b) => b.date.getTime() - a.date.getTime())
-      .slice(0, 50);
-  }, [policies, clients, commissions]);
-
-  // Group activities by date
-  const groupedActivities = useMemo(() => {
-    const groups: { [key: string]: typeof recentActivities } = {};
+  // Get available agents for filter (based on scope)
+  const availableAgents = useMemo(() => {
+    let agents = clients.filter(c => c.type_adresse === 'collaborateur');
     
-    recentActivities.forEach(activity => {
-      const dateKey = format(activity.date, 'dd.MM.yyyy');
-      if (!groups[dateKey]) {
-        groups[dateKey] = [];
-      }
-      groups[dateKey].push(activity);
-    });
+    if (dashboardScope === 'team' && myTeam && myCollaborator) {
+      const teamIds = [myCollaborator.id, ...myTeam.teamMembers.map(m => m.id)];
+      agents = agents.filter(a => teamIds.includes(a.id));
+    } else if (dashboardScope === 'personal' && myCollaborator) {
+      agents = agents.filter(a => a.id === myCollaborator.id);
+    }
 
-    return Object.entries(groups).map(([date, items]) => ({
-      date,
-      items,
-    }));
-  }, [recentActivities]);
+    return agents;
+  }, [clients, dashboardScope, myTeam, myCollaborator]);
 
-  // Monthly LCA vs VIE contracts data
-  const monthlyLcaVie = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 
-                    'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
-    
-    const data = months.map((month) => ({
-      month,
-      lca: 0,
-      vie: 0,
-    }));
+  // Can see financial data?
+  const canSeeFinancials = dashboardScope === 'global' || isAdmin;
 
-    policies.forEach(p => {
-      const date = new Date(p.created_at);
-      if (date.getFullYear() === currentYear) {
-        const productType = (p.product_type || '').toLowerCase();
-        // LCA = complementary health (Maladie complémentaire)
-        if (productType.includes('lca') || productType.includes('complémentaire') || productType.includes('maladie')) {
-          data[date.getMonth()].lca += 1;
-        }
-        // VIE = 3e pilier / life insurance
-        if (productType.includes('vie') || productType.includes('3') || productType.includes('pilier')) {
-          data[date.getMonth()].vie += 1;
-        }
-      }
-    });
-
-    return data;
-  }, [policies]);
-
-  // Contracts by manager/team
-  const contractsByManager = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth();
-    
-    // Get all managers (collaborators who have other collaborators assigned to them)
-    const managers = clients.filter(c => c.type_adresse === 'collaborateur' && c.manager_id === null);
-    
-    // Get all collaborators with their managers
-    const collaborators = clients.filter(c => c.type_adresse === 'collaborateur');
-    
-    // Build manager → team members map
-    const managerTeams: { [managerId: string]: string[] } = {};
-    managers.forEach(m => {
-      managerTeams[m.id] = [m.id]; // include manager themselves
-    });
-    collaborators.forEach(c => {
-      if (c.manager_id && managerTeams[c.manager_id]) {
-        managerTeams[c.manager_id].push(c.id);
-      }
-    });
-
-    // Count contracts per manager/team
-    const result = managers.map(manager => {
-      const teamMemberIds = managerTeams[manager.id] || [manager.id];
-      
-      let monthCount = 0;
-      let yearCount = 0;
-      
-      policies.forEach(p => {
-        const policyClient = clients.find(c => c.id === p.client_id);
-        // Check if the policy's assigned agent is in this manager's team
-        if (policyClient?.assigned_agent_id && teamMemberIds.includes(policyClient.assigned_agent_id)) {
-          const date = new Date(p.created_at);
-          if (date.getFullYear() === currentYear) {
-            yearCount++;
-            if (date.getMonth() === currentMonth) {
-              monthCount++;
-            }
-          }
-        }
-      });
-
-      return {
-        name: `${manager.first_name || ''} ${manager.last_name || ''}`.trim() || 'Manager',
-        mois: monthCount,
-        annee: yearCount,
-      };
-    }).filter(m => m.mois > 0 || m.annee > 0);
-
-    return result;
-  }, [clients, policies]);
-
-  // Financial summary - includes all distributed commissions to agents
-  const financialSummary = useMemo(() => {
-    const collaborators = clients.filter(c => c.type_adresse === 'collaborateur');
-    
-    // Total commissions received from insurance companies (CA)
-    const totalCommissions = commissions.reduce((sum, c) => sum + (c.amount || 0), 0);
-    
-    // Total fixed salaries
-    const totalSalaries = collaborators.reduce((sum, c) => sum + (c.fixed_salary || 0), 0);
-    
-    // Total commissions distributed to agents (from commission_part_agent)
-    const totalDistributedCommissions = allCommissionParts.reduce((sum, part) => sum + (part.amount || 0), 0);
-    
-    // Base for social charges = fixed salaries + distributed commissions
-    const baseCharges = totalSalaries + totalDistributedCommissions;
-    
-    // Social charges (Swiss rates: AVS 5.05%, AC 1.1%, LPP ~7%, AANP 0.5% = ~13.65%)
-    const socialChargesRate = 0.1365;
-    const socialCharges = baseCharges * socialChargesRate;
-    
-    // Total charges = fixed salaries + distributed commissions + social charges on all
-    const totalCharges = totalSalaries + totalDistributedCommissions + socialCharges;
-    
-    // Benefit = CA - Total charges
-    const benefit = totalCommissions - totalCharges;
-
-    return {
-      ca: totalCommissions,
-      salaries: totalSalaries,
-      distributedCommissions: totalDistributedCommissions,
-      socialCharges,
-      totalCharges,
-      benefit,
-    };
-  }, [clients, commissions, allCommissionParts]);
-
-  const currentYear = new Date().getFullYear();
-  const currentMonthName = format(new Date(), 'MMMM yyyy', { locale: fr });
+  const periodLabels: Record<PeriodFilter, string> = {
+    week: 'Cette semaine',
+    month: 'Ce mois',
+    quarter: 'Ce trimestre',
+    year: 'Cette année',
+  };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header with Filters */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg">
             <TrendingUp className="h-5 w-5 text-white" />
@@ -274,8 +340,56 @@ export default function CRMDashboard() {
             <h1 className="text-2xl font-bold text-foreground">Tableau de bord</h1>
             <p className="text-sm text-muted-foreground">
               {format(new Date(), "EEEE d MMMM yyyy", { locale: fr })}
+              {dashboardScope === 'personal' && ' • Vue personnelle'}
+              {dashboardScope === 'team' && ' • Vue équipe'}
+              {dashboardScope === 'global' && ' • Vue globale'}
             </p>
           </div>
+        </div>
+
+        {/* Filters */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Select value={periodFilter} onValueChange={(v) => setPeriodFilter(v as PeriodFilter)}>
+            <SelectTrigger className="w-[140px] h-9">
+              <Calendar className="h-4 w-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="week">Semaine</SelectItem>
+              <SelectItem value="month">Mois</SelectItem>
+              <SelectItem value="quarter">Trimestre</SelectItem>
+              <SelectItem value="year">Année</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={productFilter} onValueChange={setProductFilter}>
+            <SelectTrigger className="w-[130px] h-9">
+              <Filter className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Produit" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous</SelectItem>
+              <SelectItem value="lca">LCA Maladie</SelectItem>
+              <SelectItem value="vie">3e Pilier / VIE</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {availableAgents.length > 1 && (
+            <Select value={agentFilter} onValueChange={setAgentFilter}>
+              <SelectTrigger className="w-[150px] h-9">
+                <Users className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Agent" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les agents</SelectItem>
+                {availableAgents.map(agent => (
+                  <SelectItem key={agent.id} value={agent.id}>
+                    {agent.first_name} {agent.last_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 
@@ -287,226 +401,384 @@ export default function CRMDashboard() {
       )}
 
       {!loading && (
-        <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-          {/* Main Column - Charts */}
-          <div className="space-y-6">
-            {/* Main Chart - LCA vs VIE with financial info */}
-            <Card className="border shadow-sm bg-card">
-              <CardHeader className="pb-3">
+        <>
+          {/* KPI Cards */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Contracts Deposited */}
+            <Card className="border shadow-sm bg-gradient-to-br from-violet-500/10 to-violet-600/5">
+              <CardContent className="p-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4 text-primary" />
-                    <CardTitle className="text-sm font-semibold">Affaires LCA vs VIE</CardTitle>
-                    <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-xs font-medium">
-                      {currentYear}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4 text-xs">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded bg-rose-500" />
-                      <span>LCA: <strong>{monthlyLcaVie.reduce((s, m) => s + m.lca, 0)}</strong></span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded bg-blue-500" />
-                      <span>VIE: <strong>{monthlyLcaVie.reduce((s, m) => s + m.vie, 0)}</strong></span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded bg-emerald-500" />
-                      <span>Total: <strong>{policies.length}</strong></span>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Contrats déposés</p>
+                    <p className="text-3xl font-bold">{kpiStats.periodContracts}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge variant="outline" className="text-xs bg-rose-500/10 text-rose-600 border-rose-200">
+                        <Heart className="h-3 w-3 mr-1" />
+                        LCA: {kpiStats.lcaContracts}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-200">
+                        <Shield className="h-3 w-3 mr-1" />
+                        VIE: {kpiStats.vieContracts}
+                      </Badge>
                     </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="h-[320px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={monthlyLcaVie} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                      <XAxis 
-                        dataKey="month" 
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                      />
-                      <YAxis 
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                      />
-                      <Tooltip 
-                        contentStyle={{
-                          backgroundColor: 'hsl(var(--card))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                        }}
-                        cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
-                      />
-                      <Legend 
-                        wrapperStyle={{ paddingTop: '10px' }}
-                        formatter={(value) => <span className="text-xs">{value === 'lca' ? 'Maladie (LCA)' : '3e Pilier (VIE)'}</span>}
-                      />
-                      <Bar 
-                        dataKey="lca" 
-                        name="lca"
-                        fill="hsl(340 82% 52%)"
-                        radius={[4, 4, 0, 0]}
-                        maxBarSize={40}
-                      />
-                      <Bar 
-                        dataKey="vie" 
-                        name="vie"
-                        fill="hsl(217 91% 60%)"
-                        radius={[4, 4, 0, 0]}
-                        maxBarSize={40}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Financial & Stats Summary below chart */}
-                <div className="grid grid-cols-4 lg:grid-cols-8 gap-2 mt-4 pt-4 border-t">
-                  <div className="text-center p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
-                    <p className="text-[9px] opacity-80">CA</p>
-                    <p className="text-sm font-bold">{formatCurrency(financialSummary.ca)}</p>
-                  </div>
-                  <div className="text-center p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-                    <p className="text-[9px] opacity-80">Salaires</p>
-                    <p className="text-sm font-bold">{formatCurrency(financialSummary.salaries)}</p>
-                  </div>
-                  <div className="text-center p-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 text-white">
-                    <p className="text-[9px] opacity-80">Com. Agents</p>
-                    <p className="text-sm font-bold">{formatCurrency(financialSummary.distributedCommissions)}</p>
-                  </div>
-                  <div className="text-center p-2.5 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 text-white">
-                    <p className="text-[9px] opacity-80">Charges Soc.</p>
-                    <p className="text-sm font-bold">{formatCurrency(financialSummary.socialCharges)}</p>
-                  </div>
-                  <div className="text-center p-2.5 rounded-xl bg-gradient-to-br from-rose-500 to-rose-600 text-white">
-                    <p className="text-[9px] opacity-80">Total Charges</p>
-                    <p className="text-sm font-bold">{formatCurrency(financialSummary.totalCharges)}</p>
-                  </div>
-                  <div className={cn(
-                    "text-center p-2.5 rounded-xl text-white",
-                    financialSummary.benefit >= 0 
-                      ? "bg-gradient-to-br from-green-500 to-green-600" 
-                      : "bg-gradient-to-br from-red-500 to-red-600"
-                  )}>
-                    <p className="text-[9px] opacity-80">Bénéfice</p>
-                    <p className="text-sm font-bold">{formatCurrency(financialSummary.benefit)}</p>
-                  </div>
-                  <div className="text-center p-2.5 rounded-xl bg-muted/50">
-                    <p className="text-[9px] text-muted-foreground">Clients</p>
-                    <p className="text-sm font-bold">{companyTotals.clientsCount}</p>
-                  </div>
-                  <div className="text-center p-2.5 rounded-xl bg-muted/50">
-                    <p className="text-[9px] text-muted-foreground">Primes/mois</p>
-                    <p className="text-sm font-bold">{formatCurrency(companyTotals.totalPremiumsMonthly)}</p>
+                  <div className="p-3 rounded-xl bg-violet-500/20">
+                    <FileText className="h-6 w-6 text-violet-600" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Contracts by Manager/Team */}
-            <Card className="border shadow-sm bg-card">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-violet-500" />
-                  <CardTitle className="text-sm font-semibold">Contrats par équipe</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                {contractsByManager.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground text-sm">
-                    Aucune donnée d'équipe disponible
+            {/* Active Contracts */}
+            <Card className="border shadow-sm bg-gradient-to-br from-emerald-500/10 to-emerald-600/5">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Contrats actifs</p>
+                    <p className="text-3xl font-bold">{kpiStats.activeContracts}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      sur {filteredPolicies.length} total
+                    </p>
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-3 gap-2 text-xs font-medium text-muted-foreground pb-2 border-b">
-                      <span>Manager</span>
-                      <span className="text-center">Ce mois</span>
-                      <span className="text-center">Cette année</span>
+                  <div className="p-3 rounded-xl bg-emerald-500/20">
+                    <Target className="h-6 w-6 text-emerald-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* CA Estimated (visible according to scope) */}
+            {(canSeeFinancials || commissionScope !== 'none') && (
+              <Card className="border shadow-sm bg-gradient-to-br from-amber-500/10 to-amber-600/5">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">CA estimé</p>
+                      <p className="text-3xl font-bold">{formatCurrency(kpiStats.caEstimated)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {periodLabels[periodFilter]}
+                      </p>
                     </div>
-                    {contractsByManager.map((manager, i) => (
-                      <div key={i} className="grid grid-cols-3 gap-2 items-center py-2 hover:bg-muted/30 rounded-lg px-2 transition-colors">
-                        <span className="text-sm font-medium truncate">{manager.name}</span>
-                        <div className="text-center">
-                          <span className="inline-flex items-center justify-center w-10 h-7 rounded-lg bg-violet-100 text-violet-700 font-bold text-sm">
-                            {manager.mois}
-                          </span>
-                        </div>
-                        <div className="text-center">
-                          <span className="inline-flex items-center justify-center w-10 h-7 rounded-lg bg-emerald-100 text-emerald-700 font-bold text-sm">
-                            {manager.annee}
-                          </span>
-                        </div>
+                    <div className="p-3 rounded-xl bg-amber-500/20">
+                      <DollarSign className="h-6 w-6 text-amber-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Personal Commission (visible if has commission scope) */}
+            {commissionScope !== 'none' && (
+              <Card className="border shadow-sm bg-gradient-to-br from-blue-500/10 to-blue-600/5">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Ma commission</p>
+                      <p className="text-3xl font-bold">{formatCurrency(kpiStats.myCommission)}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-emerald-600">
+                          ✓ {formatCurrency(kpiStats.confirmedCommission)}
+                        </span>
+                        <span className="text-xs text-amber-600">
+                          ~ {formatCurrency(kpiStats.estimatedCommission)}
+                        </span>
                       </div>
-                    ))}
+                    </div>
+                    <div className="p-3 rounded-xl bg-blue-500/20">
+                      <Zap className="h-6 w-6 text-blue-600" />
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
-          {/* Right Column - Recent Activity */}
-            <Card className="border shadow-sm bg-card h-fit">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-blue-500" />
-                  <CardTitle className="text-sm font-semibold">Dernières nouvelles</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-                  {groupedActivities.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">
-                      Aucune activité récente
+          <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+            {/* Main Column */}
+            <div className="space-y-6">
+              {/* Combined Chart: Contracts + CA */}
+              <Card className="border shadow-sm bg-card">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4 text-primary" />
+                      <CardTitle className="text-sm font-semibold">Performance {new Date().getFullYear()}</CardTitle>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 rounded bg-rose-500" />
+                        <span>LCA</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 rounded bg-blue-500" />
+                        <span>VIE</span>
+                      </div>
+                      {(canSeeFinancials || commissionScope !== 'none') && (
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-3 h-3 rounded bg-emerald-500" />
+                          <span>CA</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={monthlyChartData} margin={{ top: 20, right: 30, bottom: 20, left: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                        <XAxis 
+                          dataKey="month" 
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                        />
+                        <YAxis 
+                          yAxisId="left"
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                        />
+                        {(canSeeFinancials || commissionScope !== 'none') && (
+                          <YAxis 
+                            yAxisId="right"
+                            orientation="right"
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                            tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                          />
+                        )}
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                          }}
+                          formatter={(value: any, name: string) => {
+                            if (name === 'ca') return [`${formatCurrency(value)} CHF`, 'CA'];
+                            return [value, name === 'lca' ? 'LCA' : 'VIE'];
+                          }}
+                        />
+                        <Bar 
+                          yAxisId="left"
+                          dataKey="lca" 
+                          fill="hsl(340 82% 52%)"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={30}
+                        />
+                        <Bar 
+                          yAxisId="left"
+                          dataKey="vie" 
+                          fill="hsl(217 91% 60%)"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={30}
+                        />
+                        {(canSeeFinancials || commissionScope !== 'none') && (
+                          <Line
+                            yAxisId="right"
+                            type="monotone"
+                            dataKey="ca"
+                            stroke="hsl(142 76% 36%)"
+                            strokeWidth={2}
+                            dot={{ fill: 'hsl(142 76% 36%)', r: 4 }}
+                          />
+                        )}
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Summary Stats */}
+                  {canSeeFinancials && (
+                    <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t">
+                      <div className="text-center p-2.5 rounded-xl bg-rose-500/10">
+                        <p className="text-[9px] text-muted-foreground">LCA Total</p>
+                        <p className="text-sm font-bold text-rose-600">
+                          {monthlyChartData.reduce((s, m) => s + m.lca, 0)}
+                        </p>
+                      </div>
+                      <div className="text-center p-2.5 rounded-xl bg-blue-500/10">
+                        <p className="text-[9px] text-muted-foreground">VIE Total</p>
+                        <p className="text-sm font-bold text-blue-600">
+                          {monthlyChartData.reduce((s, m) => s + m.vie, 0)}
+                        </p>
+                      </div>
+                      <div className="text-center p-2.5 rounded-xl bg-emerald-500/10">
+                        <p className="text-[9px] text-muted-foreground">CA Annuel</p>
+                        <p className="text-sm font-bold text-emerald-600">
+                          {formatCurrency(monthlyChartData.reduce((s, m) => s + m.ca, 0))}
+                        </p>
+                      </div>
+                      <div className="text-center p-2.5 rounded-xl bg-violet-500/10">
+                        <p className="text-[9px] text-muted-foreground">Total Contrats</p>
+                        <p className="text-sm font-bold text-violet-600">
+                          {monthlyChartData.reduce((s, m) => s + m.total, 0)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Motivation Message for Agents */}
+              {dashboardScope === 'personal' && myPerformance && (
+                <Card className="border-2 border-dashed border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-full bg-primary/20">
+                        <Star className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">
+                          {kpiStats.periodContracts >= 5 
+                            ? "🔥 Excellent travail ce mois !" 
+                            : kpiStats.periodContracts >= 3 
+                              ? "👍 Bon rythme, continue !"
+                              : "💪 C'est parti pour un super mois !"}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {kpiStats.periodContracts} contrat{kpiStats.periodContracts > 1 ? 's' : ''} ce mois • 
+                          Objectif : 10 contrats
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Right Column - Gamification & Activity */}
+            <div className="space-y-6">
+              {/* Top 5 - Photos Only */}
+              <Card className="border shadow-sm bg-card overflow-hidden">
+                <CardHeader className="pb-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-amber-500" />
+                    <CardTitle className="text-sm font-semibold">Top 5 du mois</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4">
+                  {topPerformers.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Pas encore de données ce mois
                     </p>
                   ) : (
-                    groupedActivities.map((group) => (
-                      <div key={group.date}>
-                        <p className="text-xs font-semibold text-muted-foreground mb-2">{group.date}</p>
-                        <div className="space-y-2">
-                          {group.items.map((activity) => {
-                            const colorClasses = {
-                              emerald: { border: 'border-emerald-500', bg: 'bg-emerald-100', text: 'text-emerald-600', title: 'text-emerald-700' },
-                              blue: { border: 'border-blue-500', bg: 'bg-blue-100', text: 'text-blue-600', title: 'text-blue-700' },
-                              amber: { border: 'border-amber-500', bg: 'bg-amber-100', text: 'text-amber-600', title: 'text-amber-700' },
-                            };
-                            const colors = colorClasses[activity.color as keyof typeof colorClasses] || colorClasses.emerald;
-                            const IconComponent = activity.icon === 'contract' ? FileText : 
-                                                  activity.icon === 'client' ? Users : DollarSign;
-                            
-                            return (
-                              <div 
-                                key={activity.id}
-                                className={cn("p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors border-l-4", colors.border)}
-                              >
-                                <div className="flex items-start gap-2">
-                                  <div className={cn("p-1.5 rounded-md flex-shrink-0", colors.bg)}>
-                                    <IconComponent className={cn("h-3.5 w-3.5", colors.text)} />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-0.5">
-                                      <p className={cn("text-xs font-semibold", colors.title)}>{activity.title}</p>
-                                      <span className="text-[10px] text-muted-foreground">
-                                        {format(activity.date, "HH:mm")}
-                                      </span>
-                                    </div>
-                                    <p className="text-sm truncate">{activity.description}</p>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
+                    <div className="flex justify-center gap-2">
+                      {topPerformers.map((performer, i) => (
+                        <div key={performer.id} className="relative">
+                          <Avatar className={cn(
+                            "border-2",
+                            i === 0 && "w-14 h-14 border-amber-400",
+                            i === 1 && "w-12 h-12 border-gray-400",
+                            i === 2 && "w-12 h-12 border-orange-400",
+                            i > 2 && "w-10 h-10 border-muted"
+                          )}>
+                            <AvatarFallback className={cn(
+                              "font-bold",
+                              i === 0 && "bg-amber-100 text-amber-700",
+                              i === 1 && "bg-gray-100 text-gray-700",
+                              i === 2 && "bg-orange-100 text-orange-700",
+                              i > 2 && "bg-muted"
+                            )}>
+                              {performer.initials}
+                            </AvatarFallback>
+                          </Avatar>
+                          {i < 3 && (
+                            <div className={cn(
+                              "absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white",
+                              i === 0 && "bg-amber-400",
+                              i === 1 && "bg-gray-400",
+                              i === 2 && "bg-orange-400"
+                            )}>
+                              {i + 1}
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))
+                      ))}
+                    </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-        </div>
+                </CardContent>
+              </Card>
+
+              {/* Employee & Manager of the Month */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Employee of the Month */}
+                <Card className="border shadow-sm bg-gradient-to-br from-amber-500/5 to-amber-500/10">
+                  <CardContent className="p-3 text-center">
+                    <Crown className="h-5 w-5 text-amber-500 mx-auto mb-2" />
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Employé du mois</p>
+                    {employeeOfMonth ? (
+                      <>
+                        <Avatar className="w-10 h-10 mx-auto my-2 border-2 border-amber-400">
+                          <AvatarFallback className="bg-amber-100 text-amber-700 font-bold">
+                            {employeeOfMonth.initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <p className="text-xs font-medium truncate">{employeeOfMonth.name}</p>
+                      </>
+                    ) : (
+                      <p className="text-xs text-muted-foreground mt-2">À déterminer</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Manager of the Month */}
+                <Card className="border shadow-sm bg-gradient-to-br from-violet-500/5 to-violet-500/10">
+                  <CardContent className="p-3 text-center">
+                    <Award className="h-5 w-5 text-violet-500 mx-auto mb-2" />
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Manager du mois</p>
+                    {managerOfMonth ? (
+                      <>
+                        <Avatar className="w-10 h-10 mx-auto my-2 border-2 border-violet-400">
+                          <AvatarFallback className="bg-violet-100 text-violet-700 font-bold">
+                            {managerOfMonth.initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <p className="text-xs font-medium truncate">{managerOfMonth.name}</p>
+                      </>
+                    ) : (
+                      <p className="text-xs text-muted-foreground mt-2">À déterminer</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Quick Stats (Team view for managers) */}
+              {dashboardScope === 'team' && myTeam && (
+                <Card className="border shadow-sm bg-card">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-violet-500" />
+                      <CardTitle className="text-sm font-semibold">Mon équipe</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-2">
+                      {myTeam.teamMembers.slice(0, 5).map(member => (
+                        <div 
+                          key={member.id}
+                          className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Avatar className="w-7 h-7">
+                              <AvatarFallback className="text-xs">
+                                {member.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm truncate">{member.name}</span>
+                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            {member.contractsCount}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
