@@ -218,17 +218,30 @@ export default function KingWizard() {
           password_require_special: formData.password_require_special,
         });
 
-      // 4. Note: Admin user creation would typically be done via an edge function
-      // to properly create the user with Supabase Auth and send invitation emails
-      // For now, we'll log this as a TODO
-      console.log("TODO: Create admin user via edge function", {
-        email: formData.admin_email,
-        firstName: formData.admin_first_name,
-        lastName: formData.admin_last_name,
-        phone: formData.admin_phone,
-        tenantId: tenant.id,
-      });
+      // 4. Create admin user via edge function
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const response = await supabase.functions.invoke('create-tenant-admin', {
+          body: {
+            tenant_id: tenant.id,
+            email: formData.admin_email,
+            first_name: formData.admin_first_name,
+            last_name: formData.admin_last_name,
+            phone: formData.admin_phone,
+            language: formData.admin_language,
+          },
+        });
 
+        if (response.error) {
+          console.error("Error creating admin:", response.error);
+          toast.error("Le tenant a été créé mais l'admin n'a pas pu être créé: " + response.error.message);
+        } else {
+          console.log("Admin created successfully:", response.data);
+        }
+      } catch (adminError: any) {
+        console.error("Error calling edge function:", adminError);
+        // Don't fail the whole process, tenant is created
+      }
       setIsComplete(true);
       toast.success("Client SaaS créé avec succès!");
       

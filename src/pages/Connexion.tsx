@@ -310,19 +310,27 @@ const Connexion = () => {
         // Check if user came from a specific login flow
         const targetSpace = sessionStorage.getItem('loginTarget');
         
+        // Get user role first
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        const role = roleData?.role || 'client';
+        
+        // KING users always go to /king
+        if (role === 'king') {
+          sessionStorage.removeItem('loginTarget');
+          navigate("/king");
+          return;
+        }
+        
         if (targetSpace === 'client') {
           sessionStorage.removeItem('loginTarget');
           navigate("/espace-client");
         } else if (targetSpace === 'team') {
           sessionStorage.removeItem('loginTarget');
-          // Verify user has team/admin access before redirecting to CRM
-          const { data: roleData } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', user.id)
-            .maybeSingle();
-          
-          const role = roleData?.role || 'client';
           
           if (role === 'client') {
             // User tried to access Team but only has client role

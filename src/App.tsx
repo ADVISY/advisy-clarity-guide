@@ -35,6 +35,15 @@ import ClientNotifications from "./pages/client/ClientNotifications";
 import ClientProfile from "./pages/client/ClientProfile";
 import ClientClaims from "./pages/client/ClientClaims";
 
+// KING Platform
+import KingLayout from "./pages/king/KingLayout";
+import KingDashboard from "./pages/king/KingDashboard";
+import KingTenants from "./pages/king/KingTenants";
+import KingWizard from "./pages/king/KingWizard";
+import KingUsers from "./pages/king/KingUsers";
+import KingSecurity from "./pages/king/KingSecurity";
+import KingSettings from "./pages/king/KingSettings";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -68,6 +77,16 @@ const App = () => (
               <Route path="parametres" element={<CRMParametres />} />
               <Route path="compagnies" element={<CRMCompagnies />} />
               <Route path="compta" element={<CRMCompta />} />
+            </Route>
+            
+            {/* KING Platform Routes */}
+            <Route path="/king" element={<ProtectedRoute><KingLayout /></ProtectedRoute>}>
+              <Route index element={<KingDashboard />} />
+              <Route path="tenants" element={<KingTenants />} />
+              <Route path="wizard" element={<KingWizard />} />
+              <Route path="users" element={<KingUsers />} />
+              <Route path="security" element={<KingSecurity />} />
+              <Route path="settings" element={<KingSettings />} />
             </Route>
             
             {/* Client Portal Routes */}
