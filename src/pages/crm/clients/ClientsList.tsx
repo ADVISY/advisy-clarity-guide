@@ -32,6 +32,7 @@ import {
 import { Plus, Eye, Edit, Trash2, Search, Users, Building2, Briefcase, UserCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { UserAvatar } from "@/components/crm/UserAvatar";
 
 const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
   prospect: { label: "Prospect", color: "text-blue-700", bgColor: "bg-blue-100" },
@@ -212,11 +213,12 @@ export default function ClientsList() {
                     >
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                            <span className="font-bold text-primary text-sm">
-                              {getClientName(client).charAt(0).toUpperCase()}
-                            </span>
-                          </div>
+                          <UserAvatar
+                            firstName={client.first_name}
+                            lastName={client.last_name}
+                            gender={(client as any).gender}
+                            size="md"
+                          />
                           <span className="font-medium group-hover:text-primary transition-colors">
                             {getClientName(client)}
                           </span>
