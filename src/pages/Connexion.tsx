@@ -10,7 +10,7 @@ import advisyLogo from "@/assets/advisy-logo.svg";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
-type View = "choice" | "client" | "team" | "team-login";
+type View = "choice" | "client" | "team" | "team-login" | "king";
 
 interface LoginFormProps {
   title: string;
@@ -308,7 +308,7 @@ const ResetPasswordForm = ({ email, setEmail, loading, onSubmit, onBack }: Reset
 
 const Connexion = () => {
   const [view, setView] = useState<View>("choice");
-  const [loginType, setLoginType] = useState<"client" | "team">("client");
+  const [loginType, setLoginType] = useState<"client" | "team" | "king">("client");
   const [isSignUp, setIsSignUp] = useState(false);
   const [isResetPassword, setIsResetPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -335,6 +335,23 @@ const Connexion = () => {
           .maybeSingle();
         
         const role = roleData?.role || 'client';
+        
+        // KING login flow
+        if (targetSpace === 'king') {
+          sessionStorage.removeItem('loginTarget');
+          if (role === 'king') {
+            navigate("/king/wizard");
+          } else {
+            toast({
+              title: "Accès refusé",
+              description: "Vous n'avez pas les droits SUPER ADMIN pour accéder à cette section.",
+              variant: "destructive",
+            });
+            // Sign out the user since they don't have KING access
+            await supabase.auth.signOut();
+          }
+          return;
+        }
         
         // KING users always go to /king
         if (role === 'king') {
@@ -570,12 +587,33 @@ const Connexion = () => {
             onResetPassword={() => setIsResetPassword(true)}
           />
         );
+      case "king":
+        return (
+          <LoginForm 
+            title="SUPER ADMIN" 
+            subtitle="Connexion plateforme LYTA"
+            onBack={() => { resetForm(); setView("choice"); }}
+            isSignUp={false}
+            setIsSignUp={() => {}}
+            email={email}
+            setEmail={setEmail}
+            password={password}
+            setPassword={setPassword}
+            firstName={firstName}
+            setFirstName={setFirstName}
+            lastName={lastName}
+            setLastName={setLastName}
+            loading={loading}
+            onSubmit={handleSubmit}
+            onResetPassword={() => setIsResetPassword(true)}
+          />
+        );
       default:
         return (
           <ChoiceScreen
             onClientClick={() => { resetForm(); setLoginType("client"); setView("client"); }}
             onTeamClick={() => { resetForm(); setLoginType("team"); setView("team"); }}
-            onSuperAdminClick={() => navigate("/king/wizard")}
+            onSuperAdminClick={() => { resetForm(); setLoginType("king"); setView("king"); }}
           />
         );
     }
