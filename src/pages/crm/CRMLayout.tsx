@@ -1,6 +1,7 @@
 import { Outlet, NavLink } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useTenant } from "@/contexts/TenantContext";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
@@ -41,9 +42,14 @@ const menuItems = [
 export default function CRMLayout() {
   const { user, signOut } = useAuth();
   const { role, loading } = useUserRole();
+  const { tenant } = useTenant();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [profile, setProfile] = useState<{ first_name: string | null; last_name: string | null } | null>(null);
+
+  // Get tenant logo or fallback to default
+  const tenantLogo = tenant?.branding?.logo_url || advisyLogo;
+  const tenantName = tenant?.branding?.display_name || tenant?.name || "Advisy";
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -139,13 +145,26 @@ export default function CRMLayout() {
           {/* Logo Section */}
           <div className="w-72 p-6 border-b border-border">
             <div className="flex items-center justify-between">
-              <img 
-                src={advisyLogo} 
-                alt="Advisy" 
-                className="h-14 object-contain"
-              />
+              {tenant?.branding?.logo_url ? (
+                <img 
+                  src={tenant.branding.logo_url} 
+                  alt={tenantName} 
+                  className="h-14 object-contain"
+                />
+              ) : (
+                <img 
+                  src={advisyLogo} 
+                  alt="Advisy" 
+                  className="h-14 object-contain"
+                />
+              )}
               <NotificationBell />
             </div>
+            {tenant && (
+              <div className="mt-2 px-2 py-1 bg-primary/10 rounded text-xs text-primary font-medium text-center">
+                {tenantName}
+              </div>
+            )}
             <div className="flex items-center justify-center gap-2 mt-3">
               <div className="w-2 h-2 rounded-full bg-emerald-500" />
               <p className="text-xs text-muted-foreground capitalize">
@@ -232,7 +251,11 @@ export default function CRMLayout() {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border">
         <div className="flex items-center justify-between p-4">
-          <img src={advisyLogo} alt="Advisy" className="h-10 object-contain" />
+          {tenant?.branding?.logo_url ? (
+            <img src={tenant.branding.logo_url} alt={tenantName} className="h-10 object-contain" />
+          ) : (
+            <img src={advisyLogo} alt="Advisy" className="h-10 object-contain" />
+          )}
           <div className="flex items-center gap-2">
             <NotificationBell />
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
