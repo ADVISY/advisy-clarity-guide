@@ -38,6 +38,7 @@ import DocumentUpload, { docKindOptions } from "@/components/crm/DocumentUpload"
 import ReserveAccountCard from "@/components/crm/ReserveAccountCard";
 import MandatGestionForm from "@/components/crm/MandatGestionForm";
 import SendEmailDialog from "@/components/crm/SendEmailDialog";
+import { UserAvatar } from "@/components/crm/UserAvatar";
 import {
   Dialog,
   DialogContent,
@@ -333,6 +334,13 @@ export default function ClientDetail() {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
+          <UserAvatar
+            firstName={client.first_name}
+            lastName={client.last_name}
+            gender={(client as any).gender}
+            photoUrl={(client as any).photo_url}
+            size="xl"
+          />
           <div>
             <h1 className="text-3xl font-bold">{getClientName()}</h1>
             <div className="flex items-center gap-2 mt-1">

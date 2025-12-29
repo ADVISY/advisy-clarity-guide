@@ -50,6 +50,7 @@ const clientSchema = z.object({
   employer: z.string().max(200).optional().nullable(),
   iban: z.string().max(34).optional().nullable(),
   bank_name: z.string().max(200).optional().nullable(),
+  gender: z.enum(["homme", "femme", "enfant"]).optional().nullable(),
 });
 
 type ClientFormData = z.infer<typeof clientSchema>;
@@ -90,6 +91,7 @@ export default function ClientForm() {
       employer: null,
       iban: null,
       bank_name: null,
+      gender: null,
     },
   });
 
@@ -150,6 +152,7 @@ export default function ClientForm() {
         employer: data.employer,
         iban: data.iban,
         bank_name: data.bank_name,
+        gender: (data as any).gender || null,
       });
       setTagsInput(data.tags?.join(", ") || "");
     }
@@ -190,6 +193,7 @@ export default function ClientForm() {
       phone: data.phone || null,
       civil_status: (data.civil_status as string) === "none" ? null : (data.civil_status || null),
       permit_type: (data.permit_type as string) === "none" ? null : (data.permit_type || null),
+      gender: (data.gender as string) === "none" ? null : (data.gender || null),
     };
 
     if (id) {
@@ -293,6 +297,35 @@ export default function ClientForm() {
                             <SelectItem value="divorcé">Divorcé(e)</SelectItem>
                             <SelectItem value="séparé">Séparé(e)</SelectItem>
                             <SelectItem value="veuf">Veuf(ve)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Avatar</FormLabel>
+                        <Select
+                          onValueChange={(value) =>
+                            field.onChange(value === "none" ? null : value)
+                          }
+                          value={field.value || "none"}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Sélectionner" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">Non renseigné</SelectItem>
+                            <SelectItem value="homme">Homme</SelectItem>
+                            <SelectItem value="femme">Femme</SelectItem>
+                            <SelectItem value="enfant">Enfant</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

@@ -312,6 +312,7 @@ export type Database = {
           external_ref: string | null
           first_name: string | null
           fixed_salary: number | null
+          gender: string | null
           hire_date: string | null
           iban: string | null
           id: string
@@ -324,6 +325,7 @@ export type Database = {
           nationality: string | null
           permit_type: string | null
           phone: string | null
+          photo_url: string | null
           postal_code: string | null
           profession: string | null
           reserve_rate: number | null
@@ -357,6 +359,7 @@ export type Database = {
           external_ref?: string | null
           first_name?: string | null
           fixed_salary?: number | null
+          gender?: string | null
           hire_date?: string | null
           iban?: string | null
           id?: string
@@ -369,6 +372,7 @@ export type Database = {
           nationality?: string | null
           permit_type?: string | null
           phone?: string | null
+          photo_url?: string | null
           postal_code?: string | null
           profession?: string | null
           reserve_rate?: number | null
@@ -402,6 +406,7 @@ export type Database = {
           external_ref?: string | null
           first_name?: string | null
           fixed_salary?: number | null
+          gender?: string | null
           hire_date?: string | null
           iban?: string | null
           id?: string
@@ -414,6 +419,7 @@ export type Database = {
           nationality?: string | null
           permit_type?: string | null
           phone?: string | null
+          photo_url?: string | null
           postal_code?: string | null
           profession?: string | null
           reserve_rate?: number | null
@@ -1408,6 +1414,7 @@ export type Database = {
           is_active: boolean | null
           last_name: string | null
           phone: string | null
+          photo_url: string | null
           updated_at: string
         }
         Insert: {
@@ -1418,6 +1425,7 @@ export type Database = {
           is_active?: boolean | null
           last_name?: string | null
           phone?: string | null
+          photo_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -1428,6 +1436,7 @@ export type Database = {
           is_active?: boolean | null
           last_name?: string | null
           phone?: string | null
+          photo_url?: string | null
           updated_at?: string
         }
         Relationships: []
