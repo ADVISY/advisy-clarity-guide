@@ -137,8 +137,14 @@ export default function CRMDashboard() {
     if (productFilter !== 'all') {
       filtered = filtered.filter(p => {
         const type = (p.product_type || '').toLowerCase();
-        if (productFilter === 'lca') return type.includes('lca') || type.includes('maladie') || type.includes('complémentaire');
-        if (productFilter === 'vie') return type.includes('vie') || type.includes('pilier') || type.includes('3');
+        if (productFilter === 'lca') {
+          return type.includes('lamal') || type.includes('lca') || type.includes('maladie') || 
+                 type.includes('complémentaire') || type.includes('complementaire') || 
+                 type.includes('health') || type.includes('multi');
+        }
+        if (productFilter === 'vie') {
+          return type.includes('vie') || type.includes('life') || type.includes('pilier') || type.includes('3a') || type.includes('3b');
+        }
         return true;
       });
     }
@@ -176,11 +182,13 @@ export default function CRMDashboard() {
     periodPolicies.forEach(p => {
       const type = (p.product_type || '').toLowerCase();
       const yearlyPremium = p.premium_yearly || (p.premium_monthly || 0) * 12;
+      const monthlyPremium = p.premium_monthly || (p.premium_yearly || 0) / 12;
 
-      if (type.includes('vie') || type.includes('pilier') || type.includes('3')) {
+      // VIE/Life products
+      if (type.includes('vie') || type.includes('life') || type.includes('pilier') || type.includes('3a') || type.includes('3b')) {
         vieTotal += yearlyPremium * 0.05;
       } else {
-        const monthlyPremium = p.premium_monthly || (p.premium_yearly || 0) / 12;
+        // LCA/Health products (LAMal, health, multi, complémentaire)
         lcaTotal += monthlyPremium * 16;
       }
     });
@@ -192,13 +200,20 @@ export default function CRMDashboard() {
   const kpiStats = useMemo(() => {
     const activeContracts = filteredPolicies.filter(p => p.status === 'active').length;
     const periodContracts = periodPolicies.length;
+    
+    // Count LCA contracts (LAMal, health, multi, complémentaire)
     const lcaContracts = periodPolicies.filter(p => {
       const type = (p.product_type || '').toLowerCase();
-      return type.includes('lca') || type.includes('maladie') || type.includes('complémentaire');
+      return type.includes('lamal') || type.includes('lca') || type.includes('maladie') || 
+             type.includes('complémentaire') || type.includes('complementaire') || 
+             type.includes('health') || type.includes('multi');
     }).length;
+    
+    // Count VIE contracts (life, pilier, 3a, 3b)
     const vieContracts = periodPolicies.filter(p => {
       const type = (p.product_type || '').toLowerCase();
-      return type.includes('vie') || type.includes('pilier') || type.includes('3');
+      return type.includes('vie') || type.includes('life') || type.includes('pilier') || 
+             type.includes('3a') || type.includes('3b');
     }).length;
 
     return {
@@ -311,10 +326,12 @@ export default function CRMDashboard() {
         const yearlyPremium = p.premium_yearly || (p.premium_monthly || 0) * 12;
         const monthlyPremium = p.premium_monthly || (p.premium_yearly || 0) / 12;
 
-        if (type.includes('vie') || type.includes('pilier') || type.includes('3')) {
+        // VIE/Life products
+        if (type.includes('vie') || type.includes('life') || type.includes('pilier') || type.includes('3a') || type.includes('3b')) {
           vie++;
           caVie += yearlyPremium * 0.05;
         } else {
+          // LCA/Health products (LAMal, health, multi, complémentaire)
           lca++;
           caLca += monthlyPremium * 16;
         }
