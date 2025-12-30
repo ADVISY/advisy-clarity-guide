@@ -16,10 +16,11 @@ import {
   Menu,
   ChevronLeft,
   ChevronRight,
-  AlertTriangle
+  AlertTriangle,
+  Building2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import advisyLogo from "@/assets/advisy-logo.svg";
+import { useTenant } from "@/contexts/TenantContext";
 
 const menuItems = [
   { to: "/espace-client", icon: Home, label: "Accueil", end: true },
@@ -35,11 +36,16 @@ export default function ClientLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { tenant } = useTenant();
   const [user, setUser] = useState<any>(null);
   const [clientData, setClientData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  
+  // Get tenant branding
+  const tenantLogo = tenant?.branding?.logo_url;
+  const tenantName = tenant?.branding?.display_name || tenant?.name || "Cabinet";
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -186,11 +192,18 @@ export default function ClientLayout() {
           {/* Logo Section */}
           <div className="w-72 p-6 border-b border-border">
             <div className="flex items-center justify-center">
-              <img 
-                src={advisyLogo} 
-                alt="Advisy" 
-                className="h-14 object-contain"
-              />
+              {tenantLogo ? (
+                <img 
+                  src={tenantLogo} 
+                  alt={tenantName} 
+                  className="h-14 object-contain"
+                />
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-8 w-8 text-primary" />
+                  <span className="text-xl font-bold">{tenantName}</span>
+                </div>
+              )}
             </div>
             <div className="flex items-center justify-center gap-2 mt-3">
               <div className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -278,7 +291,14 @@ export default function ClientLayout() {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border">
         <div className="flex items-center justify-between p-4">
-          <img src={advisyLogo} alt="Advisy" className="h-10 object-contain" />
+          {tenantLogo ? (
+            <img src={tenantLogo} alt={tenantName} className="h-10 object-contain" />
+          ) : (
+            <div className="flex items-center gap-2">
+              <Building2 className="h-6 w-6 text-primary" />
+              <span className="font-bold">{tenantName}</span>
+            </div>
+          )}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -287,7 +307,14 @@ export default function ClientLayout() {
             </SheetTrigger>
             <SheetContent side="left" className="w-80 p-0">
               <div className="p-6 border-b border-border flex flex-col items-center">
-                <img src={advisyLogo} alt="Advisy" className="h-14 object-contain" />
+                {tenantLogo ? (
+                  <img src={tenantLogo} alt={tenantName} className="h-14 object-contain" />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-8 w-8 text-primary" />
+                    <span className="text-xl font-bold">{tenantName}</span>
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground mt-2">Espace Client</p>
               </div>
               <nav className="p-4 overflow-y-auto max-h-[calc(100vh-200px)]">

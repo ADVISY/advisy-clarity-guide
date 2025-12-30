@@ -678,9 +678,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Fetch tenant branding
     let branding: TenantBranding | null = null;
-    let tenantName = 'LYTA';
+    let tenantName = 'Cabinet';
     
-    const slug = tenantSlug || data?.tenantSlug || 'lyta';
+    const slug = tenantSlug || data?.tenantSlug;
     
     const { data: tenant, error: tenantError } = await supabaseAdmin
       .from('tenants')
