@@ -1591,8 +1591,15 @@ export type Database = {
       }
       tenant_branding: {
         Row: {
+          company_address: string | null
+          company_email: string | null
+          company_phone: string | null
+          company_website: string | null
           created_at: string
           display_name: string | null
+          email_footer_text: string | null
+          email_sender_address: string | null
+          email_sender_name: string | null
           id: string
           logo_url: string | null
           primary_color: string | null
@@ -1601,8 +1608,15 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_address?: string | null
+          company_email?: string | null
+          company_phone?: string | null
+          company_website?: string | null
           created_at?: string
           display_name?: string | null
+          email_footer_text?: string | null
+          email_sender_address?: string | null
+          email_sender_name?: string | null
           id?: string
           logo_url?: string | null
           primary_color?: string | null
@@ -1611,8 +1625,15 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_address?: string | null
+          company_email?: string | null
+          company_phone?: string | null
+          company_website?: string | null
           created_at?: string
           display_name?: string | null
+          email_footer_text?: string | null
+          email_sender_address?: string | null
+          email_sender_name?: string | null
           id?: string
           logo_url?: string | null
           primary_color?: string | null
