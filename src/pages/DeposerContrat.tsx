@@ -27,21 +27,18 @@ import {
   ArrowLeft, 
   FileCheck, 
   Loader2, 
-  Search, 
   User, 
   Building2, 
-  Check,
   Heart,
   Shield,
   Briefcase,
   Upload,
   Mail,
   LogOut,
-  FileText,
-  AlertCircle
+  FileText
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import DocumentUpload from "@/components/crm/DocumentUpload";
+import SingleDocumentUpload from "@/components/crm/SingleDocumentUpload";
 import lytaLogoFallback from "@/assets/lyta-logo-full.svg";
 
 type UploadedDocument = {
@@ -50,16 +47,6 @@ type UploadedDocument = {
   doc_kind: string;
   mime_type: string;
   size_bytes: number;
-};
-
-type Client = {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  company_name: string | null;
-  email: string | null;
-  phone: string | null;
-  mobile: string | null;
 };
 
 type VerifiedPartner = {
@@ -183,9 +170,6 @@ export default function DeposerContrat() {
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [clientSearch, setClientSearch] = useState("");
-  const [selectedClientId, setSelectedClientId] = useState("");
 
   // SANA Form
   const [sanaForm, setSanaForm] = useState<SanaFormData>({
@@ -287,13 +271,6 @@ export default function DeposerContrat() {
     "Contrat de bail (si locataire)",
   ];
 
-  // Load clients when verified
-  useEffect(() => {
-    if (verifiedPartner) {
-      loadClients();
-    }
-  }, [verifiedPartner]);
-
   // Set agent name when partner is verified
   useEffect(() => {
     if (verifiedPartner) {
@@ -364,8 +341,6 @@ export default function DeposerContrat() {
     setVerifiedPartner(null);
     setVerificationStep('email');
     setPartnerEmail("");
-    setClients([]);
-    setSelectedClientId("");
     setSelectedFormType(null);
   };
 
@@ -377,53 +352,6 @@ export default function DeposerContrat() {
   const handleBackToSelection = () => {
     setSelectedFormType(null);
     setVerificationStep('selection');
-  };
-
-  const loadClients = async () => {
-    setLoading(true);
-    try {
-      const { data } = await supabase
-        .from("clients")
-        .select("id, first_name, last_name, company_name, email, phone, mobile")
-        .neq("type_adresse", "collaborateur")
-        .order("last_name");
-      if (data) setClients(data);
-    } catch (error) {
-      console.error('Error loading clients:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredClients = clients.filter((client) => {
-    if (!clientSearch) return true;
-    const search = clientSearch.toLowerCase();
-    const fullName = `${client.first_name || ""} ${client.last_name || ""}`.toLowerCase();
-    const companyName = (client.company_name || "").toLowerCase();
-    const email = (client.email || "").toLowerCase();
-    return fullName.includes(search) || companyName.includes(search) || email.includes(search);
-  });
-
-  const selectedClient = clients.find((c) => c.id === selectedClientId);
-
-  const getClientName = (client: Client) => {
-    if (client.company_name) return client.company_name;
-    return `${client.first_name || ""} ${client.last_name || ""}`.trim() || "Sans nom";
-  };
-
-  const handleClientSelect = (clientId: string) => {
-    setSelectedClientId(clientId);
-    const client = clients.find(c => c.id === clientId);
-    if (client) {
-      const clientName = client.last_name || "";
-      const clientPrenom = client.first_name || "";
-      const clientEmail = client.email || "";
-      const clientTel = client.mobile || client.phone || "";
-
-      setSanaForm(prev => ({ ...prev, clientName, clientPrenom, clientEmail, clientTel }));
-      setVitaForm(prev => ({ ...prev, clientName, clientPrenom, clientEmail, clientTel }));
-      setMedioForm(prev => ({ ...prev, clientName, clientPrenom, clientEmail, clientTel }));
-    }
   };
 
   const sendContractDepositEmail = async (formType: 'sana' | 'vita' | 'medio' | 'business', formData: any, documents: any[]) => {
@@ -463,7 +391,7 @@ export default function DeposerContrat() {
     setSubmitting(true);
     try {
       const { error } = await supabase.from("policies").insert({
-        client_id: selectedClientId || null,
+        client_id: null,
         product_id: "00000000-0000-0000-0000-000000000001",
         start_date: sanaForm.lamalDateEffet || new Date().toISOString().split("T")[0],
         status: "pending",
@@ -484,7 +412,6 @@ export default function DeposerContrat() {
         lamalDateEffet: "", lcaDateEffet: "", lcaProduction: "",
         agentName: verifiedPartner?.name || "", commentaires: "", confirmDocuments: false,
       });
-      setSelectedClientId("");
       handleBackToSelection();
     } catch (error: any) {
       toast({ title: "Erreur", description: error.message || "Impossible de soumettre le formulaire", variant: "destructive" });
@@ -506,7 +433,7 @@ export default function DeposerContrat() {
     setSubmitting(true);
     try {
       const { error } = await supabase.from("policies").insert({
-        client_id: selectedClientId || null,
+        client_id: null,
         product_id: "00000000-0000-0000-0000-000000000002",
         start_date: vitaForm.vitaDateEffet || new Date().toISOString().split("T")[0],
         premium_monthly: parseFloat(vitaForm.vitaPrimeMensuelle) || 0,
@@ -528,7 +455,6 @@ export default function DeposerContrat() {
         vitaDateEffet: "", vitaDureeContrat: "", vitaPrimeMensuelle: "",
         agentName: verifiedPartner?.name || "", commentaires: "", confirmDocuments: false,
       });
-      setSelectedClientId("");
       handleBackToSelection();
     } catch (error: any) {
       toast({ title: "Erreur", description: error.message || "Impossible de soumettre le formulaire", variant: "destructive" });
@@ -550,7 +476,7 @@ export default function DeposerContrat() {
     setSubmitting(true);
     try {
       const { error } = await supabase.from("policies").insert({
-        client_id: selectedClientId || null,
+        client_id: null,
         product_id: "00000000-0000-0000-0000-000000000003",
         start_date: medioForm.dateEffet || new Date().toISOString().split("T")[0],
         status: "pending",
@@ -571,7 +497,6 @@ export default function DeposerContrat() {
         dateEffet: "", typeCouverture: "", production: "",
         agentName: verifiedPartner?.name || "", commentaires: "", confirmDocuments: false,
       });
-      setSelectedClientId("");
       handleBackToSelection();
     } catch (error: any) {
       toast({ title: "Erreur", description: error.message || "Impossible de soumettre le formulaire", variant: "destructive" });
@@ -589,7 +514,7 @@ export default function DeposerContrat() {
     setSubmitting(true);
     try {
       const { error } = await supabase.from("policies").insert({
-        client_id: selectedClientId || null,
+        client_id: null,
         product_id: "00000000-0000-0000-0000-000000000004",
         start_date: businessForm.dateEffet || new Date().toISOString().split("T")[0],
         status: "pending",
@@ -611,7 +536,6 @@ export default function DeposerContrat() {
         entrepriseAdresse: "", chefPrenom: "", chefNom: "", civilite: "", dateNaissance: "",
         chefAdresse: "", nationalite: "", permis: "", dateEffet: "", emailRetour: "", commentaires: "",
       });
-      setSelectedClientId("");
       handleBackToSelection();
     } catch (error: any) {
       toast({ title: "Erreur", description: error.message || "Impossible de soumettre le formulaire", variant: "destructive" });
@@ -682,7 +606,7 @@ export default function DeposerContrat() {
                 {verifying ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Vérification...</>
                 ) : (
-                  <><Check className="mr-2 h-4 w-4" />Vérifier mon accès</>
+                  <><Mail className="mr-2 h-4 w-4" />Vérifier mon accès</>
                 )}
               </Button>
               <p className="text-xs text-center text-muted-foreground">
@@ -814,51 +738,6 @@ export default function DeposerContrat() {
       </header>
 
       <main className="container py-8 max-w-3xl">
-        {/* Client Selection */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <User className="h-5 w-5" />
-              Sélectionner un client (optionnel)
-            </CardTitle>
-            <CardDescription>Préremplir les informations depuis un client existant</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Rechercher un client..."
-                  value={clientSearch}
-                  onChange={(e) => setClientSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              {selectedClient && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-king/10 rounded-lg">
-                  <Check className="h-4 w-4 text-king" />
-                  <span className="text-sm font-medium">{getClientName(selectedClient)}</span>
-                  <Button variant="ghost" size="sm" onClick={() => setSelectedClientId("")} className="h-6 w-6 p-0">×</Button>
-                </div>
-              )}
-            </div>
-            {clientSearch && !selectedClientId && (
-              <div className="mt-2 max-h-48 overflow-y-auto border rounded-lg">
-                {filteredClients.slice(0, 10).map((client) => (
-                  <button
-                    key={client.id}
-                    onClick={() => { handleClientSelect(client.id); setClientSearch(""); }}
-                    className="w-full p-3 text-left hover:bg-muted transition-colors border-b last:border-b-0"
-                  >
-                    <p className="font-medium">{getClientName(client)}</p>
-                    {client.email && <p className="text-sm text-muted-foreground">{client.email}</p>}
-                  </button>
-                ))}
-                {filteredClients.length === 0 && <p className="p-3 text-center text-muted-foreground">Aucun client trouvé</p>}
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
         {/* SANA Form */}
         {selectedFormType === 'sana' && (
@@ -915,24 +794,29 @@ export default function DeposerContrat() {
               </div>
 
               {/* Documents Section */}
-              <div className="space-y-4 p-4 border-2 border-dashed border-king/30 rounded-lg bg-king/5">
-                <div className="flex items-center gap-2 text-king">
+              <div className="space-y-4 p-4 border-2 rounded-lg" style={{ borderColor: tenantPrimaryColor || 'hsl(var(--primary)/0.3)', backgroundColor: tenantPrimaryColor ? `${tenantPrimaryColor}08` : 'hsl(var(--primary)/0.05)' }}>
+                <div className="flex items-center gap-2" style={{ color: tenantPrimaryColor || 'hsl(var(--primary))' }}>
                   <FileText className="h-5 w-5" />
                   <h3 className="font-semibold">Documents à fournir</h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="space-y-3">
                   {sanaRequiredDocs.map((doc, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <AlertCircle className="h-3 w-3 shrink-0" />
-                      <span>{doc}</span>
-                    </div>
+                    <SingleDocumentUpload
+                      key={i}
+                      label={doc}
+                      docKind={`sana_doc_${i}`}
+                      onUpload={(uploadedDoc) => setSanaDocuments(prev => {
+                        const newDocs = [...prev];
+                        newDocs[i] = uploadedDoc;
+                        return newDocs;
+                      })}
+                      onRemove={() => setSanaDocuments(prev => prev.filter((_, idx) => idx !== i))}
+                      uploadedDocument={sanaDocuments[i] || null}
+                      required={i < 3}
+                      primaryColor={tenantPrimaryColor || undefined}
+                    />
                   ))}
                 </div>
-                <DocumentUpload
-                  onUpload={(doc) => setSanaDocuments(prev => [...prev, doc])}
-                  onRemove={(index) => setSanaDocuments(prev => prev.filter((_, i) => i !== index))}
-                  documents={sanaDocuments}
-                />
               </div>
 
               <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
@@ -1014,24 +898,29 @@ export default function DeposerContrat() {
               </div>
 
               {/* Documents Section */}
-              <div className="space-y-4 p-4 border-2 border-dashed border-king/30 rounded-lg bg-king/5">
-                <div className="flex items-center gap-2 text-king">
+              <div className="space-y-4 p-4 border-2 rounded-lg" style={{ borderColor: tenantPrimaryColor || 'hsl(var(--primary)/0.3)', backgroundColor: tenantPrimaryColor ? `${tenantPrimaryColor}08` : 'hsl(var(--primary)/0.05)' }}>
+                <div className="flex items-center gap-2" style={{ color: tenantPrimaryColor || 'hsl(var(--primary))' }}>
                   <FileText className="h-5 w-5" />
                   <h3 className="font-semibold">Documents à fournir</h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="space-y-3">
                   {vitaRequiredDocs.map((doc, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <AlertCircle className="h-3 w-3 shrink-0" />
-                      <span>{doc}</span>
-                    </div>
+                    <SingleDocumentUpload
+                      key={i}
+                      label={doc}
+                      docKind={`vita_doc_${i}`}
+                      onUpload={(uploadedDoc) => setVitaDocuments(prev => {
+                        const newDocs = [...prev];
+                        newDocs[i] = uploadedDoc;
+                        return newDocs;
+                      })}
+                      onRemove={() => setVitaDocuments(prev => prev.filter((_, idx) => idx !== i))}
+                      uploadedDocument={vitaDocuments[i] || null}
+                      required={i < 3}
+                      primaryColor={tenantPrimaryColor || undefined}
+                    />
                   ))}
                 </div>
-                <DocumentUpload
-                  onUpload={(doc) => setVitaDocuments(prev => [...prev, doc])}
-                  onRemove={(index) => setVitaDocuments(prev => prev.filter((_, i) => i !== index))}
-                  documents={vitaDocuments}
-                />
               </div>
 
               <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
@@ -1112,24 +1001,29 @@ export default function DeposerContrat() {
               </div>
 
               {/* Documents Section */}
-              <div className="space-y-4 p-4 border-2 border-dashed border-king/30 rounded-lg bg-king/5">
-                <div className="flex items-center gap-2 text-king">
+              <div className="space-y-4 p-4 border-2 rounded-lg" style={{ borderColor: tenantPrimaryColor || 'hsl(var(--primary)/0.3)', backgroundColor: tenantPrimaryColor ? `${tenantPrimaryColor}08` : 'hsl(var(--primary)/0.05)' }}>
+                <div className="flex items-center gap-2" style={{ color: tenantPrimaryColor || 'hsl(var(--primary))' }}>
                   <FileText className="h-5 w-5" />
                   <h3 className="font-semibold">Documents à fournir</h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="space-y-3">
                   {medioRequiredDocs.map((doc, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <AlertCircle className="h-3 w-3 shrink-0" />
-                      <span>{doc}</span>
-                    </div>
+                    <SingleDocumentUpload
+                      key={i}
+                      label={doc}
+                      docKind={`medio_doc_${i}`}
+                      onUpload={(uploadedDoc) => setMedioDocuments(prev => {
+                        const newDocs = [...prev];
+                        newDocs[i] = uploadedDoc;
+                        return newDocs;
+                      })}
+                      onRemove={() => setMedioDocuments(prev => prev.filter((_, idx) => idx !== i))}
+                      uploadedDocument={medioDocuments[i] || null}
+                      required={i < 3}
+                      primaryColor={tenantPrimaryColor || undefined}
+                    />
                   ))}
                 </div>
-                <DocumentUpload
-                  onUpload={(doc) => setMedioDocuments(prev => [...prev, doc])}
-                  onRemove={(index) => setMedioDocuments(prev => prev.filter((_, i) => i !== index))}
-                  documents={medioDocuments}
-                />
               </div>
 
               <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
@@ -1260,24 +1154,29 @@ export default function DeposerContrat() {
               </div>
 
               {/* Documents Section */}
-              <div className="space-y-4 p-4 border-2 border-dashed border-king/30 rounded-lg bg-king/5">
-                <div className="flex items-center gap-2 text-king">
+              <div className="space-y-4 p-4 border-2 rounded-lg" style={{ borderColor: tenantPrimaryColor || 'hsl(var(--primary)/0.3)', backgroundColor: tenantPrimaryColor ? `${tenantPrimaryColor}08` : 'hsl(var(--primary)/0.05)' }}>
+                <div className="flex items-center gap-2" style={{ color: tenantPrimaryColor || 'hsl(var(--primary))' }}>
                   <FileText className="h-5 w-5" />
                   <h3 className="font-semibold">Documents à fournir</h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="space-y-3">
                   {businessRequiredDocs.map((doc, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <AlertCircle className="h-3 w-3 shrink-0" />
-                      <span>{doc}</span>
-                    </div>
+                    <SingleDocumentUpload
+                      key={i}
+                      label={doc}
+                      docKind={`business_doc_${i}`}
+                      onUpload={(uploadedDoc) => setBusinessDocuments(prev => {
+                        const newDocs = [...prev];
+                        newDocs[i] = uploadedDoc;
+                        return newDocs;
+                      })}
+                      onRemove={() => setBusinessDocuments(prev => prev.filter((_, idx) => idx !== i))}
+                      uploadedDocument={businessDocuments[i] || null}
+                      required={i < 4}
+                      primaryColor={tenantPrimaryColor || undefined}
+                    />
                   ))}
                 </div>
-                <DocumentUpload
-                  onUpload={(doc) => setBusinessDocuments(prev => [...prev, doc])}
-                  onRemove={(index) => setBusinessDocuments(prev => prev.filter((_, i) => i !== index))}
-                  documents={businessDocuments}
-                />
               </div>
 
               <Button className="w-full bg-king hover:bg-king-dark text-white" size="lg" onClick={handleSubmitBusiness} disabled={submitting || businessDocuments.length === 0}>
