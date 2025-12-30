@@ -814,7 +814,7 @@ export default function CRMCompta() {
 
         {/* Footer */}
         <div className="mt-6 pt-4 border-t text-center text-xs text-muted-foreground">
-          <p>Advisy Sàrl • Conseil en assurances</p>
+          <p>{tenantName} • Conseil en assurances</p>
           <p>Cette fiche de paie est générée automatiquement. Les taux de cotisations sont indicatifs.</p>
         </div>
       </div>
