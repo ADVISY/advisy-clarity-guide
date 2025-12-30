@@ -327,7 +327,8 @@ const Connexion = () => {
   const navigate = useNavigate();
   
   // Get tenant display name and logo
-  const displayName = tenant?.branding?.display_name || tenant?.name || 'Cabinet';
+  // If tenant exists, use tenant branding; otherwise show "LYTA" for the main platform
+  const displayName = tenant ? (tenant.branding?.display_name || tenant.name) : 'LYTA';
   const logoUrl = tenant?.branding?.logo_url;
   // Only show platform logo (lytaLogo) if no tenant is detected at all
   const showPlatformLogo = !tenant && !logoUrl;
