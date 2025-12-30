@@ -133,6 +133,13 @@ export function TenantProvider({ children }: TenantProviderProps) {
         // Format tenant data
         const brandingRaw = (tenantData as any).tenant_branding;
         const branding = Array.isArray(brandingRaw) ? brandingRaw[0] : brandingRaw;
+        
+        console.log('Tenant branding loaded:', { 
+          slug, 
+          brandingRaw, 
+          branding,
+          logo_url: branding?.logo_url 
+        });
 
         const formattedTenant: Tenant = {
           id: tenantData.id,
@@ -140,7 +147,12 @@ export function TenantProvider({ children }: TenantProviderProps) {
           slug: tenantData.slug,
           email: tenantData.email,
           status: tenantData.status,
-          branding: branding || undefined,
+          branding: branding ? {
+            logo_url: branding.logo_url || null,
+            primary_color: branding.primary_color || null,
+            secondary_color: branding.secondary_color || null,
+            display_name: branding.display_name || null,
+          } : undefined,
         };
 
         setTenant(formattedTenant);
