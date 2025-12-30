@@ -101,6 +101,8 @@ export default function CRMCompta() {
   // Tenant branding for PDFs
   const tenantName = tenant?.branding?.display_name || tenant?.name || "Cabinet";
   const tenantLogo = tenant?.branding?.logo_url;
+  const tenantPrimaryColor = tenant?.branding?.primary_color || '#1800AD';
+  const tenantSecondaryColor = tenant?.branding?.secondary_color || '#1a1a2e';
   
   const [activeTab, setActiveTab] = useState("decomptes");
   
@@ -453,16 +455,16 @@ export default function CRMCompta() {
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Inter', sans-serif; color: #1a1a2e; }
+          body { font-family: 'Inter', sans-serif; color: ${tenantSecondaryColor}; }
           .page { width: 210mm; min-height: 297mm; padding: 15mm; page-break-after: always; background: white; }
           .page:last-child { page-break-after: avoid; }
-          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #1800AD; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid ${tenantPrimaryColor}; }
           .logo { height: 50px; }
           .title { text-align: right; }
-          .title h1 { font-size: 20px; color: #1800AD; margin-bottom: 4px; }
+          .title h1 { font-size: 20px; color: ${tenantPrimaryColor}; margin-bottom: 4px; }
           .title p { color: #666; font-size: 12px; }
           table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 11px; }
-          th { background: #1800AD; color: white; padding: 8px 6px; text-align: left; }
+          th { background: ${tenantPrimaryColor}; color: white; padding: 8px 6px; text-align: left; }
           td { padding: 6px; border-bottom: 1px solid #eee; }
           .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; text-align: center; color: #666; font-size: 10px; }
           @media print { body { padding: 0; } .page { padding: 10mm; } }
