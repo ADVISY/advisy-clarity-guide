@@ -15,7 +15,10 @@ import {
   FileText,
   ExternalLink,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Plus,
+  X,
+  Mail
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,7 +57,9 @@ export default function KingTenantDetail() {
     address: "",
     slug: "",
     status: "test",
+    contract_notification_emails: [] as string[],
   });
+  const [newNotificationEmail, setNewNotificationEmail] = useState("");
 
   const [brandingData, setBrandingData] = useState({
     logo_url: "",
@@ -122,6 +127,7 @@ export default function KingTenantDetail() {
         address: tenant.address || "",
         slug: tenant.slug || "",
         status: tenant.status || "test",
+        contract_notification_emails: tenant.contract_notification_emails || [],
       });
 
       if (tenant.tenant_branding?.[0]) {
@@ -147,6 +153,7 @@ export default function KingTenantDetail() {
           phone: tenantData.phone,
           address: tenantData.address,
           status: tenantData.status,
+          contract_notification_emails: tenantData.contract_notification_emails,
           updated_at: new Date().toISOString(),
         })
         .eq('id', tenantId);
@@ -421,6 +428,80 @@ export default function KingTenantDetail() {
                       <SelectItem value="suspended">Suspendu</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+
+              {/* Email notifications for contract deposits */}
+              <div className="space-y-4 pt-4 border-t">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <Label className="text-base font-medium">Emails de notification (dépôt de contrats)</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Ces adresses recevront les notifications lors du dépôt de nouveaux contrats
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  {tenantData.contract_notification_emails.map((email, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        value={email}
+                        readOnly
+                        className="flex-1 bg-muted"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setTenantData({
+                            ...tenantData,
+                            contract_notification_emails: tenantData.contract_notification_emails.filter((_, i) => i !== index)
+                          });
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="email"
+                      placeholder="email@exemple.com"
+                      value={newNotificationEmail}
+                      onChange={(e) => setNewNotificationEmail(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && newNotificationEmail && newNotificationEmail.includes('@')) {
+                          e.preventDefault();
+                          setTenantData({
+                            ...tenantData,
+                            contract_notification_emails: [...tenantData.contract_notification_emails, newNotificationEmail]
+                          });
+                          setNewNotificationEmail('');
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        if (newNotificationEmail && newNotificationEmail.includes('@')) {
+                          setTenantData({
+                            ...tenantData,
+                            contract_notification_emails: [...tenantData.contract_notification_emails, newNotificationEmail]
+                          });
+                          setNewNotificationEmail('');
+                        }
+                      }}
+                      disabled={!newNotificationEmail || !newNotificationEmail.includes('@')}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
 
