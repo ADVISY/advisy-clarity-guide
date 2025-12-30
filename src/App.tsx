@@ -43,6 +43,7 @@ import ClientClaims from "./pages/client/ClientClaims";
 import KingLayout from "./pages/king/KingLayout";
 import KingDashboard from "./pages/king/KingDashboard";
 import KingTenants from "./pages/king/KingTenants";
+import KingTenantDetail from "./pages/king/KingTenantDetail";
 import KingWizard from "./pages/king/KingWizard";
 import KingUsers from "./pages/king/KingUsers";
 import KingSecurity from "./pages/king/KingSecurity";
@@ -91,6 +92,7 @@ const App = () => (
               <Route path="/king" element={<ProtectedRoute><KingLayout /></ProtectedRoute>}>
                 <Route index element={<KingDashboard />} />
                 <Route path="tenants" element={<KingTenants />} />
+                <Route path="tenants/:tenantId" element={<KingTenantDetail />} />
                 <Route path="wizard" element={<KingWizard />} />
                 <Route path="users" element={<KingUsers />} />
                 <Route path="security" element={<KingSecurity />} />
