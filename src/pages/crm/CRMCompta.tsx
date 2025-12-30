@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Calculator, FileText, Printer, Eye, Loader2, Users, Calendar, DollarSign, FileDown, CheckSquare } from "lucide-react";
+import { Calculator, FileText, Printer, Eye, Loader2, Users, Calendar, DollarSign, FileDown, CheckSquare, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCommissions, Commission } from "@/hooks/useCommissions";
 import { useCommissionParts, CommissionPart } from "@/hooks/useCommissionParts";
@@ -18,7 +18,7 @@ import { useDocuments } from "@/hooks/useDocuments";
 import { format, startOfMonth, endOfMonth, getMonth, getYear } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
-import advisyLogo from "@/assets/advisy-logo.svg";
+import { useTenant } from "@/contexts/TenantContext";
 import html2pdf from "html2pdf.js";
 
 interface DecompteCommission {
@@ -96,6 +96,11 @@ export default function CRMCompta() {
   const { collaborateurs, loading: loadingCollaborateurs } = useCollaborateursCommission();
   const { createDocument } = useDocuments();
   const { toast } = useToast();
+  const { tenant } = useTenant();
+  
+  // Tenant branding for PDFs
+  const tenantName = tenant?.branding?.display_name || tenant?.name || "Cabinet";
+  const tenantLogo = tenant?.branding?.logo_url;
   
   const [activeTab, setActiveTab] = useState("decomptes");
   
@@ -444,7 +449,7 @@ export default function CRMCompta() {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Document - Advisy</title>
+        <title>Document - ${tenantName}</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
           * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -538,7 +543,14 @@ export default function CRMCompta() {
         style={{ pageBreakAfter: isLast ? 'auto' : 'always', minHeight: '277mm', width: '100%' }}
       >
         <div className="flex justify-between items-start mb-6 pb-4 border-b-2 border-primary">
-          <img src={advisyLogo} alt="Advisy" className="h-12" />
+          {tenantLogo ? (
+            <img src={tenantLogo} alt={tenantName} className="h-12" />
+          ) : (
+            <div className="flex items-center gap-2">
+              <Building2 className="h-8 w-8 text-primary" />
+              <span className="text-xl font-bold text-primary">{tenantName}</span>
+            </div>
+          )}
           <div className="text-right">
             <h1 className="text-xl font-bold text-primary">Décompte de Commissions</h1>
             <p className="text-muted-foreground text-sm">
@@ -630,7 +642,7 @@ export default function CRMCompta() {
         </Table>
 
         <div className="mt-6 pt-4 border-t text-center text-xs text-muted-foreground">
-          <p>Advisy Sàrl • Conseil en assurances</p>
+          <p>{tenantName} • Conseil en assurances</p>
           <p>Ce document est généré automatiquement et fait foi de décompte de commissions.</p>
         </div>
       </div>
@@ -646,7 +658,14 @@ export default function CRMCompta() {
         style={{ pageBreakAfter: isLast ? 'auto' : 'always', minHeight: '277mm', width: '100%' }}
       >
         <div className="flex justify-between items-start mb-6 pb-4 border-b-2 border-primary">
-          <img src={advisyLogo} alt="Advisy" className="h-12" />
+          {tenantLogo ? (
+            <img src={tenantLogo} alt={tenantName} className="h-12" />
+          ) : (
+            <div className="flex items-center gap-2">
+              <Building2 className="h-8 w-8 text-primary" />
+              <span className="text-xl font-bold text-primary">{tenantName}</span>
+            </div>
+          )}
           <div className="text-right">
             <h1 className="text-xl font-bold text-primary">Fiche de Paie</h1>
             <p className="text-muted-foreground text-sm">{fiche.mois} {fiche.annee}</p>
@@ -660,7 +679,7 @@ export default function CRMCompta() {
         <div className="grid grid-cols-2 gap-6 mb-6">
           <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-4 rounded-lg">
             <h2 className="text-sm font-semibold text-primary mb-2">Employeur</h2>
-            <p className="font-medium">Advisy Sàrl</p>
+            <p className="font-medium">{tenantName}</p>
             <p className="text-sm text-muted-foreground">Conseil en assurances</p>
             <p className="text-sm text-muted-foreground">Suisse</p>
           </div>

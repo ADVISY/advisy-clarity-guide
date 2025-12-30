@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { useCollaborateurs, Collaborateur, CollaborateurFormData } from "@/hooks/useCollaborateurs";
 import { CollaborateurForm } from "@/components/crm/CollaborateurForm";
 import { CollaboratorPermissionsDialog } from "@/components/crm/CollaboratorPermissionsDialog";
+import { useTenant } from "@/contexts/TenantContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +37,8 @@ const professionLabels: Record<string, string> = {
 
 export default function CRMCollaborateurs() {
   const { collaborateurs, loading, stats, addCollaborateur, updateCollaborateur, deleteCollaborateur } = useCollaborateurs();
+  const { tenant } = useTenant();
+  const tenantName = tenant?.branding?.display_name || tenant?.name || "l'équipe";
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editingCollaborateur, setEditingCollaborateur] = useState<Collaborateur | null>(null);
@@ -114,7 +117,7 @@ export default function CRMCollaborateurs() {
               <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                 Collaborateurs
               </h1>
-              <p className="text-muted-foreground">Gérez votre équipe Advisy</p>
+              <p className="text-muted-foreground">Gérez votre équipe {tenantName}</p>
             </div>
           </div>
           <Button 

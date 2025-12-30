@@ -12,6 +12,10 @@ interface Tenant {
     primary_color: string | null;
     secondary_color: string | null;
     display_name: string | null;
+    company_address?: string | null;
+    company_phone?: string | null;
+    company_email?: string | null;
+    company_website?: string | null;
   };
 }
 

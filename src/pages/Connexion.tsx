@@ -1,12 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, LayoutDashboard, FileUp, User, Users, Crown } from "lucide-react";
+import { ChevronLeft, LayoutDashboard, FileUp, User, Users, Crown, Building2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
 import lytaLogo from "@/assets/lyta-logo-full.svg";
-import advisyLogo from "@/assets/advisy-logo.svg";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -328,8 +327,10 @@ const Connexion = () => {
   const navigate = useNavigate();
   
   // Get tenant display name and logo
-  const displayName = tenant?.branding?.display_name || tenant?.name || 'LYTA';
-  const logoUrl = tenant?.branding?.logo_url || (tenant ? advisyLogo : lytaLogo);
+  const displayName = tenant?.branding?.display_name || tenant?.name || 'Cabinet';
+  const logoUrl = tenant?.branding?.logo_url;
+  // Only show platform logo (lytaLogo) if no tenant is detected at all
+  const showPlatformLogo = !tenant && !logoUrl;
 
   // Redirect based on loginType choice (not role) if already logged in
   useEffect(() => {
@@ -590,7 +591,7 @@ const Connexion = () => {
           
           toast({
             title: "Connexion réussie",
-            description: "Bienvenue sur votre espace Advisy.",
+            description: `Bienvenue sur votre espace ${displayName}.`,
           });
           // Redirect will happen via useEffect based on loginType
         }
@@ -732,11 +733,24 @@ const Connexion = () => {
 
       <main className="min-h-screen flex flex-col items-center justify-center px-4 py-20 relative z-10">
         <div className="text-center mb-8">
-          <img 
-            src={logoUrl} 
-            alt={displayName} 
-            className="h-24 sm:h-32 mx-auto"
-          />
+          {showPlatformLogo ? (
+            <img 
+              src={lytaLogo} 
+              alt="Platform" 
+              className="h-24 sm:h-32 mx-auto"
+            />
+          ) : logoUrl ? (
+            <img 
+              src={logoUrl} 
+              alt={displayName} 
+              className="h-24 sm:h-32 mx-auto"
+            />
+          ) : (
+            <div className="flex items-center justify-center gap-3">
+              <Building2 className="h-16 w-16 text-primary" />
+              <span className="text-4xl font-bold">{displayName}</span>
+            </div>
+          )}
         </div>
 
         <div className="max-w-xl w-full bg-card rounded-xl shadow-lg border p-6 sm:p-8">

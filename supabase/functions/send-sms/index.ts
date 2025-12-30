@@ -47,10 +47,9 @@ serve(async (req: Request): Promise<Response> => {
     const results = [];
 
     for (const recipient of recipients) {
-      // Replace variables in message
+      // Replace variables in message (company_name should be passed from frontend with tenant branding)
       let personalizedMessage = message
-        .replace(/\{\{client_name\}\}/g, recipient.name)
-        .replace(/\{\{company_name\}\}/g, "Advisy");
+        .replace(/\{\{client_name\}\}/g, recipient.name);
 
       try {
         const response = await fetch(

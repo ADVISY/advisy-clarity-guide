@@ -24,7 +24,6 @@ import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import advisyLogo from "@/assets/advisy-logo.svg";
 import { supabase } from "@/integrations/supabase/client";
 
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -63,9 +62,9 @@ export default function CRMLayout() {
     }
   }, [user]);
 
-  // Get tenant logo or fallback to default
-  const tenantLogo = tenant?.branding?.logo_url || advisyLogo;
-  const tenantName = tenant?.branding?.display_name || tenant?.name || "Advisy";
+  // Get tenant logo or show placeholder
+  const tenantLogo = tenant?.branding?.logo_url;
+  const tenantName = tenant?.branding?.display_name || tenant?.name || "Cabinet";
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -170,18 +169,17 @@ export default function CRMLayout() {
           {/* Logo Section */}
           <div className="w-72 p-6 border-b border-border">
             <div className="flex items-center justify-between">
-              {tenant?.branding?.logo_url ? (
+              {tenantLogo ? (
                 <img 
-                  src={tenant.branding.logo_url} 
+                  src={tenantLogo} 
                   alt={tenantName} 
                   className="h-14 object-contain"
                 />
               ) : (
-                <img 
-                  src={advisyLogo} 
-                  alt="Advisy" 
-                  className="h-14 object-contain"
-                />
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-8 w-8 text-primary" />
+                  <span className="text-xl font-bold">{tenantName}</span>
+                </div>
               )}
               <div className="flex items-center gap-1">
                 <SoundToggle />
@@ -279,10 +277,13 @@ export default function CRMLayout() {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border">
         <div className="flex items-center justify-between p-4">
-          {tenant?.branding?.logo_url ? (
-            <img src={tenant.branding.logo_url} alt={tenantName} className="h-10 object-contain" />
+          {tenantLogo ? (
+            <img src={tenantLogo} alt={tenantName} className="h-10 object-contain" />
           ) : (
-            <img src={advisyLogo} alt="Advisy" className="h-10 object-contain" />
+            <div className="flex items-center gap-2">
+              <Building2 className="h-6 w-6 text-primary" />
+              <span className="font-bold">{tenantName}</span>
+            </div>
           )}
           <div className="flex items-center gap-1">
             <SoundToggle />
@@ -295,7 +296,14 @@ export default function CRMLayout() {
               </SheetTrigger>
             <SheetContent side="left" className="w-80 p-0">
               <div className="p-6 border-b border-border flex flex-col items-center">
-                <img src={tenantLogo} alt={tenantName} className="h-14 object-contain" />
+                {tenantLogo ? (
+                  <img src={tenantLogo} alt={tenantName} className="h-14 object-contain" />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-8 w-8 text-primary" />
+                    <span className="text-xl font-bold">{tenantName}</span>
+                  </div>
+                )}
                 <p className="text-sm font-medium mt-2">{tenantName}</p>
                 <p className="text-xs text-muted-foreground capitalize">{role}</p>
               </div>

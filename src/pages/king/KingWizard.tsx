@@ -357,7 +357,7 @@ export default function KingWizard() {
                   id="name"
                   value={formData.name}
                   onChange={(e) => handleNameChange(e.target.value)}
-                  placeholder="Ex: Advisy"
+                  placeholder="Ex: Mon Cabinet"
                 />
               </div>
               <div className="space-y-2">
@@ -366,7 +366,7 @@ export default function KingWizard() {
                   id="legal_name"
                   value={formData.legal_name}
                   onChange={(e) => updateFormData("legal_name", e.target.value)}
-                  placeholder="Ex: Advisy SA"
+                  placeholder="Ex: Mon Cabinet SA"
                 />
               </div>
               <div className="space-y-2">
@@ -376,7 +376,7 @@ export default function KingWizard() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => updateFormData("email", e.target.value)}
-                  placeholder="contact@advisy.ch"
+                  placeholder="contact@moncabinet.ch"
                 />
               </div>
               <div className="space-y-2">
@@ -405,7 +405,7 @@ export default function KingWizard() {
                     id="slug"
                     value={formData.slug}
                     onChange={(e) => updateFormData("slug", e.target.value.toLowerCase())}
-                    placeholder="advisy"
+                    placeholder="moncabinet"
                     className="rounded-r-none"
                   />
                   <span className="inline-flex items-center px-3 bg-muted border border-l-0 rounded-r-md text-sm text-muted-foreground">
@@ -535,7 +535,7 @@ export default function KingWizard() {
                   id="display_name"
                   value={formData.display_name}
                   onChange={(e) => updateFormData("display_name", e.target.value)}
-                  placeholder="Ex: Advisy"
+                  placeholder="Ex: Mon Cabinet"
                 />
                 <p className="text-xs text-muted-foreground">
                   Ce nom apparaîtra dans le header et la page de connexion
@@ -695,7 +695,7 @@ export default function KingWizard() {
                   type="email"
                   value={formData.admin_email}
                   onChange={(e) => updateFormData("admin_email", e.target.value)}
-                  placeholder="admin@advisy.ch"
+                  placeholder="admin@moncabinet.ch"
                 />
               </div>
               <div className="space-y-2">
