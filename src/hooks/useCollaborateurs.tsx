@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
+import { useUserTenant } from "@/hooks/useUserTenant";
+import { translateError } from "@/lib/errorTranslations";
 
 export interface Collaborateur {
   id: string;
@@ -58,6 +60,7 @@ export function useCollaborateurs() {
   const { toast } = useToast();
   const [collaborateurs, setCollaborateurs] = useState<Collaborateur[]>([]);
   const [loading, setLoading] = useState(true);
+  const { tenantId } = useUserTenant();
 
   const fetchCollaborateurs = useCallback(async () => {
     try {
@@ -83,7 +86,7 @@ export function useCollaborateurs() {
     } catch (error: any) {
       toast({
         title: "Erreur",
-        description: error.message,
+        description: translateError(error.message),
         variant: "destructive"
       });
     } finally {
@@ -97,12 +100,17 @@ export function useCollaborateurs() {
 
   const addCollaborateur = async (data: CollaborateurFormData) => {
     try {
+      if (!tenantId) {
+        throw new Error("Aucun cabinet assigné à cet utilisateur");
+      }
+
       const { error } = await supabase
         .from('clients')
         .insert([{
           ...data,
           type_adresse: 'collaborateur',
-          status: data.status || 'actif'
+          status: data.status || 'actif',
+          tenant_id: tenantId
         }]);
 
       if (error) throw error;
@@ -117,7 +125,7 @@ export function useCollaborateurs() {
     } catch (error: any) {
       toast({
         title: "Erreur",
-        description: error.message,
+        description: translateError(error.message),
         variant: "destructive"
       });
       return false;

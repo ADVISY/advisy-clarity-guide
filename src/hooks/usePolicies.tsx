@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserTenant } from '@/hooks/useUserTenant';
+import { translateError } from '@/lib/errorTranslations';
 
 export type Policy = {
   id: string;
@@ -39,6 +41,7 @@ export function usePolicies() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { tenantId } = useUserTenant();
 
   const fetchPolicies = async () => {
     try {
@@ -76,7 +79,7 @@ export function usePolicies() {
     } catch (error: any) {
       toast({
         title: "Erreur",
-        description: error.message,
+        description: translateError(error.message),
         variant: "destructive"
       });
       setPolicies([]);
@@ -87,6 +90,10 @@ export function usePolicies() {
 
   const createPolicy = async (policyData: any) => {
     try {
+      if (!tenantId) {
+        throw new Error("Aucun cabinet assigné à cet utilisateur");
+      }
+
       // Get the current user's partner profile if they have one
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       
@@ -105,7 +112,7 @@ export function usePolicies() {
 
       const { data, error } = await supabase
         .from('policies')
-        .insert([policyData])
+        .insert([{ ...policyData, tenant_id: tenantId }])
         .select('id')
         .maybeSingle();
 
@@ -121,7 +128,7 @@ export function usePolicies() {
     } catch (error: any) {
       toast({
         title: "Erreur",
-        description: error.message,
+        description: translateError(error.message),
         variant: "destructive"
       });
       throw error;
