@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserTenant } from '@/hooks/useUserTenant';
+import { translateError } from '@/lib/errorTranslations';
 
 export type Client = {
   id: string;
@@ -59,6 +61,7 @@ export function useClients() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { tenantId } = useUserTenant();
 
   const fetchClients = async (typeFilter?: string) => {
     try {
@@ -104,7 +107,7 @@ export function useClients() {
     } catch (error: any) {
       toast({
         title: "Erreur",
-        description: error.message,
+        description: translateError(error.message),
         variant: "destructive"
       });
     } finally {
@@ -114,9 +117,13 @@ export function useClients() {
 
   const createClient = async (clientData: any) => {
     try {
+      if (!tenantId) {
+        throw new Error("Aucun cabinet assigné à cet utilisateur");
+      }
+
       const { data, error } = await supabase
         .from('clients' as any)
-        .insert([clientData])
+        .insert([{ ...clientData, tenant_id: tenantId }])
         .select('*')
         .single();
 
@@ -132,7 +139,7 @@ export function useClients() {
     } catch (error: any) {
       toast({
         title: "Erreur",
-        description: error.message,
+        description: translateError(error.message),
         variant: "destructive"
       });
       return { data: null, error };

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserTenant } from '@/hooks/useUserTenant';
+import { translateError } from '@/lib/errorTranslations';
 
 export type Document = {
   id: string;
@@ -21,6 +23,7 @@ export function useDocuments() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { tenantId } = useUserTenant();
 
   const fetchDocuments = async () => {
     try {
@@ -35,7 +38,7 @@ export function useDocuments() {
     } catch (error: any) {
       toast({
         title: "Erreur",
-        description: error.message,
+        description: translateError(error.message),
         variant: "destructive"
       });
     } finally {
@@ -45,11 +48,16 @@ export function useDocuments() {
 
   const createDocument = async (documentData: any) => {
     try {
+      if (!tenantId) {
+        throw new Error("Aucun cabinet assigné à cet utilisateur");
+      }
+
       const { data, error } = await supabase
         .from('documents' as any)
         .insert([{
           ...documentData,
-          created_by: user?.id
+          created_by: user?.id,
+          tenant_id: tenantId
         }])
         .select()
         .single();
@@ -66,7 +74,7 @@ export function useDocuments() {
     } catch (error: any) {
       toast({
         title: "Erreur",
-        description: error.message,
+        description: translateError(error.message),
         variant: "destructive"
       });
       throw error;

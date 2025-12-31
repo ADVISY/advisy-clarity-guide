@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useUserTenant } from "@/hooks/useUserTenant";
+import { translateError } from "@/lib/errorTranslations";
 
 export type SuiviType = "activation" | "annulation" | "retour" | "resiliation" | "sinistre" | "autre";
 export type SuiviStatus = "ouvert" | "en_cours" | "ferme";
@@ -72,6 +74,7 @@ export function useSuivis(clientId?: string) {
   const [suivis, setSuivis] = useState<Suivi[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { tenantId } = useUserTenant();
 
   const fetchSuivis = async () => {
     setLoading(true);
@@ -95,7 +98,7 @@ export function useSuivis(clientId?: string) {
         console.error("Error fetching suivis:", error);
         toast({
           title: "Erreur",
-          description: "Impossible de charger les suivis",
+          description: translateError(error.message),
           variant: "destructive",
         });
       } else {
@@ -110,6 +113,10 @@ export function useSuivis(clientId?: string) {
 
   const createSuivi = async (data: CreateSuiviData): Promise<{ data: Suivi | null; error: string | null }> => {
     try {
+      if (!tenantId) {
+        throw new Error("Aucun cabinet assigné à cet utilisateur");
+      }
+
       const { data: newSuivi, error } = await supabase
         .from("suivis")
         .insert([{
@@ -120,6 +127,7 @@ export function useSuivis(clientId?: string) {
           status: data.status || "ouvert",
           reminder_date: data.reminder_date || null,
           assigned_agent_id: data.assigned_agent_id || null,
+          tenant_id: tenantId,
         }])
         .select()
         .single();
@@ -128,7 +136,7 @@ export function useSuivis(clientId?: string) {
         console.error("Error creating suivi:", error);
         toast({
           title: "Erreur",
-          description: "Impossible de créer le suivi",
+          description: translateError(error.message),
           variant: "destructive",
         });
         return { data: null, error: error.message };
@@ -141,9 +149,14 @@ export function useSuivis(clientId?: string) {
       
       await fetchSuivis();
       return { data: newSuivi as unknown as Suivi, error: null };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating suivi:", error);
-      return { data: null, error: "Erreur inattendue" };
+      toast({
+        title: "Erreur",
+        description: translateError(error.message),
+        variant: "destructive",
+      });
+      return { data: null, error: error.message || "Erreur inattendue" };
     }
   };
 
