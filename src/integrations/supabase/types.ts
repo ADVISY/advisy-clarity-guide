@@ -1833,7 +1833,7 @@ export type Database = {
       }
       policies: {
         Row: {
-          client_id: string
+          client_id: string | null
           company_name: string | null
           created_at: string
           currency: string
@@ -1854,7 +1854,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          client_id: string
+          client_id?: string | null
           company_name?: string | null
           created_at?: string
           currency?: string
@@ -1875,7 +1875,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          client_id?: string
+          client_id?: string | null
           company_name?: string | null
           created_at?: string
           currency?: string
