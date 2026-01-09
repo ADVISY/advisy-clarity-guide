@@ -97,65 +97,48 @@ const LoginForm = ({
 );
 
 interface ChoiceScreenProps {
-  onClientClick: () => void;
   onTeamClick: () => void;
   onSuperAdminClick: () => void;
-  tenantName?: string;
   showSuperAdmin?: boolean;
 }
 
-const ChoiceScreen = ({ onClientClick, onTeamClick, onSuperAdminClick, tenantName, showSuperAdmin = true }: ChoiceScreenProps) => (
+const ChoiceScreen = ({ onTeamClick, onSuperAdminClick, showSuperAdmin = true }: ChoiceScreenProps) => (
   <div className="space-y-8">
     <div className="text-center">
-      <h2 className="text-xl font-bold text-foreground mb-2">Bienvenue sur {tenantName || 'LYTA'}</h2>
+      <h2 className="text-xl font-bold text-foreground mb-2">Bienvenue sur LYTA</h2>
       <p className="text-sm text-muted-foreground">Sélectionnez votre espace</p>
     </div>
 
-    <div className="grid grid-cols-2 gap-6">
-      <button
-        onClick={onClientClick}
-        className="flex flex-col items-center gap-4 p-8 border-2 rounded-xl hover:border-primary hover:bg-primary/5 transition-all group"
-      >
-        <div className="p-4 rounded-full bg-blue-500/10 text-blue-600 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-          <User className="h-10 w-10" />
-        </div>
-        <div className="text-center">
-          <h3 className="text-lg font-bold text-foreground">CLIENT</h3>
-          <p className="text-sm text-muted-foreground mt-1">Accès espace client</p>
-        </div>
-      </button>
-
+    <div className="space-y-4">
       <button
         onClick={onTeamClick}
-        className="flex flex-col items-center gap-4 p-8 border-2 rounded-xl hover:border-primary hover:bg-primary/5 transition-all group"
+        className="w-full flex items-center gap-4 p-6 border-2 rounded-xl hover:border-primary hover:bg-primary/5 transition-all group"
       >
         <div className="p-4 rounded-full bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-          <Users className="h-10 w-10" />
+          <Users className="h-8 w-8" />
         </div>
-        <div className="text-center">
-          <h3 className="text-lg font-bold text-foreground">TEAM</h3>
-          <p className="text-sm text-muted-foreground mt-1">Membres {tenantName || 'de l\'équipe'}</p>
+        <div className="text-left">
+          <h3 className="text-lg font-bold text-foreground">MEMBRE LYTA</h3>
+          <p className="text-sm text-muted-foreground">Support & Développement</p>
         </div>
       </button>
-    </div>
 
-    {/* Super Admin Button - Only show on main platform, not on tenant subdomains */}
-    {showSuperAdmin && (
-      <div className="pt-4 border-t">
+      {/* Super Admin Button */}
+      {showSuperAdmin && (
         <button
           onClick={onSuperAdminClick}
-          className="w-full flex items-center justify-center gap-3 p-4 border-2 border-amber-500/30 rounded-xl hover:border-amber-500 hover:bg-amber-500/5 transition-all group"
+          className="w-full flex items-center gap-4 p-6 border-2 border-amber-500/30 rounded-xl hover:border-amber-500 hover:bg-amber-500/5 transition-all group"
         >
-          <div className="p-2 rounded-full bg-amber-500/10 text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-colors">
-            <Crown className="h-6 w-6" />
+          <div className="p-4 rounded-full bg-amber-500/10 text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+            <Crown className="h-8 w-8" />
           </div>
           <div className="text-left">
-            <h3 className="text-sm font-bold text-amber-600">SUPER ADMIN</h3>
-            <p className="text-xs text-muted-foreground">Accès plateforme</p>
+            <h3 className="text-lg font-bold text-amber-600">SUPER ADMIN</h3>
+            <p className="text-sm text-muted-foreground">Accès plateforme</p>
           </div>
         </button>
-      </div>
-    )}
+      )}
+    </div>
   </div>
 );
 
@@ -591,10 +574,8 @@ const Connexion = () => {
       default:
         return (
           <ChoiceScreen
-            onClientClick={() => { resetForm(); setLoginType("client"); setView("client"); }}
             onTeamClick={() => { resetForm(); setLoginType("team"); setView("team"); }}
             onSuperAdminClick={() => { resetForm(); setLoginType("king"); setView("king"); }}
-            tenantName={displayName}
             showSuperAdmin={!tenant}
           />
         );
