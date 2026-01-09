@@ -89,9 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           };
         }
 
-        // Sign out temporarily until SMS is verified
-        await supabase.auth.signOut();
-        
+        // DON'T sign out - keep session alive for SMS verification
         // Store pending verification
         setPendingSmsVerification({
           userId: data.user.id,
