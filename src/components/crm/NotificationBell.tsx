@@ -1,4 +1,5 @@
 import { Bell, FileText, Check } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,10 +9,22 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, de, it, enUS } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import i18n from '@/i18n';
+
+const getDateLocale = () => {
+  const lang = i18n.language;
+  switch (lang) {
+    case 'de': return de;
+    case 'it': return it;
+    case 'en': return enUS;
+    default: return fr;
+  }
+};
 
 export const NotificationBell = () => {
+  const { t } = useTranslation();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const navigate = useNavigate();
 
@@ -46,7 +59,7 @@ export const NotificationBell = () => {
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end">
         <div className="flex items-center justify-between p-3 border-b">
-          <h4 className="font-semibold text-sm">Notifications</h4>
+          <h4 className="font-semibold text-sm">{t("notifications.title")}</h4>
           {unreadCount > 0 && (
             <Button 
               variant="ghost" 
@@ -55,14 +68,14 @@ export const NotificationBell = () => {
               onClick={markAllAsRead}
             >
               <Check className="h-3 w-3 mr-1" />
-              Tout marquer lu
+              {t("notifications.markAllRead")}
             </Button>
           )}
         </div>
         <ScrollArea className="h-[300px]">
           {notifications.length === 0 ? (
             <div className="p-4 text-center text-muted-foreground text-sm">
-              Aucune notification
+              {t("notifications.noNotifications")}
             </div>
           ) : (
             <div className="divide-y">
@@ -90,7 +103,7 @@ export const NotificationBell = () => {
                       <p className="text-xs text-muted-foreground mt-1">
                         {formatDistanceToNow(new Date(notification.created_at), { 
                           addSuffix: true,
-                          locale: fr 
+                          locale: getDateLocale() 
                         })}
                       </p>
                     </div>

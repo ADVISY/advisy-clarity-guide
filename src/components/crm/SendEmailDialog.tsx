@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,32 +26,33 @@ interface SendEmailDialogProps {
   disabled?: boolean;
 }
 
-const emailTemplates = [
-  {
-    value: "welcome",
-    label: "Message de bienvenue",
-    description: "Email d'accueil pour les nouveaux clients",
-    icon: "👋",
-  },
-  {
-    value: "relation_client",
-    label: "Message relation client",
-    description: "Email de suivi et fidélisation client",
-    icon: "💬",
-  },
-  {
-    value: "offre_speciale",
-    label: "Message d'offre spéciale",
-    description: "Email promotionnel avec rabais et offres",
-    icon: "🎁",
-  },
-];
-
 export default function SendEmailDialog({ clientEmail, clientName, disabled }: SendEmailDialogProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [sending, setSending] = useState(false);
   const { sendEmail } = useCrmEmails();
+
+  const emailTemplates = [
+    {
+      value: "welcome",
+      label: t("forms.email.templates.welcome"),
+      description: t("forms.email.templates.welcomeDescription"),
+      icon: "👋",
+    },
+    {
+      value: "relation_client",
+      label: t("forms.email.templates.relationClient"),
+      description: t("forms.email.templates.relationClientDescription"),
+      icon: "💬",
+    },
+    {
+      value: "offre_speciale",
+      label: t("forms.email.templates.specialOffer"),
+      description: t("forms.email.templates.specialOfferDescription"),
+      icon: "🎁",
+    },
+  ];
 
   const handleSend = async () => {
     if (!selectedTemplate || !clientEmail) return;
@@ -79,26 +81,26 @@ export default function SendEmailDialog({ clientEmail, clientName, disabled }: S
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" disabled={disabled || !clientEmail}>
           <Mail className="h-4 w-4 mr-2" />
-          Envoyer un email
+          {t("forms.email.sendEmail")}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5 text-primary" />
-            Envoyer un email
+            {t("forms.email.sendEmail")}
           </DialogTitle>
           <DialogDescription>
-            Envoyez un email à <strong>{clientName}</strong> ({clientEmail})
+            {t("forms.email.sendTo", { name: clientName, email: clientEmail })}
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Choisir un modèle d'email</label>
+            <label className="text-sm font-medium">{t("forms.email.chooseTemplate")}</label>
             <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionnez un modèle..." />
+                <SelectValue placeholder={t("forms.email.selectTemplate")} />
               </SelectTrigger>
               <SelectContent>
                 {emailTemplates.map((template) => (
@@ -128,7 +130,7 @@ export default function SendEmailDialog({ clientEmail, clientName, disabled }: S
         
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            Annuler
+            {t("common.cancel")}
           </Button>
           <Button 
             onClick={handleSend} 
@@ -137,12 +139,12 @@ export default function SendEmailDialog({ clientEmail, clientName, disabled }: S
             {sending ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Envoi en cours...
+                {t("forms.email.sending")}
               </>
             ) : (
               <>
                 <Send className="h-4 w-4 mr-2" />
-                Envoyer
+                {t("forms.email.send")}
               </>
             )}
           </Button>
