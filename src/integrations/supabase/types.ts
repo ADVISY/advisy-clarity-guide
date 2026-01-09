@@ -1943,6 +1943,7 @@ export type Database = {
           last_name: string | null
           phone: string | null
           photo_url: string | null
+          preferred_language: string | null
           updated_at: string
         }
         Insert: {
@@ -1954,6 +1955,7 @@ export type Database = {
           last_name?: string | null
           phone?: string | null
           photo_url?: string | null
+          preferred_language?: string | null
           updated_at?: string
         }
         Update: {
@@ -1965,6 +1967,7 @@ export type Database = {
           last_name?: string | null
           phone?: string | null
           photo_url?: string | null
+          preferred_language?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -2704,6 +2707,7 @@ export type Database = {
           contract_notification_emails: string[] | null
           created_at: string
           current_period_end: string | null
+          default_language: string | null
           email: string | null
           extra_users: number | null
           id: string
@@ -2734,6 +2738,7 @@ export type Database = {
           contract_notification_emails?: string[] | null
           created_at?: string
           current_period_end?: string | null
+          default_language?: string | null
           email?: string | null
           extra_users?: number | null
           id?: string
@@ -2764,6 +2769,7 @@ export type Database = {
           contract_notification_emails?: string[] | null
           created_at?: string
           current_period_end?: string | null
+          default_language?: string | null
           email?: string | null
           extra_users?: number | null
           id?: string

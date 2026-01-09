@@ -19,7 +19,8 @@ import { useAuth } from '@/hooks/useAuth';
 export function LanguageSelector() {
   const { i18n } = useTranslation();
   const { user } = useAuth();
-  const currentLang = i18n.language as SupportedLanguage;
+  const currentLang = (i18n.language?.split('-')[0] || 'fr') as SupportedLanguage;
+  const displayLang = SUPPORTED_LANGUAGES.includes(currentLang) ? currentLang : 'fr';
 
   const changeLanguage = async (lang: SupportedLanguage) => {
     // Change language locally
@@ -29,9 +30,10 @@ export function LanguageSelector() {
     // If user is logged in, save preference to database
     if (user) {
       try {
+        // Using raw update since types may not be synced yet
         await supabase
           .from('profiles')
-          .update({ preferred_language: lang })
+          .update({ preferred_language: lang } as any)
           .eq('id', user.id);
       } catch (error) {
         console.error('Error saving language preference:', error);
@@ -46,7 +48,7 @@ export function LanguageSelector() {
           variant="ghost" 
           size="icon"
           className="h-9 w-9"
-          title={LANGUAGE_NAMES[currentLang] || 'Language'}
+          title={LANGUAGE_NAMES[displayLang]}
         >
           <Globe className="h-4 w-4" />
           <span className="sr-only">Change language</span>
@@ -57,7 +59,7 @@ export function LanguageSelector() {
           <DropdownMenuItem
             key={lang}
             onClick={() => changeLanguage(lang)}
-            className={currentLang === lang ? 'bg-accent' : ''}
+            className={displayLang === lang ? 'bg-accent' : ''}
           >
             <span className="mr-2">{LANGUAGE_FLAGS[lang]}</span>
             {LANGUAGE_NAMES[lang]}
