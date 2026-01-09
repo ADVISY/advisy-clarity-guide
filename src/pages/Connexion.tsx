@@ -556,23 +556,20 @@ const Connexion = () => {
   const handleSmsVerified = async () => {
     if (!smsVerificationData) return;
     
-    // Clear SMS verification state FIRST so useEffect can trigger redirect
+    // Clear SMS verification state
     setSmsVerificationData(null);
     setShowSmsVerification(false);
     clearPendingVerification();
     
-    // Re-login now that SMS is verified
+    // Session is already active - just redirect
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (error) {
+      if (!user) {
         toast({
           title: "Erreur",
-          description: "Erreur lors de la connexion après vérification.",
+          description: "Session expirée. Veuillez vous reconnecter.",
           variant: "destructive",
         });
         return;
@@ -586,36 +583,36 @@ const Connexion = () => {
         description: `Bienvenue sur votre espace ${displayName}.`,
       });
       
-      // Force redirect based on role after successful re-auth
-      if (data.user) {
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', data.user.id)
-          .maybeSingle();
-        
-        const role = roleData?.role || 'client';
-        
-        if (role === 'king') {
-          navigate("/king");
-        } else if (loginType === 'client') {
-          navigate("/espace-client");
-        } else {
-          await redirectToTenantSubdomain(data.user.id);
-        }
+      // Redirect based on role
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      const role = roleData?.role || 'client';
+      
+      if (role === 'king') {
+        navigate("/king");
+      } else if (loginType === 'client') {
+        navigate("/espace-client");
+      } else {
+        await redirectToTenantSubdomain(user.id);
       }
     } catch (error) {
-      console.error("Error re-authenticating after SMS:", error);
+      console.error("Error after SMS verification:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSmsCancelled = () => {
+  const handleSmsCancelled = async () => {
     setSmsVerificationData(null);
     setShowSmsVerification(false);
     clearPendingVerification();
     setPassword("");
+    // Sign out the session since SMS verification was cancelled
+    await supabase.auth.signOut();
   };
 
   const resetForm = () => {
