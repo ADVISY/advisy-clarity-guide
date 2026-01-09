@@ -181,7 +181,7 @@ export default function KingWizard() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // 1. Create tenant
+      // 1. Create tenant with plan
       const { data: tenant, error: tenantError } = await supabase
         .from('tenants')
         .insert({
@@ -193,6 +193,9 @@ export default function KingWizard() {
           slug: formData.slug,
           status: formData.status,
           contract_notification_emails: formData.contract_notification_emails.filter(e => e.trim()),
+          plan: formData.plan,
+          extra_users: formData.extra_users,
+          billing_status: 'trial',
         })
         .select()
         .single();
