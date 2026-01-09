@@ -78,10 +78,10 @@ export default function KingTenants() {
     queryKey: ['king-tenants-stats'],
     refetchInterval: 30000, // Refresh every 30 seconds
     queryFn: async () => {
-      // Get all clients grouped by tenant with type_adresse
+      // Get all clients grouped by tenant with type_adresse and user_id
       const { data: clientsData } = await supabase
         .from('clients')
-        .select('tenant_id, type_adresse');
+        .select('tenant_id, type_adresse, user_id');
       
       // Get all policies grouped by tenant
       const { data: policiesData } = await supabase
@@ -106,6 +106,10 @@ export default function KingTenants() {
         // collaborateur and partenaire are considered as collaborateurs
         if (client.type_adresse === 'collaborateur' || client.type_adresse === 'partenaire') {
           stats[tenantId].collaborateurs++;
+          // Count as active user if they have a user_id
+          if (client.user_id) {
+            stats[tenantId].active_users++;
+          }
         } else {
           stats[tenantId].clients++;
         }
@@ -243,7 +247,7 @@ export default function KingTenants() {
           ) : filteredTenants && filteredTenants.length > 0 ? (
             <div className="space-y-4">
               {filteredTenants.map((tenant) => {
-                const stats = tenantsStats?.[tenant.id] || { clients: 0, collaborateurs: 0, policies: 0, commissions_total: 0 };
+                const stats: TenantStats = tenantsStats?.[tenant.id] || { clients: 0, collaborateurs: 0, policies: 0, commissions_total: 0, active_users: 0 };
                 
                 return (
                   <div
@@ -284,6 +288,22 @@ export default function KingTenants() {
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
+                        {/* Plan Badge */}
+                        {tenant.plan && (
+                          <Badge className={`${PLAN_COLORS[tenant.plan as TenantPlan] || PLAN_COLORS.start}`}>
+                            {tenant.plan === 'founder' && <Crown className="h-3 w-3 mr-1" />}
+                            {tenant.plan === 'prime' && <Star className="h-3 w-3 mr-1" />}
+                            {tenant.plan === 'pro' && <Zap className="h-3 w-3 mr-1" />}
+                            {PLAN_CONFIGS[tenant.plan as TenantPlan]?.name || 'START'}
+                          </Badge>
+                        )}
+                        {/* Billing Status Badge */}
+                        {tenant.billing_status && (
+                          <Badge variant="outline" className={BILLING_COLORS[tenant.billing_status] || ''}>
+                            <CreditCard className="h-3 w-3 mr-1" />
+                            {BILLING_LABELS[tenant.billing_status] || tenant.billing_status}
+                          </Badge>
+                        )}
                         <span className={`text-xs px-3 py-1 rounded-full font-medium ${
                           tenant.status === 'active' 
                             ? 'bg-emerald-500/10 text-emerald-600'
@@ -316,7 +336,7 @@ export default function KingTenants() {
                     </div>
                     
                     {/* Stats Row */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 pt-4 border-t">
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-blue-500/10">
                           <Users className="h-4 w-4 text-blue-600" />
@@ -351,6 +371,26 @@ export default function KingTenants() {
                         <div>
                           <p className="text-xl font-bold">CHF {stats.commissions_total.toLocaleString()}</p>
                           <p className="text-xs text-muted-foreground">Commissions</p>
+                        </div>
+                      </div>
+                      {/* Users count with seat info */}
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${stats.active_users > (tenant.seats_included || 1) ? 'bg-orange-500/10' : 'bg-cyan-500/10'}`}>
+                          <Users className={`h-4 w-4 ${stats.active_users > (tenant.seats_included || 1) ? 'text-orange-600' : 'text-cyan-600'}`} />
+                        </div>
+                        <div>
+                          <p className="text-xl font-bold">
+                            {stats.active_users}
+                            <span className="text-sm font-normal text-muted-foreground">/{tenant.seats_included || 1}</span>
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Utilisateurs
+                            {stats.active_users > (tenant.seats_included || 1) && (
+                              <span className="text-orange-600 ml-1">
+                                (+{stats.active_users - (tenant.seats_included || 1)} supp.)
+                              </span>
+                            )}
+                          </p>
                         </div>
                       </div>
                     </div>
