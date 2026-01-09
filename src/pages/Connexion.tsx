@@ -321,19 +321,17 @@ const Connexion = () => {
       try {
         const targetSpace = sessionStorage.getItem('loginTarget');
 
-        const fetchRole = () =>
-          supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', user.id)
-            .maybeSingle();
-
-        const fetchTenantSlug = () =>
-          supabase
-            .from('user_tenant_assignments')
-            .select('tenant_id, tenants(slug)')
-            .eq('user_id', user.id)
-            .maybeSingle();
+        // OPTIMIZATION: Use cached login data from signIn (no extra DB calls!)
+        const cachedDataStr = sessionStorage.getItem('userLoginData');
+        let cachedData: { role: string; tenant_slug: string | null } | null = null;
+        
+        if (cachedDataStr) {
+          try {
+            cachedData = JSON.parse(cachedDataStr);
+          } catch {
+            cachedData = null;
+          }
+        }
 
         const goToTenantCrm = (tenantSlug: string) => {
           const hostname = window.location.hostname;
@@ -349,10 +347,34 @@ const Connexion = () => {
           window.location.href = `${protocol}//${tenantSlug}.${baseDomain}/crm`;
         };
 
-        // If no target space set and user is already logged in, they just navigated here
+        // Helper to get role (from cache or fetch)
+        const getRole = async (): Promise<string> => {
+          if (cachedData?.role) return cachedData.role;
+          const { data } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          return data?.role || 'client';
+        };
+
+        // Helper to get tenant slug (from cache or fetch)
+        const getTenantSlug = async (): Promise<string | null> => {
+          if (cachedData) return cachedData.tenant_slug;
+          const { data } = await supabase
+            .from('user_tenant_assignments')
+            .select('tenant_id, tenants(slug)')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          return (data?.tenants as any)?.slug || null;
+        };
+
+        // Clean up cached data after use
+        sessionStorage.removeItem('userLoginData');
+
+        // If no target space set, user navigated to /connexion while logged in
         if (!targetSpace) {
-          const [roleRes, assignmentRes] = await Promise.all([fetchRole(), fetchTenantSlug()]);
-          const role = roleRes.data?.role || 'client';
+          const role = await getRole();
 
           if (role === 'king') {
             navigate("/king/wizard", { replace: true });
@@ -364,7 +386,7 @@ const Connexion = () => {
             return;
           }
 
-          const tenantSlug = (assignmentRes.data?.tenants as any)?.slug as string | undefined;
+          const tenantSlug = await getTenantSlug();
           if (tenantSlug) {
             goToTenantCrm(tenantSlug);
           } else {
@@ -374,11 +396,10 @@ const Connexion = () => {
         }
 
         // New login flow - targetSpace is set
-        if (targetSpace === 'king') {
-          const { data: roleData } = await fetchRole();
-          const role = roleData?.role || 'client';
+        sessionStorage.removeItem('loginTarget');
 
-          sessionStorage.removeItem('loginTarget');
+        if (targetSpace === 'king') {
+          const role = await getRole();
           if (role === 'king') {
             navigate("/king/wizard", { replace: true });
           } else {
@@ -392,35 +413,20 @@ const Connexion = () => {
           return;
         }
 
+        const role = await getRole();
+
+        // KING users always go to /king/wizard
+        if (role === 'king') {
+          navigate("/king/wizard", { replace: true });
+          return;
+        }
+
         if (targetSpace === 'client') {
-          const { data: roleData } = await fetchRole();
-          const role = roleData?.role || 'client';
-
-          // KING users always go to /king/wizard
-          if (role === 'king') {
-            sessionStorage.removeItem('loginTarget');
-            navigate("/king/wizard", { replace: true });
-            return;
-          }
-
-          sessionStorage.removeItem('loginTarget');
           navigate("/espace-client", { replace: true });
           return;
         }
 
         // targetSpace === 'team'
-        const [roleRes, assignmentRes] = await Promise.all([fetchRole(), fetchTenantSlug()]);
-        const role = roleRes.data?.role || 'client';
-
-        // KING users always go to /king/wizard
-        if (role === 'king') {
-          sessionStorage.removeItem('loginTarget');
-          navigate("/king/wizard", { replace: true });
-          return;
-        }
-
-        sessionStorage.removeItem('loginTarget');
-
         if (role === 'client') {
           toast({
             title: "Accès refusé",
@@ -431,7 +437,7 @@ const Connexion = () => {
           return;
         }
 
-        const tenantSlug = (assignmentRes.data?.tenants as any)?.slug as string | undefined;
+        const tenantSlug = await getTenantSlug();
         if (tenantSlug) {
           goToTenantCrm(tenantSlug);
         } else {
@@ -452,10 +458,33 @@ const Connexion = () => {
     }
   }, [smsVerificationData, showSmsVerification]);
 
-  // Removed checkSubdomainReachable - was causing unnecessary delay
-
   const redirectToTenantSubdomain = async (userId: string) => {
     try {
+      // Check cache first
+      const cachedDataStr = sessionStorage.getItem('userLoginData');
+      if (cachedDataStr) {
+        try {
+          const cachedData = JSON.parse(cachedDataStr);
+          if (cachedData?.tenant_slug) {
+            sessionStorage.removeItem('userLoginData');
+            const hostname = window.location.hostname;
+            const isLocalhost = hostname === 'localhost' || hostname.includes('lovable');
+
+            if (isLocalhost) {
+              navigate(`/crm?tenant=${cachedData.tenant_slug}`, { replace: true });
+              return;
+            }
+
+            const protocol = window.location.protocol;
+            const baseDomain = hostname.split('.').slice(-2).join('.');
+            window.location.href = `${protocol}//${cachedData.tenant_slug}.${baseDomain}/crm`;
+            return;
+          }
+        } catch {
+          // ignore parse errors
+        }
+      }
+
       const { data: assignment } = await supabase
         .from('user_tenant_assignments')
         .select('tenant_id, tenants(slug)')

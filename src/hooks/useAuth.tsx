@@ -63,14 +63,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (data.user) {
-      // OPTIMIZATION: Check SMS verification and get phone in PARALLEL
-      const [smsCheck, profileCheck] = await Promise.all([
-        supabase.rpc("requires_sms_verification", { p_user_id: data.user.id }),
-        supabase.from("profiles").select("phone").eq("id", data.user.id).maybeSingle()
-      ]);
+      // SINGLE RPC call to get ALL login data at once (role, tenant, sms requirement, phone)
+      const { data: loginData, error: rpcError } = await supabase.rpc(
+        "get_user_login_data",
+        { p_user_id: data.user.id }
+      );
 
-      if (smsCheck.data) {
-        const phoneNumber = profileCheck.data?.phone || data.user.phone;
+      if (rpcError) {
+        console.error("Error fetching login data:", rpcError);
+        // Fallback: allow login without extra checks
+        return { error: null };
+      }
+
+      // Cast to expected shape
+      const parsedData = loginData as {
+        role: string;
+        tenant_slug: string | null;
+        requires_sms: boolean;
+        phone: string | null;
+      } | null;
+
+      // Store login data for redirect logic
+      if (parsedData) {
+        sessionStorage.setItem('userLoginData', JSON.stringify(parsedData));
+      }
+
+      if (parsedData?.requires_sms) {
+        const phoneNumber = parsedData.phone || data.user.phone;
 
         if (!phoneNumber) {
           await supabase.auth.signOut();

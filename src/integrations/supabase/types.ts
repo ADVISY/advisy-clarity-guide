@@ -3598,6 +3598,7 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["dashboard_scope"]
       }
+      get_user_login_data: { Args: { p_user_id: string }; Returns: Json }
       get_user_tenant_id: { Args: never; Returns: string }
       has_role: {
         Args: {
