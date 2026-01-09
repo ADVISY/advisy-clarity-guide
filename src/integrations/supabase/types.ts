@@ -2655,41 +2655,65 @@ export type Database = {
       tenants: {
         Row: {
           address: string | null
+          admin_email: string | null
+          backoffice_email: string | null
+          contact_name: string | null
           contract_notification_emails: string[] | null
           created_at: string
-          email: string
+          email: string | null
           id: string
           legal_name: string | null
           name: string
+          notes: string | null
           phone: string | null
+          plan_id: string | null
+          processed_at: string | null
+          processed_by: string | null
           slug: string
           status: string
+          stripe_session_id: string | null
           updated_at: string
         }
         Insert: {
           address?: string | null
+          admin_email?: string | null
+          backoffice_email?: string | null
+          contact_name?: string | null
           contract_notification_emails?: string[] | null
           created_at?: string
-          email: string
+          email?: string | null
           id?: string
           legal_name?: string | null
           name: string
+          notes?: string | null
           phone?: string | null
+          plan_id?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
           slug: string
           status?: string
+          stripe_session_id?: string | null
           updated_at?: string
         }
         Update: {
           address?: string | null
+          admin_email?: string | null
+          backoffice_email?: string | null
+          contact_name?: string | null
           contract_notification_emails?: string[] | null
           created_at?: string
-          email?: string
+          email?: string | null
           id?: string
           legal_name?: string | null
           name?: string
+          notes?: string | null
           phone?: string | null
+          plan_id?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
           slug?: string
           status?: string
+          stripe_session_id?: string | null
           updated_at?: string
         }
         Relationships: []

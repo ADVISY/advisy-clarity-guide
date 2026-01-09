@@ -109,11 +109,15 @@ export default function KingTenants() {
     },
   });
 
+  // Count pending tenants
+  const pendingCount = tenants?.filter(t => t.status === 'pending').length || 0;
+
   const filteredTenants = tenants?.filter(tenant => {
     const matchesSearch = 
       tenant.name.toLowerCase().includes(search.toLowerCase()) ||
       tenant.slug.toLowerCase().includes(search.toLowerCase()) ||
-      tenant.email.toLowerCase().includes(search.toLowerCase());
+      (tenant.email?.toLowerCase() || '').includes(search.toLowerCase()) ||
+      (tenant.contact_name?.toLowerCase() || '').includes(search.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || tenant.status === statusFilter;
     
@@ -156,6 +160,14 @@ export default function KingTenants() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous les statuts</SelectItem>
+                <SelectItem value="pending">
+                  <span className="flex items-center gap-2">
+                    En attente
+                    {pendingCount > 0 && (
+                      <span className="bg-orange-500 text-white text-xs px-1.5 py-0.5 rounded-full">{pendingCount}</span>
+                    )}
+                  </span>
+                </SelectItem>
                 <SelectItem value="active">Actif</SelectItem>
                 <SelectItem value="test">Test</SelectItem>
                 <SelectItem value="suspended">Suspendu</SelectItem>
@@ -164,6 +176,32 @@ export default function KingTenants() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Pending Alert Banner */}
+      {pendingCount > 0 && statusFilter !== 'pending' && (
+        <Card className="border-orange-500/50 bg-orange-500/5">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-orange-500/20">
+                  <Building2 className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-orange-700">{pendingCount} demande(s) en attente</p>
+                  <p className="text-sm text-muted-foreground">Des clients attendent l'activation de leur compte</p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                className="border-orange-500 text-orange-600 hover:bg-orange-500/10"
+                onClick={() => setStatusFilter('pending')}
+              >
+                Voir les demandes
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Tenants List */}
       <Card>
@@ -227,9 +265,11 @@ export default function KingTenants() {
                             ? 'bg-emerald-500/10 text-emerald-600'
                             : tenant.status === 'test'
                             ? 'bg-blue-500/10 text-blue-600'
+                            : tenant.status === 'pending'
+                            ? 'bg-orange-500/10 text-orange-600'
                             : 'bg-red-500/10 text-red-600'
                         }`}>
-                          {tenant.status === 'active' ? 'Actif' : tenant.status === 'test' ? 'Test' : 'Suspendu'}
+                          {tenant.status === 'active' ? 'Actif' : tenant.status === 'test' ? 'Test' : tenant.status === 'pending' ? 'En attente' : 'Suspendu'}
                         </span>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -293,7 +333,11 @@ export default function KingTenants() {
                     
                     {/* Footer info */}
                     <div className="flex items-center justify-between mt-4 pt-3 border-t text-xs text-muted-foreground">
-                      <span>Email: {tenant.email}</span>
+                      <span>
+                        {tenant.status === 'pending' && tenant.contact_name 
+                          ? `Contact: ${tenant.contact_name}` 
+                          : `Email: ${tenant.email || tenant.admin_email || 'N/A'}`}
+                      </span>
                       <span>Créé le {new Date(tenant.created_at).toLocaleDateString('fr-CH')}</span>
                     </div>
                   </div>
