@@ -83,11 +83,26 @@ serve(async (req: Request): Promise<Response> => {
 
     // Normalize phone numbers (Switzerland default) and prevent invalid Twilio sends
     const normalizePhone = (value: string) => {
-      let v = (value || "").replace(/\s/g, "");
+      let v = (value || "").trim();
       if (!v) return v;
-      if (v.startsWith("0")) v = "+41" + v.substring(1);
-      if (!v.startsWith("+")) v = "+41" + v;
-      return v;
+
+      // Keep only digits and a possible leading '+'
+      v = v.replace(/[^\d+]/g, "");
+
+      // Convert international prefix 00 -> +
+      if (v.startsWith("00")) v = "+" + v.slice(2);
+
+      // If already E.164, keep it
+      if (v.startsWith("+")) return v;
+
+      // If number already contains country code (e.g. 41XXXXXXXXX), just prefix '+'
+      if (v.startsWith("41") && v.length >= 11) return "+" + v;
+
+      // Swiss local format (0XXXXXXXXX)
+      if (v.startsWith("0")) return "+41" + v.slice(1);
+
+      // Default: assume Switzerland
+      return "+41" + v;
     };
 
     const formattedPhone = normalizePhone(phoneNumber);
