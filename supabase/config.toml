@@ -15,5 +15,8 @@ verify_jwt = false
 [functions.send-contract-deposit-email]
 verify_jwt = false
 
+[functions.deposit-contract]
+verify_jwt = false
+
 [functions.process-scheduled-emails]
 verify_jwt = false
