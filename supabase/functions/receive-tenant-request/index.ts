@@ -52,19 +52,16 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Insert tenant request
+    // Insert tenant request (status 'test' until manually activated)
     const { data: tenant, error } = await supabase.from("tenants").insert({
       name: companyName,
       slug: subdomain,
-      status: "pending",
-      settings: {
-        contact_name: contactName,
-        contact_email: contactEmail,
-        contact_phone: contactPhone,
-        plan_id: planId,
-        stripe_session_id: stripeSessionId,
-      }
+      email: contactEmail,
+      phone: contactPhone,
+      status: "test",
     }).select().single();
+
+    if (error) throw error;
 
     if (error) throw error;
 
@@ -88,9 +85,9 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Error:", errorMessage);
+  } catch (error: unknown) {
+    console.error("Full error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
