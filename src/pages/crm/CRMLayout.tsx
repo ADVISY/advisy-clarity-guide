@@ -1,8 +1,10 @@
 import { Outlet, NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useTenant } from "@/contexts/TenantContext";
 import { usePlanFeatures } from "@/hooks/usePlanFeatures";
+import { useLanguage } from "@/hooks/useLanguage";
 import { PlanModule } from "@/config/plans";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +34,7 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/comp
 import { supabase } from "@/integrations/supabase/client";
 
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { LanguageSelector } from "@/components/ui/language-selector";
 import { WelcomeMessage } from "@/components/crm/WelcomeMessage";
 import { UserAvatar } from "@/components/crm/UserAvatar";
 import { SoundToggle } from "@/components/crm/SoundToggle";
@@ -59,10 +62,12 @@ const allMenuItems: MenuItem[] = [
 ];
 
 export default function CRMLayout() {
+  const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const { role, loading } = useUserRole();
   const { tenant } = useTenant();
   const { hasModule, loading: planLoading } = usePlanFeatures();
+  useLanguage(); // Initialize language based on user/tenant preferences
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [profile, setProfile] = useState<{ first_name: string | null; last_name: string | null } | null>(null);
@@ -207,6 +212,7 @@ export default function CRMLayout() {
                 </div>
               )}
               <div className="flex items-center gap-1">
+                <LanguageSelector />
                 <SoundToggle />
                 <ThemeToggle />
               </div>
@@ -267,7 +273,7 @@ export default function CRMLayout() {
                         <LogOut className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="right">Déconnexion</TooltipContent>
+                    <TooltipContent side="right">{t('auth.logout')}</TooltipContent>
                   </Tooltip>
                 </div>
               ) : (
@@ -290,7 +296,7 @@ export default function CRMLayout() {
                     onClick={() => signOut()}
                   >
                     <LogOut className="h-4 w-4 mr-2" />
-                    Déconnexion
+                    {t('auth.logout')}
                   </Button>
                 </>
               )}
@@ -311,6 +317,7 @@ export default function CRMLayout() {
             </div>
           )}
           <div className="flex items-center gap-1">
+            <LanguageSelector />
             <SoundToggle />
             <ThemeToggle />
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -343,7 +350,7 @@ export default function CRMLayout() {
                   onClick={() => signOut()}
                 >
                   <LogOut className="h-4 w-4 mr-2" />
-                  Déconnexion
+                  {t('auth.logout')}
                 </Button>
               </div>
             </SheetContent>

@@ -32,14 +32,15 @@ export function useLanguage() {
         try {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('preferred_language')
+            .select('*')
             .eq('id', user.id)
             .maybeSingle();
 
-          if (profile?.preferred_language && 
-              SUPPORTED_LANGUAGES.includes(profile.preferred_language as SupportedLanguage)) {
-            i18n.changeLanguage(profile.preferred_language);
-            localStorage.setItem('preferred_language', profile.preferred_language);
+          // Cast to access the new column (types may not be synced yet)
+          const preferredLang = (profile as any)?.preferred_language;
+          if (preferredLang && SUPPORTED_LANGUAGES.includes(preferredLang as SupportedLanguage)) {
+            i18n.changeLanguage(preferredLang);
+            localStorage.setItem('preferred_language', preferredLang);
             return;
           }
         } catch (error) {
@@ -47,16 +48,17 @@ export function useLanguage() {
         }
       }
 
-      // Fall back to tenant default language
-      if (tenant?.default_language && 
-          SUPPORTED_LANGUAGES.includes(tenant.default_language as SupportedLanguage)) {
-        i18n.changeLanguage(tenant.default_language);
-        localStorage.setItem('preferred_language', tenant.default_language);
+      // Fall back to tenant default language (cast for new column)
+      const tenantDefaultLang = (tenant as any)?.default_language;
+      if (tenantDefaultLang && SUPPORTED_LANGUAGES.includes(tenantDefaultLang as SupportedLanguage)) {
+        i18n.changeLanguage(tenantDefaultLang);
+        localStorage.setItem('preferred_language', tenantDefaultLang);
         return;
       }
 
       // Default to French if nothing else is set
-      if (!i18n.language || !SUPPORTED_LANGUAGES.includes(i18n.language as SupportedLanguage)) {
+      const currentLang = i18n.language?.split('-')[0];
+      if (!currentLang || !SUPPORTED_LANGUAGES.includes(currentLang as SupportedLanguage)) {
         i18n.changeLanguage('fr');
       }
     };
@@ -72,7 +74,7 @@ export function useLanguage() {
       try {
         await supabase
           .from('profiles')
-          .update({ preferred_language: lang })
+          .update({ preferred_language: lang } as any)
           .eq('id', user.id);
       } catch (error) {
         console.error('Error saving language preference:', error);
@@ -80,8 +82,11 @@ export function useLanguage() {
     }
   };
 
+  const currentLang = (i18n.language?.split('-')[0] || 'fr') as SupportedLanguage;
+  const displayLang = SUPPORTED_LANGUAGES.includes(currentLang) ? currentLang : 'fr';
+
   return {
-    currentLanguage: i18n.language as SupportedLanguage,
+    currentLanguage: displayLang,
     setLanguage,
     t: i18n.t,
   };
