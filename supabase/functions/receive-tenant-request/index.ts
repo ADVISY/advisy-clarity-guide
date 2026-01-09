@@ -44,7 +44,12 @@ serve(async (req) => {
       contactPhone, 
       subdomain, 
       planId, 
-      stripeSessionId 
+      stripeSessionId,
+      primaryColor,
+      secondaryColor,
+      backofficeEmail,
+      adminEmail,
+      logoUrl
     } = await req.json();
 
     const supabase = createClient(
@@ -52,32 +57,65 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Insert tenant request (status 'test' until manually activated)
+    // Insert tenant request with status 'pending'
     const { data: tenant, error } = await supabase.from("tenants").insert({
       name: companyName,
       slug: subdomain,
       email: contactEmail,
       phone: contactPhone,
-      status: "test",
+      contact_name: contactName,
+      plan_id: planId,
+      stripe_session_id: stripeSessionId,
+      backoffice_email: backofficeEmail,
+      admin_email: adminEmail,
+      status: "pending",
     }).select().single();
 
     if (error) throw error;
 
-    if (error) throw error;
+    // Create branding entry if colors or logo provided
+    if (primaryColor || secondaryColor || logoUrl) {
+      await supabase.from("tenant_branding").insert({
+        tenant_id: tenant.id,
+        display_name: companyName,
+        primary_color: primaryColor || "#3B82F6",
+        secondary_color: secondaryColor || "#10B981",
+        logo_url: logoUrl || null,
+      });
+    }
 
     // Send notification email to admin
     await sendEmail(
       ["admin@e-advisy.ch"],
-      `🎉 Nouveau client Lyta : ${companyName}`,
+      `🎉 Nouvelle demande Lyta : ${companyName}`,
       `
-        <h1>Nouvelle demande de création de tenant</h1>
-        <p><strong>Entreprise:</strong> ${companyName}</p>
-        <p><strong>Contact:</strong> ${contactName}</p>
-        <p><strong>Email:</strong> ${contactEmail}</p>
-        <p><strong>Téléphone:</strong> ${contactPhone || "Non renseigné"}</p>
-        <p><strong>Sous-domaine:</strong> ${subdomain}.lyta.ch</p>
-        <p><strong>Plan:</strong> ${planId}</p>
-        <p><a href="https://lyta.ch/king/tenants">Gérer dans le dashboard</a></p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #1a1a2e;">Nouvelle demande de tenant</h1>
+          
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h2 style="margin-top: 0; color: #333;">Informations entreprise</h2>
+            <p><strong>Entreprise:</strong> ${companyName}</p>
+            <p><strong>Contact:</strong> ${contactName}</p>
+            <p><strong>Email:</strong> ${contactEmail}</p>
+            <p><strong>Téléphone:</strong> ${contactPhone || "Non renseigné"}</p>
+          </div>
+          
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h2 style="margin-top: 0; color: #333;">Configuration</h2>
+            <p><strong>Sous-domaine:</strong> ${subdomain}.lyta.ch</p>
+            <p><strong>Plan:</strong> ${planId}</p>
+            <p><strong>Email backoffice:</strong> ${backofficeEmail || "Non renseigné"}</p>
+            <p><strong>Email admin:</strong> ${adminEmail || "Non renseigné"}</p>
+            ${stripeSessionId ? `<p><strong>Session Stripe:</strong> ${stripeSessionId}</p>` : ''}
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="https://app.lyta.ch/king/tenants" 
+               style="background: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+              Gérer dans le dashboard
+            </a>
+          </div>
+        </div>
       `
     );
 
