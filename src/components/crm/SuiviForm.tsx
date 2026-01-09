@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -29,15 +30,16 @@ import { Button } from "@/components/ui/button";
 import { useSuivis, Suivi, SuiviType, SuiviStatus, suiviTypeLabels, suiviStatusLabels } from "@/hooks/useSuivis";
 import { Loader2 } from "lucide-react";
 
-const formSchema = z.object({
-  title: z.string().min(1, "Le titre est requis"),
+const getFormSchema = (t: (key: string) => string) => z.object({
+  title: z.string().min(1, t("forms.suivi.errors.titleRequired")),
   type: z.enum(["activation", "annulation", "retour", "resiliation", "sinistre", "autre"]).optional(),
   status: z.enum(["ouvert", "en_cours", "ferme"]).default("ouvert"),
   description: z.string().optional(),
   reminder_date: z.string().optional(),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+type FormSchema = ReturnType<typeof getFormSchema>;
+type FormValues = z.infer<FormSchema>;
 
 interface SuiviFormProps {
   clientId: string;
@@ -56,11 +58,12 @@ export default function SuiviForm({
   editMode = false,
   suivi,
 }: SuiviFormProps) {
+  const { t } = useTranslation();
   const { createSuivi, updateSuivi } = useSuivis(clientId);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(getFormSchema(t)),
     defaultValues: {
       title: "",
       type: undefined,
@@ -126,7 +129,7 @@ export default function SuiviForm({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {editMode ? "Modifier le suivi" : "Nouveau suivi"}
+            {editMode ? t("forms.suivi.editTitle") : t("forms.suivi.newTitle")}
           </DialogTitle>
         </DialogHeader>
 
@@ -137,9 +140,9 @@ export default function SuiviForm({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Titre *</FormLabel>
+                  <FormLabel>{t("forms.suivi.title")} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Demande de résiliation" {...field} />
+                    <Input placeholder={t("forms.suivi.titlePlaceholder")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -152,11 +155,11 @@ export default function SuiviForm({
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Type / Thème</FormLabel>
+                    <FormLabel>{t("forms.suivi.type")}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner un type" />
+                          <SelectValue placeholder={t("forms.suivi.selectType")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -177,11 +180,11 @@ export default function SuiviForm({
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Statut</FormLabel>
+                    <FormLabel>{t("forms.suivi.status")}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner un statut" />
+                          <SelectValue placeholder={t("forms.suivi.selectStatus")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -203,7 +206,7 @@ export default function SuiviForm({
               name="reminder_date"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Date de rappel</FormLabel>
+                  <FormLabel>{t("forms.suivi.reminderDate")}</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
@@ -217,10 +220,10 @@ export default function SuiviForm({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description / Commentaires</FormLabel>
+                  <FormLabel>{t("forms.suivi.description")}</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Détails du suivi, notes, commentaires..."
+                      placeholder={t("forms.suivi.descriptionPlaceholder")}
                       rows={4}
                       {...field} 
                     />
@@ -236,11 +239,11 @@ export default function SuiviForm({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Annuler
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {editMode ? "Mettre à jour" : "Créer le suivi"}
+                {editMode ? t("common.update") : t("forms.suivi.create")}
               </Button>
             </div>
           </form>

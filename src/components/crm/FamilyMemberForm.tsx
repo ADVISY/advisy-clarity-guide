@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,16 +30,16 @@ import { useFamilyMembers, FamilyMember } from "@/hooks/useFamilyMembers";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-const familyMemberSchema = z.object({
-  first_name: z.string().min(1, "Prénom requis"),
-  last_name: z.string().min(1, "Nom requis"),
+const getSchema = (t: (key: string) => string) => z.object({
+  first_name: z.string().min(1, t("forms.familyMember.errors.firstNameRequired")),
+  last_name: z.string().min(1, t("forms.familyMember.errors.lastNameRequired")),
   birth_date: z.string().optional().nullable(),
   relation_type: z.enum(["conjoint", "enfant", "autre"]),
   permit_type: z.string().optional().nullable(),
   nationality: z.string().optional().nullable(),
 });
 
-type FamilyMemberFormData = z.infer<typeof familyMemberSchema>;
+type FamilyMemberFormData = z.infer<ReturnType<typeof getSchema>>;
 
 interface FamilyMemberFormProps {
   clientId: string;
@@ -53,6 +54,7 @@ export default function FamilyMemberForm({
   onOpenChange,
   member,
 }: FamilyMemberFormProps) {
+  const { t } = useTranslation();
   const { createFamilyMember, updateFamilyMember } = useFamilyMembers(clientId);
   const [loading, setLoading] = useState(false);
   const [parentClient, setParentClient] = useState<any>(null);
@@ -74,7 +76,7 @@ export default function FamilyMemberForm({
   }, [clientId, open]);
 
   const form = useForm<FamilyMemberFormData>({
-    resolver: zodResolver(familyMemberSchema),
+    resolver: zodResolver(getSchema(t)),
     defaultValues: member
       ? {
           first_name: member.first_name,
@@ -129,11 +131,11 @@ export default function FamilyMemberForm({
 
         if (clientError) {
           console.error('Error creating client for family member:', clientError);
-          toast({
-            title: "Erreur",
-            description: "Impossible de créer la fiche client",
-            variant: "destructive"
-          });
+        toast({
+          title: t("common.error"),
+          description: t("forms.familyMember.errors.createClientError"),
+          variant: "destructive"
+        });
           setLoading(false);
           return;
         }
@@ -168,8 +170,8 @@ export default function FamilyMemberForm({
         }
 
         toast({
-          title: "Membre ajouté",
-          description: `${data.first_name} ${data.last_name} a été ajouté(e) à la famille et à la liste des adresses`
+          title: t("forms.familyMember.success.added"),
+          description: t("forms.familyMember.success.addedDescription", { name: `${data.first_name} ${data.last_name}` })
         });
 
         onOpenChange(false);
@@ -177,8 +179,8 @@ export default function FamilyMemberForm({
       } catch (err) {
         console.error('Error:', err);
         toast({
-          title: "Erreur",
-          description: "Une erreur est survenue",
+          title: t("common.error"),
+          description: t("forms.familyMember.errors.genericError"),
           variant: "destructive"
         });
       }
@@ -192,7 +194,7 @@ export default function FamilyMemberForm({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {member ? "Modifier le membre" : "Ajouter un membre de la famille"}
+            {member ? t("forms.familyMember.editTitle") : t("forms.familyMember.addTitle")}
           </DialogTitle>
         </DialogHeader>
 
@@ -204,7 +206,7 @@ export default function FamilyMemberForm({
                 name="first_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Prénom *</FormLabel>
+                    <FormLabel>{t("forms.familyMember.firstName")} *</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -218,7 +220,7 @@ export default function FamilyMemberForm({
                 name="last_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nom *</FormLabel>
+                    <FormLabel>{t("forms.familyMember.lastName")} *</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -234,7 +236,7 @@ export default function FamilyMemberForm({
                 name="relation_type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Type de relation *</FormLabel>
+                    <FormLabel>{t("forms.familyMember.relationType")} *</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -242,9 +244,9 @@ export default function FamilyMemberForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="conjoint">Conjoint(e)</SelectItem>
-                        <SelectItem value="enfant">Enfant</SelectItem>
-                        <SelectItem value="autre">Autre</SelectItem>
+                        <SelectItem value="conjoint">{t("forms.familyMember.relationTypes.spouse")}</SelectItem>
+                        <SelectItem value="enfant">{t("forms.familyMember.relationTypes.child")}</SelectItem>
+                        <SelectItem value="autre">{t("forms.familyMember.relationTypes.other")}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -257,7 +259,7 @@ export default function FamilyMemberForm({
                 name="birth_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Date de naissance</FormLabel>
+                    <FormLabel>{t("forms.familyMember.birthDate")}</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} value={field.value || ""} />
                     </FormControl>
@@ -273,7 +275,7 @@ export default function FamilyMemberForm({
                 name="permit_type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Type de permis</FormLabel>
+                    <FormLabel>{t("forms.familyMember.permitType")}</FormLabel>
                     <Select
                       onValueChange={(value) =>
                         field.onChange(value === "none" ? null : value)
@@ -282,16 +284,16 @@ export default function FamilyMemberForm({
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner" />
+                          <SelectValue placeholder={t("common.select")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">Aucun</SelectItem>
-                        <SelectItem value="B">Permis B</SelectItem>
-                        <SelectItem value="C">Permis C</SelectItem>
-                        <SelectItem value="G">Permis G</SelectItem>
-                        <SelectItem value="L">Permis L</SelectItem>
-                        <SelectItem value="Autre">Autre</SelectItem>
+                        <SelectItem value="none">{t("forms.familyMember.permits.none")}</SelectItem>
+                        <SelectItem value="B">{t("forms.familyMember.permits.b")}</SelectItem>
+                        <SelectItem value="C">{t("forms.familyMember.permits.c")}</SelectItem>
+                        <SelectItem value="G">{t("forms.familyMember.permits.g")}</SelectItem>
+                        <SelectItem value="L">{t("forms.familyMember.permits.l")}</SelectItem>
+                        <SelectItem value="Autre">{t("forms.familyMember.permits.other")}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -304,7 +306,7 @@ export default function FamilyMemberForm({
                 name="nationality"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nationalité</FormLabel>
+                    <FormLabel>{t("forms.familyMember.nationality")}</FormLabel>
                     <FormControl>
                       <Input {...field} value={field.value || ""} />
                     </FormControl>
@@ -323,10 +325,10 @@ export default function FamilyMemberForm({
                   form.reset();
                 }}
               >
-                Annuler
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? "Enregistrement..." : "Enregistrer"}
+                {loading ? t("common.saving") : t("common.save")}
               </Button>
             </div>
           </form>
