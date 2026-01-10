@@ -3622,6 +3622,7 @@ export type Database = {
         Returns: boolean
       }
       is_king: { Args: never; Returns: boolean }
+      is_tenant_admin: { Args: never; Returns: boolean }
       requires_sms_verification: {
         Args: { p_user_id: string }
         Returns: boolean

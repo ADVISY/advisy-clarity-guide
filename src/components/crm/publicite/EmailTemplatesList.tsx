@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DOMPurify from "dompurify";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -609,7 +610,7 @@ export const EmailTemplatesList = () => {
               </div>
             ) : (
               <div
-                dangerouslySetInnerHTML={{ __html: selectedTemplate?.body_html || "" }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedTemplate?.body_html || "") }}
                 className="prose dark:prose-invert max-w-none"
               />
             )}
