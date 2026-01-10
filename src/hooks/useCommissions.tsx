@@ -58,6 +58,14 @@ export function useCommissions() {
   const fetchCommissions = async () => {
     try {
       setLoading(true);
+      
+      // Must have tenant to fetch commissions
+      if (!effectiveTenantId) {
+        setCommissions([]);
+        setLoading(false);
+        return;
+      }
+      
       const { data, error } = await supabase
         .from('commissions')
         .select(`
@@ -78,6 +86,7 @@ export function useCommissions() {
             )
           )
         `)
+        .eq('tenant_id', effectiveTenantId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -209,8 +218,10 @@ export function useCommissions() {
   };
 
   useEffect(() => {
-    fetchCommissions();
-  }, []);
+    if (effectiveTenantId) {
+      fetchCommissions();
+    }
+  }, [effectiveTenantId]);
 
   return {
     commissions,
