@@ -66,9 +66,18 @@ export function useClients() {
   const fetchClients = async (typeFilter?: string) => {
     try {
       setLoading(true);
+      
+      // Must have tenantId to fetch clients
+      if (!tenantId) {
+        setClients([]);
+        setLoading(false);
+        return;
+      }
+      
       let query = supabase
         .from('clients' as any)
-        .select('*');
+        .select('*')
+        .eq('tenant_id', tenantId);
       
       if (typeFilter) {
         query = query.eq('type_adresse', typeFilter);
@@ -219,10 +228,10 @@ export function useClients() {
   };
 
   useEffect(() => {
-    if (user) {
+    if (user && tenantId) {
       fetchClients();
     }
-  }, [user]);
+  }, [user, tenantId]);
 
   return {
     clients,

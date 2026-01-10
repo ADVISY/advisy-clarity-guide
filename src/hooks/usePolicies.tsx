@@ -46,6 +46,14 @@ export function usePolicies() {
   const fetchPolicies = async () => {
     try {
       setLoading(true);
+      
+      // Must have tenantId to fetch policies
+      if (!tenantId) {
+        setPolicies([]);
+        setLoading(false);
+        return;
+      }
+      
       const { data, error } = await supabase
         .from('policies' as any)
         .select(`
@@ -72,6 +80,7 @@ export function usePolicies() {
             code
           )
         `)
+        .eq('tenant_id', tenantId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -186,10 +195,10 @@ export function usePolicies() {
   };
 
   useEffect(() => {
-    if (user) {
+    if (user && tenantId) {
       fetchPolicies();
     }
-  }, [user]);
+  }, [user, tenantId]);
 
   return {
     policies,
