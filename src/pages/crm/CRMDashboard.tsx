@@ -442,10 +442,10 @@ export default function CRMDashboard() {
   const canSeeFinancials = dashboardScope === 'global' || isAdmin;
 
   const periodLabels: Record<PeriodFilter, string> = {
-    week: 'Cette semaine',
-    month: 'Ce mois',
-    quarter: 'Ce trimestre',
-    year: 'Cette année',
+    week: t('dashboard.thisWeek'),
+    month: t('dashboard.thisMonth'),
+    quarter: t('dashboard.thisQuarter'),
+    year: t('dashboard.thisYear'),
   };
 
   // Recent notifications (last 5)
@@ -473,12 +473,12 @@ export default function CRMDashboard() {
             <TrendingUp className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Tableau de bord</h1>
+            <h1 className="text-2xl font-bold text-foreground">{t('dashboard.title')}</h1>
             <p className="text-sm text-muted-foreground">
               {format(new Date(), "EEEE d MMMM yyyy", { locale: fr })}
-              {dashboardScope === 'personal' && ' • Vue personnelle'}
-              {dashboardScope === 'team' && ' • Vue équipe'}
-              {dashboardScope === 'global' && ' • Vue globale'}
+              {dashboardScope === 'personal' && ` • ${t('dashboard.globalView').replace('globale', 'personnelle')}`}
+              {dashboardScope === 'team' && ` • ${t('dashboard.globalView').replace('globale', 'équipe')}`}
+              {dashboardScope === 'global' && ` • ${t('dashboard.globalView')}`}
             </p>
           </div>
         </div>
@@ -491,22 +491,22 @@ export default function CRMDashboard() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="week">Semaine</SelectItem>
-              <SelectItem value="month">Mois</SelectItem>
-              <SelectItem value="quarter">Trimestre</SelectItem>
-              <SelectItem value="year">Année</SelectItem>
+              <SelectItem value="week">{t('common.week')}</SelectItem>
+              <SelectItem value="month">{t('common.month')}</SelectItem>
+              <SelectItem value="quarter">{t('common.quarter')}</SelectItem>
+              <SelectItem value="year">{t('common.year')}</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={productFilter} onValueChange={setProductFilter}>
             <SelectTrigger className="w-[130px] h-9">
               <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Produit" />
+              <SelectValue placeholder={t('dashboard.filterByProduct')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
-              <SelectItem value="lca">LCA Maladie</SelectItem>
-              <SelectItem value="vie">3e Pilier / VIE</SelectItem>
+              <SelectItem value="all">{t('dashboard.allProducts')}</SelectItem>
+              <SelectItem value="lca">{t('dashboard.lca')}</SelectItem>
+              <SelectItem value="vie">{t('dashboard.vie')}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -514,10 +514,10 @@ export default function CRMDashboard() {
             <Select value={agentFilter} onValueChange={setAgentFilter}>
               <SelectTrigger className="w-[150px] h-9">
                 <Users className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Agent" />
+                <SelectValue placeholder={t('dashboard.filterByAgent')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les agents</SelectItem>
+                <SelectItem value="all">{t('dashboard.allAgents')}</SelectItem>
                 {availableAgents.map(agent => (
                   <SelectItem key={agent.id} value={agent.id}>
                     {agent.first_name} {agent.last_name}
@@ -532,7 +532,7 @@ export default function CRMDashboard() {
       {loading && (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-3 text-muted-foreground">Chargement...</span>
+          <span className="ml-3 text-muted-foreground">{t('common.loading')}</span>
         </div>
       )}
 
@@ -545,7 +545,7 @@ export default function CRMDashboard() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Contrats déposés</p>
+                    <p className="text-xs text-muted-foreground mb-1">{t('dashboard.depositedContracts')}</p>
                     <p className="text-3xl font-bold">{kpiStats.periodContracts}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="outline" className="text-xs bg-rose-500/10 text-rose-600 border-rose-200">
@@ -570,10 +570,10 @@ export default function CRMDashboard() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Contrats actifs</p>
+                    <p className="text-xs text-muted-foreground mb-1">{t('dashboard.activeContracts')}</p>
                     <p className="text-3xl font-bold">{kpiStats.activeContracts}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      sur {filteredPolicies.length} total
+                      {t('dashboard.total', { count: filteredPolicies.length })}
                     </p>
                   </div>
                   <div className="p-3 rounded-xl bg-emerald-500/20">
@@ -587,11 +587,11 @@ export default function CRMDashboard() {
             {(canSeeFinancials || commissionScope !== 'none') && (
               <Card className="border shadow-sm bg-gradient-to-br from-amber-500/10 to-amber-600/5">
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">CA estimé</p>
-                      <p className="text-3xl font-bold">{formatCurrency(kpiStats.caEstimated)}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">{t('dashboard.estimatedCA')}</p>
+                    <p className="text-3xl font-bold">{formatCurrency(kpiStats.caEstimated)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
                         {periodLabels[periodFilter]}
                       </p>
                     </div>
@@ -607,13 +607,13 @@ export default function CRMDashboard() {
             {(canSeeFinancials || commissionScope !== 'none') && (
               <Card className="border shadow-sm bg-gradient-to-br from-teal-500/10 to-teal-600/5">
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">CA en vigueur</p>
-                      <p className="text-3xl font-bold">{formatCurrency(kpiStats.caEnVigueur)}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Contrats actifs
-                      </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">{t('dashboard.currentCA')}</p>
+                    <p className="text-3xl font-bold">{formatCurrency(kpiStats.caEnVigueur)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {t('dashboard.activeContracts')}
+                    </p>
                     </div>
                     <div className="p-3 rounded-xl bg-teal-500/20">
                       <TrendingUp className="h-6 w-6 text-teal-600" />
@@ -631,10 +631,10 @@ export default function CRMDashboard() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Zap className="h-4 w-4 text-primary" />
-                    <CardTitle className="text-sm font-semibold">Commissions par période</CardTitle>
+                    <CardTitle className="text-sm font-semibold">{t('dashboard.commissions')}</CardTitle>
                   </div>
                   <Badge variant="secondary" className="text-xs">
-                    {commissionsByPeriod.list.length} commissions
+                    {commissionsByPeriod.list.length} {t('dashboard.commissions').toLowerCase()}
                   </Badge>
                 </div>
               </CardHeader>
@@ -642,22 +642,22 @@ export default function CRMDashboard() {
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   {/* Total */}
                   <div className="p-4 rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-200/50">
-                    <p className="text-xs text-muted-foreground mb-1">Total</p>
+                    <p className="text-xs text-muted-foreground mb-1">{t('common.total')}</p>
                     <p className="text-2xl font-bold text-blue-600">{formatCurrency(realCommissions.total)} CHF</p>
                   </div>
                   {/* Paid */}
                   <div className="p-4 rounded-lg bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-200/50">
-                    <p className="text-xs text-muted-foreground mb-1">Payées</p>
+                    <p className="text-xs text-muted-foreground mb-1">{t('commissions.paid')}</p>
                     <p className="text-2xl font-bold text-emerald-600">{formatCurrency(realCommissions.paid)} CHF</p>
                   </div>
                   {/* Pending */}
                   <div className="p-4 rounded-lg bg-gradient-to-br from-amber-500/10 to-amber-600/5 border border-amber-200/50">
-                    <p className="text-xs text-muted-foreground mb-1">En attente</p>
+                    <p className="text-xs text-muted-foreground mb-1">{t('commissions.pending')}</p>
                     <p className="text-2xl font-bold text-amber-600">{formatCurrency(realCommissions.pending)} CHF</p>
                   </div>
                   {/* Count */}
                   <div className="p-4 rounded-lg bg-gradient-to-br from-violet-500/10 to-violet-600/5 border border-violet-200/50">
-                    <p className="text-xs text-muted-foreground mb-1">Nombre</p>
+                    <p className="text-xs text-muted-foreground mb-1">{t('common.total')}</p>
                     <p className="text-2xl font-bold text-violet-600">{realCommissions.count}</p>
                   </div>
                 </div>
@@ -671,7 +671,7 @@ export default function CRMDashboard() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Commissions</p>
+                    <p className="text-xs text-muted-foreground mb-1">{t('dashboard.commissions')}</p>
                     <p className="text-3xl font-bold">{formatCurrency(kpiStats.totalCommission)}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs text-emerald-600">
@@ -699,7 +699,7 @@ export default function CRMDashboard() {
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <BarChart3 className="h-4 w-4 text-primary" />
-                      <CardTitle className="text-sm font-semibold">Performance {new Date().getFullYear()}</CardTitle>
+                      <CardTitle className="text-sm font-semibold">{t('dashboard.performance', { year: new Date().getFullYear() })}</CardTitle>
                     </div>
                     <div className="flex items-center gap-4 text-xs">
                       <div className="flex items-center gap-1.5">
@@ -790,25 +790,25 @@ export default function CRMDashboard() {
                   {canSeeFinancials && (
                     <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t">
                       <div className="text-center p-2.5 rounded-xl bg-rose-500/10">
-                        <p className="text-[9px] text-muted-foreground">LCA Total</p>
+                        <p className="text-[9px] text-muted-foreground">{t('dashboard.lcaTotal')}</p>
                         <p className="text-sm font-bold text-rose-600">
                           {monthlyChartData.reduce((s, m) => s + m.lca, 0)}
                         </p>
                       </div>
                       <div className="text-center p-2.5 rounded-xl bg-blue-500/10">
-                        <p className="text-[9px] text-muted-foreground">VIE Total</p>
+                        <p className="text-[9px] text-muted-foreground">{t('dashboard.vieTotal')}</p>
                         <p className="text-sm font-bold text-blue-600">
                           {monthlyChartData.reduce((s, m) => s + m.vie, 0)}
                         </p>
                       </div>
                       <div className="text-center p-2.5 rounded-xl bg-emerald-500/10">
-                        <p className="text-[9px] text-muted-foreground">CA Annuel</p>
+                        <p className="text-[9px] text-muted-foreground">{t('dashboard.annualCA')}</p>
                         <p className="text-sm font-bold text-emerald-600">
                           {formatCurrency(monthlyChartData.reduce((s, m) => s + m.ca, 0))}
                         </p>
                       </div>
                       <div className="text-center p-2.5 rounded-xl bg-violet-500/10">
-                        <p className="text-[9px] text-muted-foreground">Commissions</p>
+                        <p className="text-[9px] text-muted-foreground">{t('dashboard.commissions')}</p>
                         <p className="text-sm font-bold text-violet-600">
                           {formatCurrency(monthlyChartData.reduce((s, m) => s + m.commission, 0))}
                         </p>
@@ -853,7 +853,7 @@ export default function CRMDashboard() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Bell className="h-4 w-4 text-blue-500" />
-                      <CardTitle className="text-sm font-semibold">Notifications</CardTitle>
+                      <CardTitle className="text-sm font-semibold">{t('notifications.title')}</CardTitle>
                     </div>
                     {unreadCount > 0 && (
                       <Badge variant="destructive" className="text-xs">
@@ -865,7 +865,7 @@ export default function CRMDashboard() {
                 <CardContent className="pt-0">
                   {recentNotifications.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-4">
-                      Aucune notification
+                      {t('notifications.noNotifications')}
                     </p>
                   ) : (
                     <ScrollArea className="h-[300px]">

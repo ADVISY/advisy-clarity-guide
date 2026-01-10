@@ -27,14 +27,14 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 
-const professionLabels: Record<string, string> = {
-  agent: "Agent",
-  manager: "Manager",
-  admin: "Administrateur",
-  backoffice: "Backoffice",
-  comptabilite: "Comptabilité",
-  direction: "Direction",
-};
+const getProfessionLabels = (t: (key: string) => string): Record<string, string> => ({
+  agent: t('collaborators.agent'),
+  manager: t('collaborators.manager'),
+  admin: t('collaborators.admin'),
+  backoffice: t('collaborators.backoffice'),
+  comptabilite: t('settings.compta'),
+  direction: t('collaborators.admin'),
+});
 
 export default function CRMCollaborateurs() {
   const { t } = useTranslation();
@@ -96,10 +96,12 @@ export default function CRMCollaborateurs() {
     }
   };
 
+  const professionLabels = getProfessionLabels(t);
+
   const statsCards = [
-    { label: "Total", value: stats.total, icon: Users, color: "from-blue-500 to-indigo-600" },
-    { label: "Actifs", value: stats.actifs, icon: UserCheck, color: "from-emerald-500 to-teal-600" },
-    { label: "Inactifs", value: stats.inactifs, icon: UserX, color: "from-gray-400 to-gray-500" },
+    { label: t('collaborators.totalCount'), value: stats.total, icon: Users, color: "from-blue-500 to-indigo-600" },
+    { label: t('collaborators.activeCount'), value: stats.actifs, icon: UserCheck, color: "from-emerald-500 to-teal-600" },
+    { label: t('collaborators.inactiveCount'), value: stats.inactifs, icon: UserX, color: "from-gray-400 to-gray-500" },
   ];
 
   return (
@@ -117,9 +119,9 @@ export default function CRMCollaborateurs() {
             </div>
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                Collaborateurs
+                {t('collaborators.title')}
               </h1>
-              <p className="text-muted-foreground">Gérez votre équipe {tenantName}</p>
+              <p className="text-muted-foreground">{t('collaborators.manageTeam')} {tenantName}</p>
             </div>
           </div>
           <Button 
@@ -127,7 +129,7 @@ export default function CRMCollaborateurs() {
             className="group bg-gradient-to-r from-primary to-violet-600 hover:from-primary/90 hover:to-violet-600/90 shadow-xl shadow-primary/20 rounded-xl"
           >
             <Plus className="h-4 w-4 mr-2 transition-transform group-hover:rotate-90 duration-300" />
-            Ajouter un collaborateur
+            {t('collaborators.addCollaborator')}
           </Button>
         </div>
       </div>
@@ -163,11 +165,11 @@ export default function CRMCollaborateurs() {
       <Card className="border-0 shadow-xl">
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <CardTitle>Liste des collaborateurs</CardTitle>
+            <CardTitle>{t('collaborators.title')}</CardTitle>
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher..."
+                placeholder={t('collaborators.searchPlaceholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
@@ -182,19 +184,19 @@ export default function CRMCollaborateurs() {
             </div>
           ) : filteredCollaborateurs.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              {search ? "Aucun résultat trouvé" : "Aucun collaborateur enregistré"}
+              {search ? t('common.noResults') : t('collaborators.noCollaborators')}
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nom</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Fonction</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead>Ajouté le</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t('common.name')}</TableHead>
+                    <TableHead>{t('collaborators.contact')}</TableHead>
+                    <TableHead>{t('collaborators.function')}</TableHead>
+                    <TableHead>{t('common.status')}</TableHead>
+                    <TableHead>{t('collaborators.addedOn')}</TableHead>
+                    <TableHead className="text-right">{t('common.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -249,7 +251,7 @@ export default function CRMCollaborateurs() {
                               : 'bg-gray-100 text-gray-600'
                           )}
                         >
-                          {collaborateur.status === 'actif' ? 'Actif' : 'Inactif'}
+                          {collaborateur.status === 'actif' ? t('collaborators.activeCount') : t('collaborators.inactiveCount')}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
@@ -261,7 +263,7 @@ export default function CRMCollaborateurs() {
                             size="icon" 
                             variant="ghost"
                             onClick={() => handlePermissions(collaborateur)}
-                            title="Gérer les permissions"
+                            title={t('collaborators.permissions')}
                           >
                             <Shield className="h-4 w-4" />
                           </Button>
@@ -269,7 +271,7 @@ export default function CRMCollaborateurs() {
                             size="icon" 
                             variant="ghost"
                             onClick={() => handleEdit(collaborateur)}
-                            title="Modifier"
+                            title={t('common.edit')}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -278,7 +280,7 @@ export default function CRMCollaborateurs() {
                             variant="ghost"
                             className="text-destructive hover:text-destructive"
                             onClick={() => handleDeleteClick(collaborateur)}
-                            title="Supprimer"
+                            title={t('common.delete')}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -305,19 +307,18 @@ export default function CRMCollaborateurs() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer ce collaborateur ?</AlertDialogTitle>
+            <AlertDialogTitle>{t('collaborators.deleteCollaborator')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer {collaborateurToDelete?.first_name} {collaborateurToDelete?.last_name} ? 
-              Cette action est irréversible.
+              {t('collaborators.deleteCollaboratorConfirm', { name: `${collaborateurToDelete?.first_name} ${collaborateurToDelete?.last_name}` })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDeleteConfirm}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Supprimer
+              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

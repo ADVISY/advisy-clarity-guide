@@ -22,19 +22,19 @@ import CommissionForm from "@/components/crm/CommissionForm";
 import DecommissionForm from "@/components/crm/DecommissionForm";
 import { useTranslation } from "react-i18next";
 
-const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-  due: { label: "À payer", color: "bg-amber-100 text-amber-800", icon: Clock },
-  pending: { label: "En attente", color: "bg-blue-100 text-blue-800", icon: AlertCircle },
-  paid: { label: "Payée", color: "bg-emerald-100 text-emerald-800", icon: CheckCircle },
-};
+const getStatusConfig = (t: (key: string) => string): Record<string, { label: string; color: string; icon: any }> => ({
+  due: { label: t('commissions.due'), color: "bg-amber-100 text-amber-800", icon: Clock },
+  pending: { label: t('commissions.pending'), color: "bg-blue-100 text-blue-800", icon: AlertCircle },
+  paid: { label: t('commissions.paid'), color: "bg-emerald-100 text-emerald-800", icon: CheckCircle },
+});
 
-const typeConfig: Record<string, { label: string; color: string }> = {
-  acquisition: { label: "Acquisition", color: "bg-violet-100 text-violet-800" },
-  renewal: { label: "Renouvellement", color: "bg-cyan-100 text-cyan-800" },
-  bonus: { label: "Bonus", color: "bg-pink-100 text-pink-800" },
-  gestion: { label: "Gestion", color: "bg-emerald-100 text-emerald-800" },
-  decommission: { label: "Décommission", color: "bg-red-100 text-red-800" },
-};
+const getTypeConfig = (t: (key: string) => string): Record<string, { label: string; color: string }> => ({
+  acquisition: { label: t('commissions.acquisition'), color: "bg-violet-100 text-violet-800" },
+  renewal: { label: t('commissions.renewal'), color: "bg-cyan-100 text-cyan-800" },
+  bonus: { label: t('commissions.bonus'), color: "bg-pink-100 text-pink-800" },
+  gestion: { label: t('commissions.management'), color: "bg-emerald-100 text-emerald-800" },
+  decommission: { label: t('commissions.decommission'), color: "bg-red-100 text-red-800" },
+});
 
 export default function CRMCommissions() {
   const { t } = useTranslation();
@@ -274,11 +274,14 @@ export default function CRMCommissions() {
     return 100 - assignedRate;
   };
 
+  const statusConfig = getStatusConfig(t);
+  const typeConfig = getTypeConfig(t);
+
   const statsCards = [
-    { label: "Total ce mois", value: formatCurrency(stats.lastMonth), icon: DollarSign, color: "from-emerald-500 to-teal-600" },
-    { label: "En attente", value: formatCurrency(stats.pending), icon: Wallet, color: "from-amber-500 to-orange-600" },
-    { label: "Payées", value: formatCurrency(stats.paid), icon: PiggyBank, color: "from-blue-500 to-indigo-600" },
-    { label: "Total", value: formatCurrency(stats.total), icon: TrendingUp, color: "from-violet-500 to-purple-600" },
+    { label: t('commissions.totalThisMonth'), value: formatCurrency(stats.lastMonth), icon: DollarSign, color: "from-emerald-500 to-teal-600" },
+    { label: t('commissions.pendingAmount'), value: formatCurrency(stats.pending), icon: Wallet, color: "from-amber-500 to-orange-600" },
+    { label: t('commissions.paidAmount'), value: formatCurrency(stats.paid), icon: PiggyBank, color: "from-blue-500 to-indigo-600" },
+    { label: t('commissions.totalAmount'), value: formatCurrency(stats.total), icon: TrendingUp, color: "from-violet-500 to-purple-600" },
   ];
 
   return (
@@ -295,18 +298,18 @@ export default function CRMCommissions() {
           </div>
           <div className="flex-1">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              Commissions
+              {t('commissions.title')}
             </h1>
-            <p className="text-muted-foreground">Suivez vos commissions et répartitions</p>
+            <p className="text-muted-foreground">{t('commissions.subtitle')}</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={() => setDecommissionFormOpen(true)} variant="outline" className="gap-2 border-destructive text-destructive hover:bg-destructive/10">
               <MinusCircle className="h-4 w-4" />
-              Décommission
+              {t('commissions.decommission')}
             </Button>
             <Button onClick={() => setCommissionFormOpen(true)} className="gap-2">
               <Plus className="h-4 w-4" />
-              Nouvelle commission
+              {t('commissions.newCommission')}
             </Button>
           </div>
         </div>
@@ -346,7 +349,7 @@ export default function CRMCommissions() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par client, produit, n° police..."
+                placeholder={t('commissions.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -354,25 +357,25 @@ export default function CRMCommissions() {
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Statut" />
+                <SelectValue placeholder={t('common.status')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les statuts</SelectItem>
-                <SelectItem value="due">À payer</SelectItem>
-                <SelectItem value="pending">En attente</SelectItem>
-                <SelectItem value="paid">Payée</SelectItem>
+                <SelectItem value="all">{t('common.allStatuses')}</SelectItem>
+                <SelectItem value="due">{t('commissions.due')}</SelectItem>
+                <SelectItem value="pending">{t('commissions.pending')}</SelectItem>
+                <SelectItem value="paid">{t('commissions.paid')}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Type" />
+                <SelectValue placeholder={t('commissions.type')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les types</SelectItem>
-                <SelectItem value="acquisition">Acquisition</SelectItem>
-                <SelectItem value="renewal">Renouvellement</SelectItem>
-                <SelectItem value="bonus">Bonus</SelectItem>
-                <SelectItem value="gestion">Gestion</SelectItem>
+                <SelectItem value="all">{t('common.allTypes')}</SelectItem>
+                <SelectItem value="acquisition">{t('commissions.acquisition')}</SelectItem>
+                <SelectItem value="renewal">{t('commissions.renewal')}</SelectItem>
+                <SelectItem value="bonus">{t('commissions.bonus')}</SelectItem>
+                <SelectItem value="gestion">{t('commissions.management')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -383,7 +386,7 @@ export default function CRMCommissions() {
       <Card className="border-0 shadow-lg">
         <CardHeader>
           <CardTitle className="text-lg">
-            Liste des commissions ({filteredCommissions.length} commissions, {groupedCommissions.length} clients)
+            {t('commissions.commissionsList')} ({filteredCommissions.length} {t('dashboard.commissions').toLowerCase()}, {groupedCommissions.length} {t('commissions.client')})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -394,7 +397,7 @@ export default function CRMCommissions() {
           ) : groupedCommissions.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-20" />
-              <p>Aucune commission trouvée</p>
+              <p>{t('commissions.noCommissions')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -402,11 +405,11 @@ export default function CRMCommissions() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-8"></TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Contrats</TableHead>
-                    <TableHead>Montant total</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t('commissions.client')}</TableHead>
+                    <TableHead>{t('commissions.contractsCount')}</TableHead>
+                    <TableHead>{t('commissions.totalAmountColumn')}</TableHead>
+                    <TableHead>{t('commissions.statusColumn')}</TableHead>
+                    <TableHead className="text-right">{t('common.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -488,7 +491,7 @@ export default function CRMCommissions() {
                               }}
                             >
                               <Eye className="h-4 w-4 mr-1" />
-                              Voir
+                              {t('common.view')}
                             </Button>
                           </TableCell>
                         </TableRow>

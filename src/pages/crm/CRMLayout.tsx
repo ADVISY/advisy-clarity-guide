@@ -48,17 +48,17 @@ interface MenuItem {
   requiredModule?: PlanModule;
 }
 
-const allMenuItems: MenuItem[] = [
-  { to: "/crm", icon: LayoutDashboard, label: "Drive", end: true, color: "from-blue-500 to-indigo-500" },
-  { to: "/crm/clients", icon: Users, label: "Adresses", color: "from-emerald-500 to-teal-500", requiredModule: "clients" },
-  { to: "/crm/contrats", icon: FileCheck, label: "Contrats", color: "from-violet-500 to-purple-500", requiredModule: "contracts" },
-  { to: "/crm/commissions", icon: DollarSign, label: "Payout", color: "from-green-500 to-emerald-500", requiredModule: "commissions" },
-  { to: "/crm/compta", icon: FileText, label: "Finance", color: "from-amber-500 to-orange-500", requiredModule: "statements" },
-  { to: "/crm/publicite", icon: Mail, label: "Publicité", color: "from-cyan-500 to-blue-500", requiredModule: "emailing" },
-  { to: "/crm/compagnies", icon: Building2, label: "Partners", color: "from-red-500 to-orange-500" },
-  { to: "/crm/collaborateurs", icon: UserCog, label: "Team", color: "from-pink-500 to-rose-500" },
-  { to: "/crm/rapports", icon: BarChart3, label: "Rapports", color: "from-indigo-500 to-violet-500" },
-  { to: "/crm/parametres", icon: Settings, label: "Paramètres", color: "from-slate-500 to-gray-500" },
+const getMenuItems = (t: (key: string) => string): MenuItem[] => [
+  { to: "/crm", icon: LayoutDashboard, label: t('nav.drive'), end: true, color: "from-blue-500 to-indigo-500" },
+  { to: "/crm/clients", icon: Users, label: t('nav.clients'), color: "from-emerald-500 to-teal-500", requiredModule: "clients" },
+  { to: "/crm/contrats", icon: FileCheck, label: t('nav.contracts'), color: "from-violet-500 to-purple-500", requiredModule: "contracts" },
+  { to: "/crm/commissions", icon: DollarSign, label: t('nav.payout'), color: "from-green-500 to-emerald-500", requiredModule: "commissions" },
+  { to: "/crm/compta", icon: FileText, label: t('nav.finance'), color: "from-amber-500 to-orange-500", requiredModule: "statements" },
+  { to: "/crm/publicite", icon: Mail, label: t('nav.advertising'), color: "from-cyan-500 to-blue-500", requiredModule: "emailing" },
+  { to: "/crm/compagnies", icon: Building2, label: t('nav.partners'), color: "from-red-500 to-orange-500" },
+  { to: "/crm/collaborateurs", icon: UserCog, label: t('nav.team'), color: "from-pink-500 to-rose-500" },
+  { to: "/crm/rapports", icon: BarChart3, label: t('nav.reports'), color: "from-indigo-500 to-violet-500" },
+  { to: "/crm/parametres", icon: Settings, label: t('nav.settings'), color: "from-slate-500 to-gray-500" },
 ];
 
 export default function CRMLayout() {
@@ -75,13 +75,14 @@ export default function CRMLayout() {
 
   // Filter menu items based on plan
   const menuItems = useMemo(() => {
+    const allMenuItems = getMenuItems(t);
     return allMenuItems.filter((item) => {
       // Items without requiredModule are always visible
       if (!item.requiredModule) return true;
       // Check if the module is enabled in the current plan
       return hasModule(item.requiredModule);
     });
-  }, [hasModule]);
+  }, [hasModule, t]);
 
   // Check if we should show welcome message (on first load after login)
   useEffect(() => {
@@ -233,7 +234,7 @@ export default function CRMLayout() {
               <div className="flex items-center justify-center gap-2 mt-2">
                 <div className="w-2 h-2 rounded-full bg-emerald-500" />
                 <p className="text-xs text-muted-foreground capitalize">
-                  {role} • en ligne
+                  {role} • {t('common.online')}
                 </p>
               </div>
             )}
