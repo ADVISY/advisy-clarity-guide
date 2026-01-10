@@ -1559,6 +1559,109 @@ export type Database = {
           },
         ]
       }
+      king_audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: unknown
+          tenant_id: string | null
+          tenant_name: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown
+          tenant_id?: string | null
+          tenant_name?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown
+          tenant_id?: string | null
+          tenant_name?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "king_audit_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      king_notifications: {
+        Row: {
+          action_label: string | null
+          action_url: string | null
+          created_at: string
+          id: string
+          kind: string
+          message: string | null
+          metadata: Json | null
+          priority: string | null
+          read_at: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          tenant_id: string | null
+          tenant_name: string | null
+          title: string
+        }
+        Insert: {
+          action_label?: string | null
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          message?: string | null
+          metadata?: Json | null
+          priority?: string | null
+          read_at?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          tenant_id?: string | null
+          tenant_name?: string | null
+          title: string
+        }
+        Update: {
+          action_label?: string | null
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          message?: string | null
+          metadata?: Json | null
+          priority?: string | null
+          read_at?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          tenant_id?: string | null
+          tenant_name?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "king_notifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           body: string | null
@@ -2699,6 +2802,8 @@ export type Database = {
       }
       tenants: {
         Row: {
+          activated_at: string | null
+          activated_by: string | null
           address: string | null
           admin_email: string | null
           backoffice_email: string | null
@@ -2711,9 +2816,12 @@ export type Database = {
           email: string | null
           extra_users: number | null
           id: string
+          last_activity_at: string | null
           legal_name: string | null
+          mrr_amount: number | null
           name: string
           notes: string | null
+          payment_status: string | null
           phone: string | null
           plan: Database["public"]["Enums"]["tenant_plan"] | null
           plan_id: string | null
@@ -2727,9 +2835,15 @@ export type Database = {
           stripe_customer_id: string | null
           stripe_session_id: string | null
           stripe_subscription_id: string | null
+          suspended_at: string | null
+          suspended_by: string | null
+          suspension_reason: string | null
+          tenant_status: string | null
           updated_at: string
         }
         Insert: {
+          activated_at?: string | null
+          activated_by?: string | null
           address?: string | null
           admin_email?: string | null
           backoffice_email?: string | null
@@ -2742,9 +2856,12 @@ export type Database = {
           email?: string | null
           extra_users?: number | null
           id?: string
+          last_activity_at?: string | null
           legal_name?: string | null
+          mrr_amount?: number | null
           name: string
           notes?: string | null
+          payment_status?: string | null
           phone?: string | null
           plan?: Database["public"]["Enums"]["tenant_plan"] | null
           plan_id?: string | null
@@ -2758,9 +2875,15 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_session_id?: string | null
           stripe_subscription_id?: string | null
+          suspended_at?: string | null
+          suspended_by?: string | null
+          suspension_reason?: string | null
+          tenant_status?: string | null
           updated_at?: string
         }
         Update: {
+          activated_at?: string | null
+          activated_by?: string | null
           address?: string | null
           admin_email?: string | null
           backoffice_email?: string | null
@@ -2773,9 +2896,12 @@ export type Database = {
           email?: string | null
           extra_users?: number | null
           id?: string
+          last_activity_at?: string | null
           legal_name?: string | null
+          mrr_amount?: number | null
           name?: string
           notes?: string | null
+          payment_status?: string | null
           phone?: string | null
           plan?: Database["public"]["Enums"]["tenant_plan"] | null
           plan_id?: string | null
@@ -2789,6 +2915,10 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_session_id?: string | null
           stripe_subscription_id?: string | null
+          suspended_at?: string | null
+          suspended_by?: string | null
+          suspension_reason?: string | null
+          tenant_status?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -3524,6 +3654,20 @@ export type Database = {
         Args: { p_reason?: string; p_transaction_id: string }
         Returns: string
       }
+      create_king_notification: {
+        Args: {
+          p_action_label?: string
+          p_action_url?: string
+          p_kind?: string
+          p_message?: string
+          p_metadata?: Json
+          p_priority?: string
+          p_tenant_id?: string
+          p_tenant_name?: string
+          p_title: string
+        }
+        Returns: string
+      }
       create_notification: {
         Args: {
           p_action_url?: string
@@ -3623,6 +3767,15 @@ export type Database = {
       }
       is_king: { Args: never; Returns: boolean }
       is_tenant_admin: { Args: never; Returns: boolean }
+      log_king_action: {
+        Args: {
+          p_action: string
+          p_details?: Json
+          p_tenant_id?: string
+          p_tenant_name?: string
+        }
+        Returns: string
+      }
       requires_sms_verification: {
         Args: { p_user_id: string }
         Returns: boolean
@@ -3648,6 +3801,7 @@ export type Database = {
       commission_status: "estimated" | "confirmed" | "cancelled"
       dashboard_scope: "personal" | "team" | "global"
       decompte_status: "draft" | "validated" | "paid" | "cancelled"
+      payment_status: "trialing" | "paid" | "past_due" | "unpaid" | "canceled"
       payout_status: "pending" | "paid" | "cancelled"
       permission_action:
         | "view"
@@ -3673,6 +3827,7 @@ export type Database = {
         | "settings"
       plan_status: "active" | "suspended"
       tenant_plan: "start" | "pro" | "prime" | "founder"
+      tenant_status: "pending_setup" | "active" | "suspended" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3814,6 +3969,7 @@ export const Constants = {
       commission_status: ["estimated", "confirmed", "cancelled"],
       dashboard_scope: ["personal", "team", "global"],
       decompte_status: ["draft", "validated", "paid", "cancelled"],
+      payment_status: ["trialing", "paid", "past_due", "unpaid", "canceled"],
       payout_status: ["pending", "paid", "cancelled"],
       permission_action: [
         "view",
@@ -3841,6 +3997,7 @@ export const Constants = {
       ],
       plan_status: ["active", "suspended"],
       tenant_plan: ["start", "pro", "prime", "founder"],
+      tenant_status: ["pending_setup", "active", "suspended", "cancelled"],
     },
   },
 } as const
