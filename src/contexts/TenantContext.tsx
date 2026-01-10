@@ -200,21 +200,41 @@ export function TenantProvider({ children }: TenantProviderProps) {
         setTenant(formattedTenant);
         
         // Update favicon dynamically based on tenant logo
-        const faviconElement = document.getElementById('dynamic-favicon') as HTMLLinkElement;
-        if (faviconElement && formattedTenant.branding?.logo_url) {
-          faviconElement.href = formattedTenant.branding.logo_url;
-          // Detect type based on URL extension
-          const logoUrl = formattedTenant.branding.logo_url.toLowerCase();
-          if (logoUrl.includes('.png')) {
-            faviconElement.type = 'image/png';
-          } else if (logoUrl.includes('.svg')) {
-            faviconElement.type = 'image/svg+xml';
-          } else if (logoUrl.includes('.ico')) {
-            faviconElement.type = 'image/x-icon';
-          } else {
-            faviconElement.type = 'image/png'; // Default to PNG for most uploaded images
-          }
+        // Force browser to refresh favicon by removing old and adding new link element
+        const existingFavicon = document.getElementById('dynamic-favicon');
+        if (existingFavicon) {
+          existingFavicon.remove();
         }
+        
+        const newFavicon = document.createElement('link');
+        newFavicon.id = 'dynamic-favicon';
+        newFavicon.rel = 'icon';
+        
+        if (formattedTenant.branding?.logo_url) {
+          // Use tenant logo with cache-busting timestamp
+          const logoUrl = formattedTenant.branding.logo_url;
+          const separator = logoUrl.includes('?') ? '&' : '?';
+          newFavicon.href = `${logoUrl}${separator}v=${Date.now()}`;
+          
+          // Detect type based on URL extension
+          if (logoUrl.toLowerCase().includes('.png')) {
+            newFavicon.type = 'image/png';
+          } else if (logoUrl.toLowerCase().includes('.svg')) {
+            newFavicon.type = 'image/svg+xml';
+          } else if (logoUrl.toLowerCase().includes('.ico')) {
+            newFavicon.type = 'image/x-icon';
+          } else {
+            newFavicon.type = 'image/png';
+          }
+        } else {
+          // No tenant logo - use a generic favicon (first letter of tenant name)
+          const initial = (displayName || 'L').charAt(0).toUpperCase();
+          const svgFavicon = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%23${formattedTenant.branding?.primary_color?.replace('#', '') || '1a1a2e'}"/><text x="50" y="67" font-size="50" font-family="Arial,sans-serif" font-weight="bold" fill="white" text-anchor="middle">${initial}</text></svg>`;
+          newFavicon.href = svgFavicon;
+          newFavicon.type = 'image/svg+xml';
+        }
+        
+        document.head.appendChild(newFavicon);
         
         // Apply tenant branding to CSS variables (convert hex to HSL for Tailwind)
         if (formattedTenant.branding?.primary_color) {
