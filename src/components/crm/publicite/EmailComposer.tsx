@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DOMPurify from "dompurify";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -401,7 +402,7 @@ export const EmailComposer = () => {
               <div className="border rounded-lg p-4 bg-white dark:bg-muted overflow-hidden">
                 <p className="font-medium mb-2 text-sm">{subject || "Sans sujet"}</p>
                 <div
-                  dangerouslySetInnerHTML={{ __html: body }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(body) }}
                   className="prose dark:prose-invert prose-sm max-w-none"
                 />
               </div>
