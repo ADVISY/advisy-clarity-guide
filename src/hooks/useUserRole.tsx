@@ -32,10 +32,13 @@ export function useUserRole() {
     }
   }, []);
 
-  // Clear active role (for logout)
+  // Clear active role (for logout) - clears ALL session auth data
   const clearActiveRole = useCallback(() => {
     setActiveRoleState(null);
+    setRoles([]);
     sessionStorage.removeItem(ACTIVE_ROLE_KEY);
+    sessionStorage.removeItem('loginTarget');
+    sessionStorage.removeItem('userLoginData');
   }, []);
 
   useEffect(() => {

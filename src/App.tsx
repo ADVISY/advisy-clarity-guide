@@ -108,7 +108,7 @@ const App = () => (
               </Route>
               
               {/* Client Portal Routes */}
-              <Route path="/espace-client" element={<ClientLayout />}>
+              <Route path="/espace-client" element={<ProtectedRoute><ClientLayout /></ProtectedRoute>}>
                 <Route index element={<ClientDashboard />} />
                 <Route path="contrats" element={<ClientContracts />} />
                 <Route path="documents" element={<ClientDocuments />} />
