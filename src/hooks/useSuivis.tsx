@@ -179,23 +179,29 @@ export function useSuivis(clientId?: string) {
 
   const updateSuivi = async (id: string, data: UpdateSuiviData): Promise<{ data: Suivi | null; error: string | null }> => {
     try {
+      console.log("[useSuivis] Updating suivi:", id, "with data:", data);
+      
       const { data: updatedSuivi, error } = await supabase
         .from("suivis")
-        .update(data)
+        .update({
+          ...data,
+          updated_at: new Date().toISOString()
+        })
         .eq("id", id)
         .select()
         .single();
 
       if (error) {
-        console.error("Error updating suivi:", error);
+        console.error("[useSuivis] Error updating suivi:", error);
         toast({
           title: "Erreur",
-          description: "Impossible de mettre à jour le suivi",
+          description: translateError(error.message) || "Impossible de mettre à jour le suivi",
           variant: "destructive",
         });
         return { data: null, error: error.message };
       }
 
+      console.log("[useSuivis] Suivi updated successfully:", updatedSuivi);
       toast({
         title: "Succès",
         description: "Suivi mis à jour avec succès",
@@ -203,9 +209,14 @@ export function useSuivis(clientId?: string) {
       
       await fetchSuivis();
       return { data: updatedSuivi as unknown as Suivi, error: null };
-    } catch (error) {
-      console.error("Error updating suivi:", error);
-      return { data: null, error: "Erreur inattendue" };
+    } catch (error: any) {
+      console.error("[useSuivis] Unexpected error updating suivi:", error);
+      toast({
+        title: "Erreur",
+        description: translateError(error.message) || "Erreur inattendue",
+        variant: "destructive",
+      });
+      return { data: null, error: error.message || "Erreur inattendue" };
     }
   };
 

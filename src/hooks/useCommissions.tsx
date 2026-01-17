@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTenant } from '@/contexts/TenantContext';
 import { translateError } from '@/lib/errorTranslations';
+import { useRefreshData } from '@/hooks/useRefreshData';
 
 export type Commission = {
   id: string;
@@ -29,6 +30,7 @@ export function useCommissions() {
   const [userTenantId, setUserTenantId] = useState<string | null>(null);
   const { toast } = useToast();
   const { tenantId: contextTenantId } = useTenant();
+  const { refreshKey, triggerRefresh } = useRefreshData();
 
   // Get user's tenant_id from their assignment
   useEffect(() => {
@@ -182,6 +184,7 @@ export function useCommissions() {
       });
 
       await fetchCommissions();
+      triggerRefresh(); // Notify other components to refresh
     } catch (error: any) {
       toast({
         title: "Erreur",
@@ -221,7 +224,7 @@ export function useCommissions() {
     if (effectiveTenantId) {
       fetchCommissions();
     }
-  }, [effectiveTenantId]);
+  }, [effectiveTenantId, refreshKey]);
 
   return {
     commissions,

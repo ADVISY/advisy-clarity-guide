@@ -165,12 +165,30 @@ export function useFamilyMembers(clientId?: string) {
 
   const updateFamilyMember = async (id: string, updates: Partial<FamilyMember>) => {
     try {
+      console.log("[useFamilyMembers] Updating member:", id, "with:", updates);
+      
+      // Skip reverse/sibling entries (synthetic IDs)
+      if (id.startsWith('reverse-') || id.startsWith('sibling-')) {
+        toast({
+          title: "Information",
+          description: "Ce membre est lié depuis une autre fiche. Modifiez-le depuis sa fiche principale.",
+          variant: "default"
+        });
+        return { error: null };
+      }
+      
       const { error } = await supabase
         .from('family_members' as any)
-        .update(updates)
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("[useFamilyMembers] Update error:", error);
+        throw error;
+      }
 
       toast({
         title: "Membre mis à jour",
@@ -180,9 +198,10 @@ export function useFamilyMembers(clientId?: string) {
       await fetchFamilyMembers(clientId);
       return { error: null };
     } catch (error: any) {
+      console.error("[useFamilyMembers] Error updating family member:", error);
       toast({
         title: "Erreur",
-        description: error.message,
+        description: error.message || "Impossible de mettre à jour le membre",
         variant: "destructive"
       });
       return { error };
@@ -191,12 +210,27 @@ export function useFamilyMembers(clientId?: string) {
 
   const deleteFamilyMember = async (id: string) => {
     try {
+      console.log("[useFamilyMembers] Deleting member:", id);
+      
+      // Skip reverse/sibling entries (synthetic IDs)
+      if (id.startsWith('reverse-') || id.startsWith('sibling-')) {
+        toast({
+          title: "Information",
+          description: "Ce membre est lié depuis une autre fiche. Supprimez-le depuis sa fiche principale.",
+          variant: "default"
+        });
+        return { error: null };
+      }
+      
       const { error } = await supabase
         .from('family_members' as any)
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("[useFamilyMembers] Delete error:", error);
+        throw error;
+      }
 
       toast({
         title: "Membre supprimé",
@@ -206,9 +240,10 @@ export function useFamilyMembers(clientId?: string) {
       await fetchFamilyMembers(clientId);
       return { error: null };
     } catch (error: any) {
+      console.error("[useFamilyMembers] Error deleting family member:", error);
       toast({
         title: "Erreur",
-        description: error.message,
+        description: error.message || "Impossible de supprimer le membre",
         variant: "destructive"
       });
       return { error };

@@ -39,6 +39,7 @@ export function useUserRole() {
     sessionStorage.removeItem(ACTIVE_ROLE_KEY);
     sessionStorage.removeItem('loginTarget');
     sessionStorage.removeItem('userLoginData');
+    sessionStorage.removeItem('lyta_login_space');
   }, []);
 
   useEffect(() => {
