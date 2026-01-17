@@ -223,6 +223,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sessionStorage.removeItem('lyta_active_role');
     sessionStorage.removeItem('loginTarget');
     sessionStorage.removeItem('userLoginData');
+    sessionStorage.removeItem('lyta_login_space');
     
     navigate("/connexion");
   };
