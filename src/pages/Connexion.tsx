@@ -659,12 +659,6 @@ const Connexion = () => {
 
     // IMPORTANT: set target BEFORE sign-in to avoid redirect race
     sessionStorage.setItem('loginTarget', loginType);
-    
-    // CRITICAL: Set the login space to enforce space isolation
-    // This prevents users from switching spaces via URL after login
-    const loginSpace = loginType === 'client' ? 'client' : loginType === 'king' ? 'king' : 'team';
-    sessionStorage.setItem('lyta_login_space', loginSpace);
-    console.log("[Connexion] Setting login space:", loginSpace);
 
     setLoading(true);
     // CRITICAL: Set flag BEFORE signIn to prevent any redirect
@@ -677,7 +671,6 @@ const Connexion = () => {
       if (result.error) {
         // Remove target when login fails
         sessionStorage.removeItem('loginTarget');
-        sessionStorage.removeItem('lyta_login_space');
         smsFlowActive.current = false;
         toast({
           title: "Erreur de connexion",

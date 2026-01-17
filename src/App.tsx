@@ -7,7 +7,6 @@ import { AuthProvider } from "./hooks/useAuth";
 import { TenantProvider } from "./contexts/TenantContext";
 import { ThemeProvider } from "./hooks/useTheme";
 import { CelebrationProvider } from "./hooks/useCelebration";
-import { RefreshProvider } from "./hooks/useRefreshData";
 import Connexion from "./pages/Connexion";
 import ResetPassword from "./pages/ResetPassword";
 import DeposerContrat from "./pages/DeposerContrat";
@@ -66,61 +65,6 @@ const App = () => (
           <BrowserRouter>
             <AuthProvider>
               <TenantProvider>
-                <RefreshProvider>
-              {/* Redirect root to login */}
-              <Route path="/" element={<Navigate to="/connexion" replace />} />
-              
-              {/* Login Page */}
-              <Route path="/connexion" element={<Connexion />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/deposer-contrat" element={<DeposerContrat />} />
-              
-              {/* CRM Routes */}
-              <Route path="/crm" element={<ProtectedRoute><CRMLayout /></ProtectedRoute>}>
-                <Route index element={<CRMDashboard />} />
-                <Route path="clients" element={<CRMClients />} />
-                <Route path="clients/nouveau" element={<ClientForm />} />
-                <Route path="clients/:id" element={<ClientDetail />} />
-                <Route path="clients/:id/edit" element={<ClientForm />} />
-                <Route path="suivis" element={<CRMSuivis />} />
-                <Route path="propositions" element={<CRMPropositions />} />
-                <Route path="contrats" element={<CRMContracts />} />
-                <Route path="commissions" element={<CRMCommissions />} />
-                <Route path="collaborateurs" element={<CRMCollaborateurs />} />
-                <Route path="rapports" element={<CRMRapports />} />
-                <Route path="parametres" element={<CRMParametres />} />
-                <Route path="compagnies" element={<CRMCompagnies />} />
-                <Route path="compta" element={<CRMCompta />} />
-                <Route path="publicite" element={<CRMPublicite />} />
-                <Route path="abonnement" element={<CRMAbonnement />} />
-              </Route>
-              
-              {/* KING Platform Routes */}
-              <Route path="/king" element={<ProtectedRoute><KingLayout /></ProtectedRoute>}>
-                <Route index element={<KingDashboard />} />
-                <Route path="tenants" element={<KingTenants />} />
-                <Route path="tenants/:tenantId" element={<KingTenantDetail />} />
-                <Route path="wizard" element={<KingWizard />} />
-                <Route path="users" element={<KingUsers />} />
-                <Route path="security" element={<KingSecurity />} />
-                <Route path="settings" element={<KingSettings />} />
-                <Route path="compliance" element={<ComplianceReport />} />
-                <Route path="onboarding" element={<TenantOnboarding />} />
-              </Route>
-              
-              {/* Client Portal Routes */}
-              <Route path="/espace-client" element={<ProtectedRoute><ClientLayout /></ProtectedRoute>}>
-                <Route index element={<ClientDashboard />} />
-                <Route path="contrats" element={<ClientContracts />} />
-                <Route path="documents" element={<ClientDocuments />} />
-                <Route path="sinistres" element={<ClientClaims />} />
-                <Route path="messages" element={<ClientMessages />} />
-                <Route path="notifications" element={<ClientNotifications />} />
-                <Route path="profil" element={<ClientProfile />} />
-              </Route>
-              
-                {/* Catch-all */}
-                <Route path="*" element={<NotFound />} />
                 <Routes>
               {/* Redirect root to login */}
               <Route path="/" element={<Navigate to="/connexion" replace />} />
@@ -177,7 +121,6 @@ const App = () => (
                 {/* Catch-all */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-                </RefreshProvider>
               </TenantProvider>
             </AuthProvider>
           </BrowserRouter>

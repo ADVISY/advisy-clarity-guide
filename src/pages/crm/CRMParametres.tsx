@@ -533,44 +533,44 @@ export default function CRMParametres() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="flex gap-1 h-auto w-full max-w-full overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent pb-1">
-          <TabsTrigger value="profil" className="gap-2 flex-shrink-0">
+        <TabsList className="flex flex-wrap gap-1 h-auto w-full max-w-4xl">
+          <TabsTrigger value="profil" className="gap-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.profile')}</span>
           </TabsTrigger>
-          <TabsTrigger value="comptes" className="gap-2 flex-shrink-0">
+          <TabsTrigger value="comptes" className="gap-2">
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.accounts')}</span>
           </TabsTrigger>
-          <TabsTrigger value="roles" className="gap-2 flex-shrink-0">
+          <TabsTrigger value="roles" className="gap-2">
             <Shield className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.roles')}</span>
           </TabsTrigger>
-          <TabsTrigger value="utilisateurs" className="gap-2 flex-shrink-0">
+          <TabsTrigger value="utilisateurs" className="gap-2">
             <KeyRound className="h-4 w-4" />
             <span className="hidden sm:inline">{t('collaborators.permissions')}</span>
           </TabsTrigger>
-          <TabsTrigger value="compagnies" className="gap-2 flex-shrink-0">
+          <TabsTrigger value="compagnies" className="gap-2">
             <Building2 className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.companies')}</span>
           </TabsTrigger>
-          <TabsTrigger value="produits" className="gap-2 flex-shrink-0">
+          <TabsTrigger value="produits" className="gap-2">
             <Package className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.products')}</span>
           </TabsTrigger>
-          <TabsTrigger value="commissions" className="gap-2 flex-shrink-0">
+          <TabsTrigger value="commissions" className="gap-2">
             <Percent className="h-4 w-4" />
             <span className="hidden sm:inline">{t('nav.commissions')}</span>
           </TabsTrigger>
-          <TabsTrigger value="apparence" className="gap-2 flex-shrink-0">
+          <TabsTrigger value="apparence" className="gap-2">
             <Palette className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.appearance')}</span>
           </TabsTrigger>
-          <TabsTrigger value="emails" className="gap-2 flex-shrink-0">
+          <TabsTrigger value="emails" className="gap-2">
             <Mail className="h-4 w-4" />
             <span className="hidden sm:inline">{t('emails.title')}</span>
           </TabsTrigger>
-          <TabsTrigger value="support" className="gap-2 flex-shrink-0">
+          <TabsTrigger value="support" className="gap-2">
             <AlertCircle className="h-4 w-4" />
             <span className="hidden sm:inline">{t('common.support')}</span>
           </TabsTrigger>
