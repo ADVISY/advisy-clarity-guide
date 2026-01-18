@@ -179,18 +179,30 @@ export function useSuivis(clientId?: string) {
 
   const updateSuivi = async (id: string, data: UpdateSuiviData): Promise<{ data: Suivi | null; error: string | null }> => {
     try {
+      // Build update object, only including defined values
+      const updateData: Record<string, any> = {};
+      if (data.title !== undefined) updateData.title = data.title;
+      if (data.description !== undefined) updateData.description = data.description;
+      if (data.type !== undefined) updateData.type = data.type;
+      if (data.status !== undefined) updateData.status = data.status;
+      if (data.reminder_date !== undefined) updateData.reminder_date = data.reminder_date;
+      if (data.assigned_agent_id !== undefined) updateData.assigned_agent_id = data.assigned_agent_id;
+      
+      // Always update updated_at
+      updateData.updated_at = new Date().toISOString();
+
       const { data: updatedSuivi, error } = await supabase
         .from("suivis")
-        .update(data)
+        .update(updateData)
         .eq("id", id)
         .select()
         .single();
 
       if (error) {
-        console.error("Error updating suivi:", error);
+        console.error("Error updating suivi:", error, "Data:", updateData);
         toast({
           title: "Erreur",
-          description: "Impossible de mettre à jour le suivi",
+          description: translateError(error.message),
           variant: "destructive",
         });
         return { data: null, error: error.message };
@@ -203,9 +215,14 @@ export function useSuivis(clientId?: string) {
       
       await fetchSuivis();
       return { data: updatedSuivi as unknown as Suivi, error: null };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating suivi:", error);
-      return { data: null, error: "Erreur inattendue" };
+      toast({
+        title: "Erreur",
+        description: translateError(error.message),
+        variant: "destructive",
+      });
+      return { data: null, error: error.message || "Erreur inattendue" };
     }
   };
 

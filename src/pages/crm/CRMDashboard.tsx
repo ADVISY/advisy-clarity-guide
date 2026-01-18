@@ -18,10 +18,10 @@ import {
   Loader2, BarChart3, Heart, Shield,
   Trophy, Star, Crown, Target, Zap, Award,
   Calendar, Filter, Bell, Medal, Flame,
-  CheckCircle, Clock, AlertCircle, ChevronRight
+  CheckCircle, Clock, AlertCircle, ChevronRight, RefreshCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isWithinInterval, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
@@ -39,14 +39,17 @@ import {
 
 type PeriodFilter = 'all' | 'week' | 'month' | 'quarter' | 'year';
 
+// Auto-refresh interval in milliseconds (60 seconds)
+const AUTO_REFRESH_INTERVAL = 60000;
+
 export default function CRMDashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { role, isAdmin, isManager, isAgent, isPartner, isClient } = useUserRole();
   const { can, dashboardScope, commissionScope, isLoading: permissionsLoading } = usePermissions();
-  const { clients, loading: clientsLoading } = useClients();
-  const { policies, loading: policiesLoading } = usePolicies();
-  const { commissions, loading: commissionsLoading } = useCommissions();
+  const { clients, loading: clientsLoading, fetchClients } = useClients();
+  const { policies, loading: policiesLoading, fetchPolicies } = usePolicies();
+  const { commissions, loading: commissionsLoading, fetchCommissions } = useCommissions();
   const { loading: performanceLoading, companyTotals, myPerformance, myTeam, individualPerformance, teamPerformance } = usePerformance();
   const { fetchAllParts, fetchPartsForAgent } = useCommissionParts();
   const { notifications, unreadCount, markAsRead } = useNotifications();
@@ -57,7 +60,42 @@ export default function CRMDashboard() {
   const [allCommissionParts, setAllCommissionParts] = useState<any[]>([]);
   const [myCommissionParts, setMyCommissionParts] = useState<any[]>([]);
   const [partsLoading, setPartsLoading] = useState(true);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  
+  // Auto-refresh ref
+  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Manual refresh function
+  const handleRefresh = useCallback(async () => {
+    setIsManualRefreshing(true);
+    try {
+      await Promise.all([
+        fetchClients(),
+        fetchPolicies(),
+        fetchCommissions(),
+      ]);
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  }, [fetchClients, fetchPolicies, fetchCommissions]);
+
+  // Setup auto-refresh
+  useEffect(() => {
+    refreshIntervalRef.current = setInterval(() => {
+      // Silent background refresh (no loading indicator)
+      Promise.all([
+        fetchClients(),
+        fetchPolicies(),
+        fetchCommissions(),
+      ]).catch(console.error);
+    }, AUTO_REFRESH_INTERVAL);
+
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+    };
+  }, [fetchClients, fetchPolicies, fetchCommissions]);
   // Get current user's collaborator record
   const myCollaborator = useMemo(() => {
     if (!user) return null;
@@ -504,6 +542,18 @@ export default function CRMDashboard() {
 
         {/* Filters */}
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Manual Refresh Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isManualRefreshing}
+            className="h-9"
+          >
+            <RefreshCw className={cn("h-4 w-4 mr-2", isManualRefreshing && "animate-spin")} />
+            {isManualRefreshing ? t('common.loading') : t('common.refresh')}
+          </Button>
+
           <Select value={periodFilter} onValueChange={(v) => setPeriodFilter(v as PeriodFilter)}>
             <SelectTrigger className="w-[140px] h-9">
               <Calendar className="h-4 w-4 mr-2" />

@@ -26,7 +26,6 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
         
         if (sessionError || !session) {
           console.error("[ProtectedRoute] Invalid session, forcing logout");
-          // Clear all session data
           sessionStorage.clear();
           await signOut();
           setIsAuthorized(false);
@@ -69,8 +68,15 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
         const userRole = roleData?.role || 'client';
         const currentPath = location.pathname;
+        
+        // Get the active login space from session
+        const activeSpace = sessionStorage.getItem('lyta_active_role');
+        const loginTarget = sessionStorage.getItem('loginTarget');
+        
+        // Determine what space the user intended to access
+        const intendedSpace = activeSpace || loginTarget;
 
-        // Validate role matches route
+        // SECURITY: Validate role matches route
         if (currentPath.startsWith('/king') && userRole !== 'king') {
           console.error("[ProtectedRoute] Unauthorized access to king route");
           setIsAuthorized(false);
@@ -78,19 +84,49 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        if (currentPath.startsWith('/espace-client') && !['client', 'king'].includes(userRole)) {
-          // Non-client users trying to access client space - check if they have a client record
-          const { data: clientRecord } = await supabase
-            .from('clients')
-            .select('id')
-            .eq('user_id', user.id)
-            .maybeSingle();
-
-          if (!clientRecord) {
-            console.error("[ProtectedRoute] User has no client record for client space");
+        // SECURITY: CRM/Team routes - block if user logged in as CLIENT
+        if (currentPath.startsWith('/crm')) {
+          // If user explicitly chose CLIENT space, block CRM access
+          if (intendedSpace === 'client') {
+            console.error("[ProtectedRoute] Client space user trying to access CRM via URL");
             setIsAuthorized(false);
             setIsValidating(false);
             return;
+          }
+          
+          // Also verify user has a team role (not just client)
+          if (userRole === 'client') {
+            console.error("[ProtectedRoute] Client role trying to access CRM");
+            setIsAuthorized(false);
+            setIsValidating(false);
+            return;
+          }
+        }
+
+        // SECURITY: Client space routes - block if user logged in as TEAM
+        if (currentPath.startsWith('/espace-client')) {
+          // If user explicitly chose TEAM space, block client space access
+          if (intendedSpace === 'team') {
+            console.error("[ProtectedRoute] Team space user trying to access client space via URL");
+            setIsAuthorized(false);
+            setIsValidating(false);
+            return;
+          }
+          
+          // Verify user has client access (either client role or has client record)
+          if (!['client', 'king'].includes(userRole)) {
+            const { data: clientRecord } = await supabase
+              .from('clients')
+              .select('id')
+              .eq('user_id', user.id)
+              .maybeSingle();
+
+            if (!clientRecord) {
+              console.error("[ProtectedRoute] User has no client record for client space");
+              setIsAuthorized(false);
+              setIsValidating(false);
+              return;
+            }
           }
         }
 
@@ -109,7 +145,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (loading || isValidating) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1800AD]" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     );
   }
