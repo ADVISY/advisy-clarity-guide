@@ -218,9 +218,19 @@ export default function ClientDashboard() {
                     className="flex items-center gap-4 p-4 rounded-xl border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
                     onClick={() => navigate('/espace-client/contrats')}
                   >
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Icon className="h-5 w-5 text-primary" />
-                    </div>
+                    {contract.product?.company?.logo_url ? (
+                      <div className="h-10 w-10 rounded-lg bg-white border border-border flex items-center justify-center overflow-hidden p-1">
+                        <img 
+                          src={contract.product.company.logo_url} 
+                          alt={contract.product.company.name}
+                          className="h-full w-full object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Icon className="h-5 w-5 text-primary" />
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">{contract.product?.name || contract.product_type}</p>
                       <p className="text-sm text-muted-foreground">{contract.company_name || contract.product?.company?.name}</p>
