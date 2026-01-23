@@ -20,6 +20,27 @@ const ResetPassword = () => {
   const location = useLocation();
   const processedRef = useRef(false);
 
+  // Listen for auth state changes - Supabase may auto-process recovery tokens
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[ResetPassword] Auth state change:", event, !!session);
+      
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log("[ResetPassword] PASSWORD_RECOVERY event - session ready");
+        setSessionReady(true);
+        setIsProcessingToken(false);
+        setTokenError(null);
+      } else if (event === 'SIGNED_IN' && session) {
+        console.log("[ResetPassword] SIGNED_IN event - session ready");
+        setSessionReady(true);
+        setIsProcessingToken(false);
+        setTokenError(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   useEffect(() => {
     // Process the recovery token from URL hash or query params
     const processRecoveryToken = async () => {
@@ -61,14 +82,15 @@ const ResetPassword = () => {
           // Clear URL to prevent re-processing
           window.history.replaceState({}, document.title, location.pathname);
           
-          // Wait for session to be established
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // Wait for session to be established and verify
+          await new Promise(resolve => setTimeout(resolve, 800));
           const { data: { session } } = await supabase.auth.getSession();
           
           if (session) {
             console.log("[ResetPassword] Session established successfully");
             setSessionReady(true);
           } else {
+            console.error("[ResetPassword] No session after setSession");
             setTokenError("Le lien de réinitialisation est invalide ou expiré.");
           }
         } else if (code) {
@@ -84,22 +106,25 @@ const ResetPassword = () => {
           // Clear URL
           window.history.replaceState({}, document.title, location.pathname);
           
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise(resolve => setTimeout(resolve, 800));
           const { data: { session } } = await supabase.auth.getSession();
           
           if (session) {
             console.log("[ResetPassword] Session established via PKCE");
             setSessionReady(true);
           } else {
+            console.error("[ResetPassword] No session after code exchange");
             setTokenError("Le lien de réinitialisation est invalide ou expiré.");
           }
         } else {
-          // No token in URL - check if we already have a valid session
+          // No token in URL - check if we already have a valid session (maybe from onAuthStateChange)
+          await new Promise(resolve => setTimeout(resolve, 1000));
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
             console.log("[ResetPassword] Existing session found");
             setSessionReady(true);
-          } else {
+          } else if (!sessionReady) {
+            // Only show error if onAuthStateChange hasn't set sessionReady
             setTokenError("Aucun lien de réinitialisation valide trouvé. Veuillez demander un nouveau lien depuis la page de connexion.");
           }
         }
@@ -111,8 +136,10 @@ const ResetPassword = () => {
       }
     };
 
-    processRecoveryToken();
-  }, [location.hash, location.search, location.pathname]);
+    // Small delay to let onAuthStateChange fire first
+    const timeout = setTimeout(processRecoveryToken, 100);
+    return () => clearTimeout(timeout);
+  }, [location.hash, location.search, location.pathname, sessionReady]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,17 +174,35 @@ const ResetPassword = () => {
     setLoading(true);
 
     try {
+      // Verify session exists before attempting update
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        console.error("[ResetPassword] No session found at submit time");
+        toast({
+          title: "Erreur",
+          description: "Votre session a expiré. Veuillez demander un nouveau lien de réinitialisation.",
+          variant: "destructive",
+        });
+        setTokenError("Votre session a expiré. Veuillez demander un nouveau lien de réinitialisation.");
+        return;
+      }
+
+      console.log("[ResetPassword] Session valid, updating password for user:", session.user.id);
+
       const { error } = await supabase.auth.updateUser({
         password: password,
       });
 
       if (error) {
+        console.error("[ResetPassword] Error updating password:", error);
         toast({
           title: "Erreur",
           description: error.message,
           variant: "destructive",
         });
       } else {
+        console.log("[ResetPassword] Password updated successfully");
         toast({
           title: "Mot de passe créé",
           description: "Votre mot de passe a été créé avec succès. Vous pouvez maintenant vous connecter.",
@@ -168,6 +213,7 @@ const ResetPassword = () => {
         navigate("/connexion");
       }
     } catch (error: any) {
+      console.error("[ResetPassword] Unexpected error:", error);
       toast({
         title: "Erreur",
         description: error.message || "Une erreur est survenue.",
@@ -178,8 +224,8 @@ const ResetPassword = () => {
     }
   };
 
-  // Show loading while processing token
-  if (isProcessingToken) {
+  // Show loading while processing token or waiting for session
+  if (isProcessingToken || (!sessionReady && !tokenError)) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background flex items-center justify-center">
         <div className="text-center">
