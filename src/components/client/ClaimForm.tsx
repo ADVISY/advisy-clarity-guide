@@ -118,6 +118,13 @@ export default function ClaimForm({ clientId, onSuccess, onCancel }: ClaimFormPr
     setLoading(true);
     
     try {
+      // Get client tenant_id first
+      const { data: clientData } = await supabase
+        .from('clients')
+        .select('tenant_id')
+        .eq('id', clientId)
+        .single();
+      
       // Create the claim
       const { data: claim, error: claimError } = await supabase
         .from('claims')
@@ -127,10 +134,13 @@ export default function ClaimForm({ clientId, onSuccess, onCancel }: ClaimFormPr
           claim_type: formData.claim_type,
           incident_date: formData.incident_date,
           description: formData.description,
-          status: 'submitted'
+          status: 'submitted',
+          tenant_id: clientData?.tenant_id || null
         })
         .select()
         .single();
+      
+      if (claimError) throw claimError;
       
       if (claimError) throw claimError;
       
@@ -176,6 +186,21 @@ export default function ClaimForm({ clientId, onSuccess, onCancel }: ClaimFormPr
                 document_id: doc.id
               });
           }
+        }
+      }
+      
+      // Send notification email to backoffice/gestionnaire
+      if (claim) {
+        try {
+          await supabase.functions.invoke('send-claim-notification', {
+            body: { 
+              claimId: claim.id,
+              tenantId: clientData?.tenant_id 
+            }
+          });
+        } catch (notifError) {
+          // Don't fail the whole submission if notification fails
+          console.error('Failed to send claim notification:', notifError);
         }
       }
       
