@@ -90,9 +90,19 @@ export default function ClientLayout() {
         setClientData(clientRecord);
         
         // Fetch assigned advisor info via secure RPC function
-        const { data: advisorRows } = await supabase.rpc('get_assigned_advisor_public');
-        if (advisorRows && advisorRows.length > 0) {
-          setAdvisorData(advisorRows[0]);
+        // Note: depending on backend/client typing, `data` may be an array or a single object.
+        const { data: advisorDataRpc, error: advisorError } =
+          await supabase.rpc("get_assigned_advisor_public");
+
+        if (advisorError) {
+          console.error("Failed to load assigned advisor", advisorError);
+        } else {
+          const advisor = Array.isArray(advisorDataRpc)
+            ? advisorDataRpc[0]
+            : advisorDataRpc;
+          if (advisor && (advisor as any).id) {
+            setAdvisorData(advisor);
+          }
         }
       }
       
