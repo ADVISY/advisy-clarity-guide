@@ -2555,6 +2555,7 @@ export type Database = {
       }
       tenant_branding: {
         Row: {
+          claims_notification_email: string | null
           company_address: string | null
           company_email: string | null
           company_phone: string | null
@@ -2572,6 +2573,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          claims_notification_email?: string | null
           company_address?: string | null
           company_email?: string | null
           company_phone?: string | null
@@ -2589,6 +2591,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          claims_notification_email?: string | null
           company_address?: string | null
           company_email?: string | null
           company_phone?: string | null

@@ -74,6 +74,7 @@ export default function KingTenantDetail() {
     display_name: "",
     email_sender_name: "",
     email_sender_address: "",
+    claims_notification_email: "",
   });
 
   const [subscriptionData, setSubscriptionData] = useState({
@@ -155,6 +156,7 @@ export default function KingTenantDetail() {
           display_name: tenant.tenant_branding[0].display_name || "",
           email_sender_name: tenant.tenant_branding[0].email_sender_name || "",
           email_sender_address: tenant.tenant_branding[0].email_sender_address || "",
+          claims_notification_email: tenant.tenant_branding[0].claims_notification_email || "",
         });
       }
 
@@ -218,6 +220,7 @@ export default function KingTenantDetail() {
           display_name: brandingData.display_name || null,
           email_sender_name: brandingData.email_sender_name || null,
           email_sender_address: brandingData.email_sender_address || null,
+          claims_notification_email: brandingData.claims_notification_email || null,
           updated_at: new Date().toISOString(),
         })
         .eq('tenant_id', tenantId);
@@ -856,6 +859,20 @@ export default function KingTenantDetail() {
                         value={brandingData.email_sender_address}
                         onChange={(e) => setBrandingData({ ...brandingData, email_sender_address: e.target.value })}
                       />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="claims_notification_email">Email notification sinistres</Label>
+                      <Input
+                        id="claims_notification_email"
+                        type="email"
+                        placeholder="Ex: sinistres@votre-domaine.ch"
+                        value={brandingData.claims_notification_email}
+                        onChange={(e) => setBrandingData({ ...brandingData, claims_notification_email: e.target.value })}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Recevez les déclarations de sinistres des clients à cette adresse
+                      </p>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
