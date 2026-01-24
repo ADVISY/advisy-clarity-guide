@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { 
   Home, 
   FileText, 
@@ -208,7 +209,7 @@ export default function ClientLayout() {
         <aside className="hidden lg:flex flex-col bg-card border-r border-border">
           {/* Logo Section */}
           <div className="w-72 p-6 border-b border-border">
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-between">
               {tenantLogo ? (
                 <img 
                   src={tenantLogo} 
@@ -221,6 +222,7 @@ export default function ClientLayout() {
                   <span className="text-xl font-bold">{tenantName}</span>
                 </div>
               )}
+              <ThemeToggle />
             </div>
             <div className="flex items-center justify-center gap-2 mt-3">
               <div className="w-2 h-2 rounded-full bg-emerald-500" />

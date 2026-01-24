@@ -21,6 +21,7 @@ import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import lytaLogo from "@/assets/lyta-logo-full.svg";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -149,9 +150,12 @@ export default function KingLayout() {
                 alt="LYTA" 
                 className="h-14 object-contain"
               />
-              <div className="flex items-center gap-1 px-2 py-1 bg-amber-500/10 rounded-full">
-                <Crown className="h-4 w-4 text-amber-500" />
-                <span className="text-xs font-bold text-amber-500">KING</span>
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <div className="flex items-center gap-1 px-2 py-1 bg-amber-500/10 rounded-full">
+                  <Crown className="h-4 w-4 text-amber-500" />
+                  <span className="text-xs font-bold text-amber-500">KING</span>
+                </div>
               </div>
             </div>
             <div className="flex items-center justify-center gap-2 mt-3">
