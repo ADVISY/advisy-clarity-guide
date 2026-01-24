@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,12 +17,14 @@ import {
   CheckCircle2, 
   ChevronRight, 
   ChevronLeft,
-  CreditCard,
   Wand2,
   Crown,
   Mail,
   Plus,
   X,
+  Globe,
+  Zap,
+  Bell,
 } from "lucide-react";
 import {
   Select,
@@ -33,6 +35,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { TenantLogoUpload } from "@/components/king/TenantLogoUpload";
+import { OnboardingNotifications } from "@/components/king/OnboardingNotifications";
 
 interface TenantFormData {
   // Step 1 - Info cabinet
@@ -111,6 +114,8 @@ export default function KingWizard() {
   const [formData, setFormData] = useState<TenantFormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [createdTenantId, setCreatedTenantId] = useState<string | null>(null);
+  const [isOnboarding, setIsOnboarding] = useState(false);
 
   const updateFormData = (field: keyof TenantFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -178,6 +183,32 @@ export default function KingWizard() {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
+  const runOnboarding = async (tenantId: string, slug: string, tenantName: string) => {
+    setIsOnboarding(true);
+    try {
+      const response = await supabase.functions.invoke('tenant-onboarding', {
+        body: {
+          tenant_id: tenantId,
+          slug: slug,
+          tenant_name: tenantName,
+          step: "full",
+        },
+      });
+
+      if (response.error) {
+        console.error("Onboarding error:", response.error);
+        toast.error("Erreur lors de l'onboarding automatique: " + response.error.message);
+      } else {
+        console.log("Onboarding completed:", response.data);
+        toast.success("Onboarding DNS & Email terminé!");
+      }
+    } catch (error: any) {
+      console.error("Error calling onboarding:", error);
+    } finally {
+      setIsOnboarding(false);
+    }
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -209,6 +240,9 @@ export default function KingWizard() {
         return;
       }
 
+      // Store tenant ID for notifications
+      setCreatedTenantId(tenant.id);
+
       // 2. Create branding
       await supabase
         .from('tenant_branding')
@@ -235,7 +269,6 @@ export default function KingWizard() {
 
       // 4. Create admin user via edge function
       try {
-        const { data: sessionData } = await supabase.auth.getSession();
         const response = await supabase.functions.invoke('create-tenant-admin', {
           body: {
             tenant_id: tenant.id,
@@ -255,10 +288,13 @@ export default function KingWizard() {
         }
       } catch (adminError: any) {
         console.error("Error calling edge function:", adminError);
-        // Don't fail the whole process, tenant is created
       }
+
       setIsComplete(true);
       toast.success("Client SaaS créé avec succès!");
+
+      // 5. Run automatic onboarding (DNS + Resend)
+      runOnboarding(tenant.id, formData.slug, formData.name);
       
     } catch (error: any) {
       console.error("Error creating tenant:", error);
@@ -270,35 +306,87 @@ export default function KingWizard() {
 
   if (isComplete) {
     return (
-      <div className="max-w-2xl mx-auto">
-        <Card className="border-emerald-500/20 bg-emerald-500/5">
-          <CardContent className="pt-12 pb-12 text-center">
-            <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 className="h-10 w-10 text-white" />
-            </div>
-            <h2 className="text-2xl font-bold mb-2">Client créé avec succès!</h2>
-            <p className="text-muted-foreground mb-6">
-              Le cabinet <strong>{formData.name}</strong> a été créé avec le sous-domaine{" "}
-              <strong>{formData.slug}.lyta.ch</strong>
-            </p>
-            <div className="flex gap-4 justify-center">
-              <Button variant="outline" onClick={() => navigate('/king/tenants')}>
-                Voir les clients
-              </Button>
-              <Button 
-                className="bg-amber-500 hover:bg-amber-600"
-                onClick={() => {
-                  setFormData(initialFormData);
-                  setCurrentStep(1);
-                  setIsComplete(false);
-                }}
-              >
-                <Wand2 className="h-4 w-4 mr-2" />
-                Créer un autre client
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Success Card */}
+          <Card className="border-emerald-500/20 bg-emerald-500/5">
+            <CardContent className="pt-8 pb-8 text-center">
+              <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="h-8 w-8 text-white" />
+              </div>
+              <h2 className="text-xl font-bold mb-2">Client créé avec succès!</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Le cabinet <strong>{formData.name}</strong> a été créé avec le sous-domaine{" "}
+                <strong>{formData.slug}.lyta.ch</strong>
+              </p>
+              
+              <div className="space-y-3 text-left bg-muted/50 rounded-lg p-4 mb-6">
+                <div className="flex items-center gap-2 text-sm">
+                  <Globe className="h-4 w-4 text-primary" />
+                  <span className="font-medium">URL:</span>
+                  <code className="bg-muted px-2 py-0.5 rounded text-xs">https://{formData.slug}.lyta.ch</code>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Mail className="h-4 w-4 text-primary" />
+                  <span className="font-medium">Admin:</span>
+                  <span>{formData.admin_email}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <User className="h-4 w-4 text-primary" />
+                  <span className="font-medium">Statut:</span>
+                  <span className={cn(
+                    "px-2 py-0.5 rounded-full text-xs font-medium",
+                    formData.status === 'active' ? "bg-emerald-100 text-emerald-700" :
+                    formData.status === 'test' ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700"
+                  )}>
+                    {formData.status}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-center">
+                <Button variant="outline" size="sm" onClick={() => navigate('/king/tenants')}>
+                  Voir les clients
+                </Button>
+                <Button 
+                  size="sm"
+                  className="bg-amber-500 hover:bg-amber-600"
+                  onClick={() => {
+                    setFormData(initialFormData);
+                    setCurrentStep(1);
+                    setIsComplete(false);
+                    setCreatedTenantId(null);
+                  }}
+                >
+                  <Wand2 className="h-4 w-4 mr-2" />
+                  Nouveau client
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Onboarding Notifications */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Bell className="h-5 w-5 text-amber-500" />
+                Protocole d'onboarding
+                {isOnboarding && (
+                  <span className="ml-2 flex items-center gap-1 text-xs font-normal text-muted-foreground">
+                    <div className="animate-spin rounded-full h-3 w-3 border-2 border-primary border-t-transparent" />
+                    En cours...
+                  </span>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <OnboardingNotifications 
+                tenantId={createdTenantId}
+                tenantName={formData.name}
+              />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -492,8 +580,8 @@ export default function KingWizard() {
               {/* Plan & Pricing Section */}
               <div className="space-y-4 md:col-span-2 border-t pt-6">
                 <Label className="flex items-center gap-2 text-lg font-semibold">
-                  <CreditCard className="h-5 w-5 text-amber-500" />
-                  Abonnement Stripe
+                  <Zap className="h-5 w-5 text-amber-500" />
+                  Abonnement
                 </Label>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
