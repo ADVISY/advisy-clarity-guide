@@ -324,9 +324,9 @@ const ComplianceReport = () => {
               </thead>
               <tbody>
                 <tr className="border-b">
-                  <td className="py-2 px-4 font-medium">Supabase (via Lovable)</td>
+                  <td className="py-2 px-4 font-medium">Supabase</td>
                   <td className="py-2 px-4">Base de données, Auth, Storage</td>
-                  <td className="py-2 px-4">🇪🇺 UE (AWS Frankfurt)</td>
+                  <td className="py-2 px-4">🇪🇺 UE (Zurich)</td>
                   <td className="py-2 px-4"><Badge className="bg-green-500">RGPD Compliant</Badge></td>
                 </tr>
                 <tr className="border-b">
