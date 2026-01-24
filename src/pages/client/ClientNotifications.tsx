@@ -83,11 +83,11 @@ export default function ClientNotifications() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 lg:space-y-6">
+      <div className="flex items-start sm:items-center justify-between gap-3 flex-col sm:flex-row">
         <div>
-          <h1 className="text-2xl font-bold">Notifications</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl lg:text-2xl font-bold">Notifications</h1>
+          <p className="text-sm lg:text-base text-muted-foreground">
             {unreadCount > 0 
               ? `${unreadCount} notification${unreadCount > 1 ? 's' : ''} non lue${unreadCount > 1 ? 's' : ''}`
               : "Toutes les notifications sont lues"
@@ -95,7 +95,7 @@ export default function ClientNotifications() {
           </p>
         </div>
         {unreadCount > 0 && (
-          <Button variant="outline" onClick={markAllAsRead} className="gap-2">
+          <Button variant="outline" onClick={markAllAsRead} className="gap-2 h-9 lg:h-10 text-xs lg:text-sm w-full sm:w-auto">
             <Check className="h-4 w-4" />
             Tout marquer comme lu
           </Button>
@@ -104,16 +104,16 @@ export default function ClientNotifications() {
 
       {notifications.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center">
-            <Bell className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
-            <h3 className="text-lg font-medium mb-2">Aucune notification</h3>
-            <p className="text-muted-foreground">
+          <CardContent className="py-10 lg:py-12 text-center">
+            <Bell className="h-12 w-12 lg:h-16 lg:w-16 mx-auto mb-4 text-muted-foreground/50" />
+            <h3 className="text-base lg:text-lg font-medium mb-2">Aucune notification</h3>
+            <p className="text-sm text-muted-foreground">
               Vous n'avez pas encore de notification
             </p>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2 lg:space-y-3">
           {notifications.map((notification) => {
             const config = kindConfig[notification.kind] || kindConfig.info;
             const Icon = config.icon;
@@ -123,39 +123,39 @@ export default function ClientNotifications() {
               <Card 
                 key={notification.id}
                 className={cn(
-                  "transition-colors cursor-pointer",
+                  "transition-colors cursor-pointer active:scale-[0.99]",
                   isUnread && "bg-primary/5 border-primary/20"
                 )}
                 onClick={() => !notification.read_at && markAsRead(notification.id)}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-4">
+                <CardContent className="p-3 lg:p-4">
+                  <div className="flex items-start gap-3 lg:gap-4">
                     <div className={cn(
-                      "h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0",
+                      "h-9 w-9 lg:h-10 lg:w-10 rounded-full flex items-center justify-center flex-shrink-0",
                       config.color
                     )}>
-                      <Icon className="h-5 w-5" />
+                      <Icon className="h-4 w-4 lg:h-5 lg:w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <div>
+                        <div className="flex-1 min-w-0">
                           <p className={cn(
-                            "font-medium",
+                            "text-sm lg:text-base font-medium",
                             isUnread && "text-foreground"
                           )}>
                             {notification.title}
                           </p>
                           {notification.message && (
-                            <p className="text-sm text-muted-foreground mt-1">
+                            <p className="text-xs lg:text-sm text-muted-foreground mt-0.5 lg:mt-1 line-clamp-2">
                               {notification.message}
                             </p>
                           )}
                         </div>
                         {isUnread && (
-                          <Badge variant="default" className="flex-shrink-0">Nouveau</Badge>
+                          <Badge variant="default" className="flex-shrink-0 text-[10px] lg:text-xs h-5 lg:h-6">Nouveau</Badge>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-2">
+                      <p className="text-[10px] lg:text-xs text-muted-foreground mt-1.5 lg:mt-2">
                         {format(new Date(notification.created_at), "dd MMM yyyy 'à' HH:mm", { locale: fr })}
                       </p>
                     </div>

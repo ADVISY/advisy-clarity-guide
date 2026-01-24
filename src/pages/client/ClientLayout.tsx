@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import MobileBottomNav from "@/components/client/MobileBottomNav";
 
 import { 
   Home, 
@@ -349,93 +350,103 @@ export default function ClientLayout() {
         </aside>
       </TooltipProvider>
 
-      {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border">
-        <div className="flex items-center justify-between p-4">
+      {/* Mobile Header - Simplified */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-b border-border">
+        <div className="flex items-center justify-between px-4 py-3">
           {tenantLogo ? (
-            <img src={tenantLogo} alt={tenantName} className="h-10 object-contain" />
+            <img src={tenantLogo} alt={tenantName} className="h-8 object-contain" />
           ) : (
             <div className="flex items-center gap-2">
-              <Building2 className="h-6 w-6 text-primary" />
-              <span className="font-bold">{tenantName}</span>
+              <Building2 className="h-5 w-5 text-primary" />
+              <span className="font-bold text-sm">{tenantName}</span>
             </div>
           )}
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-80 p-0">
-              <div className="p-6 border-b border-border flex flex-col items-center">
-                {tenantLogo ? (
-                  <img src={tenantLogo} alt={tenantName} className="h-14 object-contain" />
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-8 w-8 text-primary" />
-                    <span className="text-xl font-bold">{tenantName}</span>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[85vw] max-w-sm p-0">
+                {/* User Profile Section */}
+                <div className="p-6 bg-gradient-to-br from-primary/10 to-primary/5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center">
+                      <span className="text-lg font-bold text-primary">{getInitials()}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold truncate">{getDisplayName()}</p>
+                      <p className="text-sm text-muted-foreground">Client</p>
+                    </div>
                   </div>
-                )}
-                <p className="text-xs text-muted-foreground mt-2">Espace Client</p>
+                </div>
                 
-                {/* Mobile Advisor Info */}
+                {/* Advisor Info in slide menu */}
                 {advisorData && (
-                  <div className="mt-4 pt-4 border-t border-border w-full">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3 text-center">Votre conseiller</p>
+                  <div className="p-4 border-b border-border">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Votre conseiller</p>
                     <div className="flex items-center gap-3">
                       {advisorData.photo_url ? (
                         <img 
                           src={advisorData.photo_url} 
                           alt={`${advisorData.first_name} ${advisorData.last_name}`}
-                          className="w-10 h-10 rounded-full object-cover border-2 border-primary/20"
+                          className="w-11 h-11 rounded-xl object-cover border-2 border-primary/20"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <User className="h-5 w-5 text-primary" />
+                        <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center">
+                          <User className="h-5 w-5 text-muted-foreground" />
                         </div>
                       )}
-                      <div className="flex-1 min-w-0 text-left">
-                        <p className="font-medium text-sm truncate">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm">
                           {advisorData.first_name} {advisorData.last_name}
                         </p>
-                        {(advisorData.phone || advisorData.mobile) && (
-                          <p className="text-xs text-muted-foreground truncate">
-                            {advisorData.mobile || advisorData.phone}
-                          </p>
-                        )}
                         {advisorData.email && (
-                          <p className="text-xs text-primary truncate">{advisorData.email}</p>
+                          <a 
+                            href={`mailto:${advisorData.email}`}
+                            className="text-xs text-primary hover:underline truncate block"
+                          >
+                            {advisorData.email}
+                          </a>
                         )}
                       </div>
                     </div>
                   </div>
                 )}
-              </div>
-              <nav className="p-4 overflow-y-auto max-h-[calc(100vh-200px)]">
-                <NavItems onItemClick={() => setMobileMenuOpen(false)} />
-              </nav>
-              <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border bg-card">
-                <p className="text-sm font-medium mb-4 truncate px-2">{getDisplayName()}</p>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Déconnexion
-                </Button>
-              </div>
-            </SheetContent>
-          </Sheet>
+
+                {/* Navigation Links */}
+                <nav className="p-4 space-y-1">
+                  <NavItems onItemClick={() => setMobileMenuOpen(false)} />
+                </nav>
+
+                {/* Logout Button */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border bg-card">
+                  <Button
+                    variant="outline"
+                    className="w-full h-12"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Déconnexion
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
-        <div className="lg:p-8 p-4 pt-20 lg:pt-8 max-w-7xl mx-auto">
+        <div className="lg:p-8 p-4 pt-16 pb-24 lg:pt-8 lg:pb-8 max-w-7xl mx-auto">
           <Outlet context={{ user, clientData, advisorData }} />
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   );
 }

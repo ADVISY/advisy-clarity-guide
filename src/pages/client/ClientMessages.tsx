@@ -92,34 +92,34 @@ export default function ClientMessages() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Messages</h1>
-        <p className="text-muted-foreground">Contactez votre conseiller {cabinetName}</p>
+        <h1 className="text-xl lg:text-2xl font-bold">Messages</h1>
+        <p className="text-sm lg:text-base text-muted-foreground">Contactez votre conseiller {cabinetName}</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Contact Form */}
         <div className="lg:col-span-2 space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <MessageCircle className="h-5 w-5" />
+            <CardHeader className="pb-2 lg:pb-4">
+              <CardTitle className="text-base lg:text-lg flex items-center gap-2">
+                <MessageCircle className="h-4 w-4 lg:h-5 lg:w-5" />
                 Envoyer un message
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 lg:space-y-4">
               <Textarea
                 placeholder="Écrivez votre message ici..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                rows={6}
-                className="resize-none"
+                rows={5}
+                className="resize-none text-base"
               />
               <Button 
                 onClick={handleSendMessage} 
                 disabled={!message.trim() || sending}
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto h-11"
               >
                 <Send className="h-4 w-4" />
                 {sending ? "Envoi en cours..." : "Envoyer"}
@@ -129,14 +129,14 @@ export default function ClientMessages() {
 
           {/* Message History Placeholder */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Historique des messages</CardTitle>
+            <CardHeader className="pb-2 lg:pb-4">
+              <CardTitle className="text-base lg:text-lg">Historique des messages</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <MessageCircle className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>Aucun message pour le moment</p>
-                <p className="text-sm">Vos échanges avec votre conseiller apparaîtront ici</p>
+              <div className="text-center py-6 lg:py-8 text-muted-foreground">
+                <MessageCircle className="h-10 w-10 lg:h-12 lg:w-12 mx-auto mb-3 opacity-50" />
+                <p className="text-sm lg:text-base">Aucun message pour le moment</p>
+                <p className="text-xs lg:text-sm">Vos échanges apparaîtront ici</p>
               </div>
             </CardContent>
           </Card>
@@ -147,15 +147,15 @@ export default function ClientMessages() {
           {/* Personal Advisor Card */}
           {hasAdvisor && (
             <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-2 lg:pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Votre conseiller</CardTitle>
-                  <Badge variant="secondary" className="text-xs">Personnel</Badge>
+                  <CardTitle className="text-base lg:text-lg">Votre conseiller</CardTitle>
+                  <Badge variant="secondary" className="text-[10px] lg:text-xs">Personnel</Badge>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 lg:space-y-4">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-14 w-14 ring-2 ring-primary/20">
+                  <Avatar className="h-12 w-12 lg:h-14 lg:w-14 ring-2 ring-primary/20">
                     {advisorData?.photo_url ? (
                       <AvatarImage 
                         src={advisorData.photo_url} 
@@ -163,24 +163,24 @@ export default function ClientMessages() {
                         className="object-cover"
                       />
                     ) : null}
-                    <AvatarFallback className="bg-primary text-primary-foreground text-lg font-medium">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-base lg:text-lg font-medium">
                       {getAdvisorInitials()}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-semibold text-lg">{getAdvisorName()}</p>
-                    <p className="text-sm text-muted-foreground">Conseiller assurance</p>
+                    <p className="font-semibold text-base lg:text-lg">{getAdvisorName()}</p>
+                    <p className="text-xs lg:text-sm text-muted-foreground">Conseiller assurance</p>
                   </div>
                 </div>
                 
-                <div className="pt-3 border-t space-y-2">
+                <div className="pt-2 lg:pt-3 border-t space-y-1.5 lg:space-y-2">
                   {getAdvisorEmail() && (
                     <a 
                       href={`mailto:${getAdvisorEmail()}`} 
-                      className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted transition-colors"
+                      className="flex items-center gap-3 p-2 lg:p-2.5 rounded-lg hover:bg-muted transition-colors"
                     >
                       <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{getAdvisorEmail()}</span>
+                      <span className="text-xs lg:text-sm truncate">{getAdvisorEmail()}</span>
                     </a>
                   )}
                   
@@ -188,10 +188,10 @@ export default function ClientMessages() {
                     <>
                       <a 
                         href={`tel:${formatPhoneForLink(getAdvisorPhone()!)}`} 
-                        className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted transition-colors"
+                        className="flex items-center gap-3 p-2 lg:p-2.5 rounded-lg hover:bg-muted transition-colors"
                       >
                         <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{getAdvisorPhone()}</span>
+                        <span className="text-xs lg:text-sm">{getAdvisorPhone()}</span>
                       </a>
                       
                       {/* WhatsApp Button */}
@@ -199,7 +199,7 @@ export default function ClientMessages() {
                         href={getWhatsAppLink(getAdvisorPhone()!)} 
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors border border-emerald-200 dark:border-emerald-800"
+                        className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors border border-emerald-200 dark:border-emerald-800"
                       >
                         <div className="h-5 w-5 text-emerald-600">
                           <svg viewBox="0 0 24 24" fill="currentColor">
@@ -220,25 +220,25 @@ export default function ClientMessages() {
 
           {/* Cabinet Info Card */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
+            <CardHeader className="pb-2 lg:pb-3">
+              <CardTitle className="text-base lg:text-lg flex items-center gap-2">
+                <Building2 className="h-4 w-4 lg:h-5 lg:w-5" />
                 {cabinetName}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2 lg:space-y-3">
               {cabinetLogo && (
                 <div className="flex justify-center pb-2">
                   <img 
                     src={cabinetLogo} 
                     alt={cabinetName} 
-                    className="h-12 object-contain"
+                    className="h-10 lg:h-12 object-contain"
                   />
                 </div>
               )}
               
               {cabinetAddress && (
-                <div className="flex items-start gap-3 text-sm">
+                <div className="flex items-start gap-3 text-xs lg:text-sm">
                   <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                   <span className="text-muted-foreground">{cabinetAddress}</span>
                 </div>
@@ -247,7 +247,7 @@ export default function ClientMessages() {
               {cabinetPhone && (
                 <a 
                   href={`tel:${formatPhoneForLink(cabinetPhone)}`}
-                  className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
+                  className="flex items-center gap-3 text-xs lg:text-sm hover:text-primary transition-colors p-2 -mx-2 rounded-lg hover:bg-muted"
                 >
                   <Phone className="h-4 w-4 text-muted-foreground" />
                   <span>{cabinetPhone}</span>
@@ -257,10 +257,10 @@ export default function ClientMessages() {
               {cabinetEmail && (
                 <a 
                   href={`mailto:${cabinetEmail}`}
-                  className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
+                  className="flex items-center gap-3 text-xs lg:text-sm hover:text-primary transition-colors p-2 -mx-2 rounded-lg hover:bg-muted"
                 >
                   <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span>{cabinetEmail}</span>
+                  <span className="truncate">{cabinetEmail}</span>
                 </a>
               )}
               
@@ -269,14 +269,14 @@ export default function ClientMessages() {
                   href={cabinetWebsite.startsWith('http') ? cabinetWebsite : `https://${cabinetWebsite}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
+                  className="flex items-center gap-3 text-xs lg:text-sm hover:text-primary transition-colors p-2 -mx-2 rounded-lg hover:bg-muted"
                 >
                   <Globe className="h-4 w-4 text-muted-foreground" />
-                  <span>{cabinetWebsite}</span>
+                  <span className="truncate">{cabinetWebsite}</span>
                 </a>
               )}
               
-              <div className="flex items-center gap-3 pt-2 border-t text-sm">
+              <div className="flex items-center gap-3 pt-2 border-t text-xs lg:text-sm">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <p className="font-medium">Horaires</p>
@@ -288,16 +288,16 @@ export default function ClientMessages() {
 
           {/* Urgent Help Card */}
           <Card className="bg-primary/5 border-primary/20">
-            <CardContent className="p-4">
-              <p className="text-sm text-center">
+            <CardContent className="p-3 lg:p-4">
+              <p className="text-xs lg:text-sm text-center">
                 <span className="font-medium">Besoin d'aide urgente?</span>
                 <br />
                 {getAdvisorPhone() ? (
-                  <a href={`tel:${formatPhoneForLink(getAdvisorPhone()!)}`} className="text-primary hover:underline">
+                  <a href={`tel:${formatPhoneForLink(getAdvisorPhone()!)}`} className="text-primary hover:underline font-medium">
                     Appelez {getAdvisorName() || "votre conseiller"}
                   </a>
                 ) : cabinetPhone ? (
-                  <a href={`tel:${formatPhoneForLink(cabinetPhone)}`} className="text-primary hover:underline">
+                  <a href={`tel:${formatPhoneForLink(cabinetPhone)}`} className="text-primary hover:underline font-medium">
                     Appelez le cabinet
                   </a>
                 ) : (

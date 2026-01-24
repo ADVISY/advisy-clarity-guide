@@ -151,79 +151,79 @@ export default function ClientDashboard() {
     .reduce((sum, c) => sum + (Number(c.premium_monthly) || 0), 0);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 lg:space-y-8">
       {/* Welcome Header */}
       <div>
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-xl lg:text-2xl font-bold">
           Bienvenue {getFirstName()} 👋
         </h1>
-        <p className="text-muted-foreground">
-          Retrouvez toutes les informations sur vos assurances
+        <p className="text-sm lg:text-base text-muted-foreground">
+          Retrouvez toutes vos assurances
         </p>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center">
-                <FileText className="h-6 w-6 text-primary" />
+      {/* Quick Stats - Horizontal scroll on mobile */}
+      <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-3 lg:overflow-visible scrollbar-hide">
+        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 min-w-[140px] lg:min-w-0 flex-shrink-0">
+          <CardContent className="p-4 lg:p-6">
+            <div className="flex items-center gap-3 lg:gap-4">
+              <div className="h-10 w-10 lg:h-12 lg:w-12 rounded-xl bg-primary/20 flex items-center justify-center">
+                <FileText className="h-5 w-5 lg:h-6 lg:w-6 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Contrats actifs</p>
-                <p className="text-2xl font-bold">{activeContracts}</p>
+                <p className="text-xs lg:text-sm text-muted-foreground">Contrats actifs</p>
+                <p className="text-xl lg:text-2xl font-bold">{activeContracts}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-secondary flex items-center justify-center">
-                <Shield className="h-6 w-6 text-secondary-foreground" />
+        <Card className="min-w-[160px] lg:min-w-0 flex-shrink-0">
+          <CardContent className="p-4 lg:p-6">
+            <div className="flex items-center gap-3 lg:gap-4">
+              <div className="h-10 w-10 lg:h-12 lg:w-12 rounded-xl bg-secondary flex items-center justify-center">
+                <Shield className="h-5 w-5 lg:h-6 lg:w-6 text-secondary-foreground" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Prime mensuelle</p>
-                <p className="text-2xl font-bold">{formatCurrency(totalPremium)}</p>
+                <p className="text-xs lg:text-sm text-muted-foreground">Prime mensuelle</p>
+                <p className="text-xl lg:text-2xl font-bold">{formatCurrency(totalPremium)}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-accent flex items-center justify-center">
-                <MessageCircle className="h-6 w-6 text-accent-foreground" />
+        <Card className="min-w-[140px] lg:min-w-0 flex-shrink-0">
+          <CardContent className="p-4 lg:p-6">
+            <div className="flex items-center gap-3 lg:gap-4">
+              <div className="h-10 w-10 lg:h-12 lg:w-12 rounded-xl bg-accent flex items-center justify-center">
+                <MessageCircle className="h-5 w-5 lg:h-6 lg:w-6 text-accent-foreground" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Documents</p>
-                <p className="text-2xl font-bold">{documents.length}</p>
+                <p className="text-xs lg:text-sm text-muted-foreground">Documents</p>
+                <p className="text-xl lg:text-2xl font-bold">{documents.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Advisor & Cabinet Info Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Advisor & Cabinet Info Row - Stack on mobile */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Personal Advisor Card */}
         {hasAdvisor && (
           <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-2 lg:pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="text-sm lg:text-base flex items-center gap-2">
                   <Phone className="h-4 w-4" />
                   Votre conseiller
                 </CardTitle>
-                <Badge variant="secondary" className="text-xs">Personnel</Badge>
+                <Badge variant="secondary" className="text-[10px] lg:text-xs">Personnel</Badge>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-4">
-                <Avatar className="h-14 w-14 ring-2 ring-primary/20">
+              <div className="flex items-center gap-3 lg:gap-4">
+                <Avatar className="h-12 w-12 lg:h-14 lg:w-14 ring-2 ring-primary/20">
                   {advisorData?.photo_url ? (
                     <AvatarImage 
                       src={advisorData.photo_url} 
@@ -231,17 +231,17 @@ export default function ClientDashboard() {
                       className="object-cover"
                     />
                   ) : null}
-                  <AvatarFallback className="bg-primary text-primary-foreground text-lg font-medium">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-base lg:text-lg font-medium">
                     {getAdvisorInitials()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-lg">{getAdvisorName()}</p>
-                  <p className="text-sm text-muted-foreground">Conseiller assurance</p>
+                  <p className="font-semibold text-base lg:text-lg">{getAdvisorName()}</p>
+                  <p className="text-xs lg:text-sm text-muted-foreground">Conseiller assurance</p>
                   {advisorData?.email && (
                     <a 
                       href={`mailto:${advisorData.email}`}
-                      className="text-sm text-primary hover:underline block truncate"
+                      className="text-xs lg:text-sm text-primary hover:underline block truncate"
                     >
                       {advisorData.email}
                     </a>
@@ -251,17 +251,17 @@ export default function ClientDashboard() {
                   <div className="flex flex-col gap-2">
                     <a 
                       href={`tel:${formatPhoneForLink(getAdvisorPhone()!)}`}
-                      className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                      className="p-2.5 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
                     >
-                      <Phone className="h-4 w-4" />
+                      <Phone className="h-5 w-5" />
                     </a>
                     <a 
                       href={getWhatsAppLink(getAdvisorPhone()!)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"
+                      className="p-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors"
                     >
-                      <MessageCircle className="h-4 w-4 text-primary" />
+                      <MessageCircle className="h-5 w-5 text-emerald-600" />
                     </a>
                   </div>
                 )}
@@ -272,16 +272,16 @@ export default function ClientDashboard() {
 
         {/* Cabinet Info Card */}
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
+          <CardHeader className="pb-2 lg:pb-3">
+            <CardTitle className="text-sm lg:text-base flex items-center gap-2">
               <Building2 className="h-4 w-4" />
               {cabinetName}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 lg:gap-4">
               {cabinetLogo ? (
-                <div className="h-14 w-14 rounded-lg bg-background border border-border flex items-center justify-center p-2">
+                <div className="h-12 w-12 lg:h-14 lg:w-14 rounded-xl bg-background border border-border flex items-center justify-center p-2">
                   <img 
                     src={cabinetLogo} 
                     alt={cabinetName} 
@@ -289,15 +289,15 @@ export default function ClientDashboard() {
                   />
                 </div>
               ) : (
-                <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center">
-                  <Building2 className="h-6 w-6 text-muted-foreground" />
+                <div className="h-12 w-12 lg:h-14 lg:w-14 rounded-xl bg-muted flex items-center justify-center">
+                  <Building2 className="h-5 w-5 lg:h-6 lg:w-6 text-muted-foreground" />
                 </div>
               )}
               <div className="flex-1 min-w-0 space-y-1">
                 {cabinetPhone && (
                   <a 
                     href={`tel:${formatPhoneForLink(cabinetPhone)}`}
-                    className="flex items-center gap-2 text-sm hover:text-primary transition-colors"
+                    className="flex items-center gap-2 text-xs lg:text-sm hover:text-primary transition-colors"
                   >
                     <Phone className="h-3.5 w-3.5 text-muted-foreground" />
                     {cabinetPhone}
@@ -306,49 +306,49 @@ export default function ClientDashboard() {
                 {cabinetEmail && (
                   <a 
                     href={`mailto:${cabinetEmail}`}
-                    className="flex items-center gap-2 text-sm hover:text-primary transition-colors"
+                    className="flex items-center gap-2 text-xs lg:text-sm hover:text-primary transition-colors"
                   >
                     <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                    {cabinetEmail}
+                    <span className="truncate">{cabinetEmail}</span>
                   </a>
                 )}
               </div>
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="gap-2"
+                className="gap-2 text-xs lg:text-sm h-9 lg:h-10"
                 onClick={() => navigate('/espace-client/messages')}
               >
                 <Send className="h-4 w-4" />
-                Contacter
+                <span className="hidden sm:inline">Contacter</span>
               </Button>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick Actions - Horizontal scroll on mobile */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Actions rapides</CardTitle>
+        <CardHeader className="pb-2 lg:pb-3">
+          <CardTitle className="text-sm lg:text-base">Actions rapides</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-3">
-            <Button variant="outline" className="gap-2" onClick={() => navigate('/espace-client/sinistres')}>
+          <div className="flex gap-2 lg:gap-3 overflow-x-auto pb-1 -mx-2 px-2 lg:mx-0 lg:px-0 lg:flex-wrap scrollbar-hide">
+            <Button variant="outline" className="gap-2 flex-shrink-0 h-10 lg:h-11 text-xs lg:text-sm" onClick={() => navigate('/espace-client/sinistres')}>
               <AlertTriangle className="h-4 w-4" />
               Déclarer un sinistre
             </Button>
-            <Button variant="outline" className="gap-2" onClick={() => navigate('/espace-client/messages')}>
+            <Button variant="outline" className="gap-2 flex-shrink-0 h-10 lg:h-11 text-xs lg:text-sm" onClick={() => navigate('/espace-client/messages')}>
               <Send className="h-4 w-4" />
-              Contacter mon conseiller
+              Contacter
             </Button>
-            <Button variant="outline" className="gap-2" onClick={() => navigate('/espace-client/contrats')}>
+            <Button variant="outline" className="gap-2 flex-shrink-0 h-10 lg:h-11 text-xs lg:text-sm" onClick={() => navigate('/espace-client/contrats')}>
               <Eye className="h-4 w-4" />
-              Voir mes contrats
+              Mes contrats
             </Button>
-            <Button variant="outline" className="gap-2" onClick={() => navigate('/espace-client/documents')}>
+            <Button variant="outline" className="gap-2 flex-shrink-0 h-10 lg:h-11 text-xs lg:text-sm" onClick={() => navigate('/espace-client/documents')}>
               <FileText className="h-4 w-4" />
-              Mes documents
+              Documents
             </Button>
           </div>
         </CardContent>
@@ -356,12 +356,12 @@ export default function ClientDashboard() {
 
       {/* Latest Contracts */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
+        <CardHeader className="flex flex-row items-center justify-between pb-2 lg:pb-3">
           <div>
-            <CardTitle className="text-base">Vos contrats récents</CardTitle>
-            <p className="text-sm text-muted-foreground">Aperçu de vos assurances</p>
+            <CardTitle className="text-sm lg:text-base">Vos contrats récents</CardTitle>
+            <p className="text-xs lg:text-sm text-muted-foreground">Aperçu de vos assurances</p>
           </div>
-          <Button variant="ghost" size="sm" className="gap-1" onClick={() => navigate('/espace-client/contrats')}>
+          <Button variant="ghost" size="sm" className="gap-1 text-xs lg:text-sm h-8 lg:h-9" onClick={() => navigate('/espace-client/contrats')}>
             Voir tout
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -377,7 +377,7 @@ export default function ClientDashboard() {
               <p>Aucun contrat pour le moment</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2 lg:space-y-3">
               {contracts.map((contract) => {
                 const category = contract.product?.category || 'other';
                 const Icon = categoryIcons[category] || Shield;
@@ -387,11 +387,11 @@ export default function ClientDashboard() {
                 return (
                   <div 
                     key={contract.id}
-                    className="flex items-center gap-4 p-4 rounded-xl border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
+                    className="flex items-center gap-3 lg:gap-4 p-3 lg:p-4 rounded-xl border bg-card hover:bg-muted/50 transition-colors cursor-pointer active:scale-[0.98]"
                     onClick={() => navigate('/espace-client/contrats')}
                   >
                     {contract.product?.company?.logo_url ? (
-                      <div className="h-10 w-10 rounded-lg bg-white border border-border flex items-center justify-center overflow-hidden p-1">
+                      <div className="h-10 w-10 rounded-lg bg-background border border-border flex items-center justify-center overflow-hidden p-1">
                         <img 
                           src={contract.product.company.logo_url} 
                           alt={contract.product.company.name}
@@ -404,12 +404,12 @@ export default function ClientDashboard() {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{contract.product?.name || contract.product_type}</p>
-                      <p className="text-sm text-muted-foreground">{contract.company_name || contract.product?.company?.name}</p>
+                      <p className="font-medium truncate text-sm lg:text-base">{contract.product?.name || contract.product_type}</p>
+                      <p className="text-xs lg:text-sm text-muted-foreground truncate">{contract.company_name || contract.product?.company?.name}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold">{formatCurrency(Number(contract.premium_monthly) || 0)}/mois</p>
-                      <Badge variant={status.variant} className="gap-1">
+                    <div className="text-right flex-shrink-0">
+                      <p className="font-semibold text-sm lg:text-base">{formatCurrency(Number(contract.premium_monthly) || 0)}<span className="text-xs text-muted-foreground">/mois</span></p>
+                      <Badge variant={status.variant} className="gap-1 text-[10px] lg:text-xs h-5 lg:h-6">
                         <StatusIcon className="h-3 w-3" />
                         {status.label}
                       </Badge>
@@ -425,9 +425,9 @@ export default function ClientDashboard() {
       {/* Recent Documents */}
       {documents.length > 0 && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-base">Documents récents</CardTitle>
-            <Button variant="ghost" size="sm" className="gap-1" onClick={() => navigate('/espace-client/documents')}>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 lg:pb-3">
+            <CardTitle className="text-sm lg:text-base">Documents récents</CardTitle>
+            <Button variant="ghost" size="sm" className="gap-1 text-xs lg:text-sm h-8 lg:h-9" onClick={() => navigate('/espace-client/documents')}>
               Voir tout
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -437,9 +437,9 @@ export default function ClientDashboard() {
               {documents.slice(0, 3).map((doc) => (
                 <div 
                   key={doc.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
+                  className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer active:scale-[0.98]"
                 >
-                  <FileText className="h-5 w-5 text-muted-foreground" />
+                  <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{doc.file_name}</p>
                     <p className="text-xs text-muted-foreground">
