@@ -52,6 +52,7 @@ import KingSecurity from "./pages/king/KingSecurity";
 import KingSettings from "./pages/king/KingSettings";
 import ComplianceReport from "./pages/king/ComplianceReport";
 import TenantOnboarding from "./pages/king/TenantOnboarding";
+import FontPreview from "./pages/FontPreview";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,7 @@ const App = () => (
               <Route path="/connexion" element={<Connexion />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/deposer-contrat" element={<DeposerContrat />} />
+              <Route path="/font-preview" element={<FontPreview />} />
               
               {/* CRM Routes */}
               <Route path="/crm" element={<ProtectedRoute><CRMLayout /></ProtectedRoute>}>
