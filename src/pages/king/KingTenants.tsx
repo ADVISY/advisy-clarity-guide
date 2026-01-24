@@ -259,28 +259,37 @@ export default function KingTenants() {
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-4">
                         <div 
-                          className="w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden"
+                          className="w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden bg-muted/50"
                           style={{ 
-                            backgroundColor: primaryColor 
-                              ? `${primaryColor}20` 
-                              : 'hsl(var(--primary) / 0.1)' 
+                            backgroundColor: logoUrl 
+                              ? 'transparent' 
+                              : primaryColor 
+                                ? `${primaryColor}20` 
+                                : 'hsl(var(--primary) / 0.1)' 
                           }}
                         >
                           {logoUrl ? (
                             <img 
                               src={logoUrl} 
                               alt={tenant.name}
-                              className="h-8 w-8 object-contain"
+                              className="w-full h-full object-contain p-1"
                               onError={(e) => {
                                 // Hide broken image and show fallback
-                                (e.target as HTMLImageElement).style.display = 'none';
-                                const sibling = (e.target as HTMLImageElement).nextElementSibling;
-                                if (sibling) sibling.classList.remove('hidden');
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  parent.style.backgroundColor = primaryColor 
+                                    ? `${primaryColor}20` 
+                                    : 'hsl(var(--primary) / 0.1)';
+                                  const fallback = parent.querySelector('.fallback-icon');
+                                  if (fallback) fallback.classList.remove('hidden');
+                                }
                               }}
                             />
                           ) : null}
                           <Building2 
-                            className={`h-6 w-6 ${logoUrl ? 'hidden' : ''}`}
+                            className={`h-6 w-6 fallback-icon ${logoUrl ? 'hidden' : ''}`}
                             style={{ color: primaryColor || 'hsl(var(--primary))' }}
                           />
                         </div>
