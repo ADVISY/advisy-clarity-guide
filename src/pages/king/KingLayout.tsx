@@ -150,13 +150,7 @@ export default function KingLayout() {
                 alt="LYTA" 
                 className="h-14 object-contain"
               />
-              <div className="flex items-center gap-2">
-                <ThemeToggle />
-                <div className="flex items-center gap-1 px-2 py-1 bg-amber-500/10 rounded-full">
-                  <Crown className="h-4 w-4 text-amber-500" />
-                  <span className="text-xs font-bold text-amber-500">KING</span>
-                </div>
-              </div>
+              <ThemeToggle />
             </div>
             <div className="flex items-center justify-center gap-2 mt-3">
               <div className="w-2 h-2 rounded-full bg-amber-500" />
