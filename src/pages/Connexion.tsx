@@ -1051,8 +1051,8 @@ const Connexion = () => {
     <MouseGradient 
       className="min-h-screen bg-background"
       gradientColor={getGradientColor()}
-      gradientSize={800}
-      intensity={0.3}
+      gradientSize={1000}
+      intensity={0.5}
     >
       <div className="absolute inset-0 bg-[url('/images/bg-pattern-gray.png')] opacity-40 pointer-events-none" />
       
