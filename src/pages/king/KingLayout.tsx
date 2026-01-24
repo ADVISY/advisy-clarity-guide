@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import lytaLogo from "@/assets/lyta-logo-full.svg";
-import { MouseGradient } from "@/components/ui/mouse-gradient";
+
 import { supabase } from "@/integrations/supabase/client";
 
 const menuItems = [
@@ -139,13 +139,7 @@ export default function KingLayout() {
   );
 
   return (
-    <MouseGradient
-      className="h-screen flex bg-background overflow-hidden"
-      gradientColor="#D4A418"
-      gradientSize={1200}
-      intensity={0.35}
-      alwaysVisible={true}
-    >
+    <div className="h-screen flex bg-background overflow-hidden">
       {/* Desktop Sidebar */}
       <TooltipProvider>
         <aside className="hidden lg:flex flex-col h-screen sticky top-0 bg-card border-r border-border">
@@ -290,6 +284,6 @@ export default function KingLayout() {
           <Outlet />
         </div>
       </main>
-    </MouseGradient>
+    </div>
   );
 }
