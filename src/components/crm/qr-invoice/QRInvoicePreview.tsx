@@ -24,22 +24,19 @@ interface QRInvoicePreviewProps {
   onMarkPaid: () => void;
 }
 
-// Validate and clean IBAN - Swiss IBAN must be exactly 21 characters
+// Validate and clean IBAN - Swiss IBAN can be 21-22 alphanumeric characters
+// In Switzerland, IBAN can end with a letter (e.g., CH32 0024 3243 6350 0601 T)
 function validateAndCleanIBAN(iban: string): string {
   if (!iban) return '';
-  // Remove all spaces and non-alphanumeric characters except letters and digits
+  // Remove all spaces and non-alphanumeric characters, keep letters and digits
   const cleaned = iban.replace(/[^A-Z0-9]/gi, '').toUpperCase();
-  // Swiss IBAN: CH + 2 check digits + 17 alphanumeric = 21 chars
-  if (cleaned.length === 21 && cleaned.startsWith('CH')) {
+  // Swiss IBAN: CH + 2 check digits + 17-18 alphanumeric (some end with letter)
+  // Valid lengths: 21 (standard) or 22 (with letter suffix like "T")
+  if ((cleaned.length === 21 || cleaned.length === 22) && cleaned.startsWith('CH')) {
     return cleaned;
   }
-  // Try to fix common issues (trailing letter that shouldn't be there)
-  const trimmed = cleaned.replace(/[A-Z]$/i, '');
-  if (trimmed.length === 21 && trimmed.startsWith('CH')) {
-    return trimmed;
-  }
-  // Return as-is but trimmed to 21 chars if too long
-  return cleaned.slice(0, 21);
+  // Return as-is for other formats
+  return cleaned;
 }
 
 // Swiss QR Bill reference generation (QRR format - 27 digits)
