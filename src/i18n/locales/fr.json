@@ -1314,6 +1314,8 @@
     "markedPaidDescription": "La facture a été marquée comme payée",
     "cancelled": "Facture annulée",
     "cancelledDescription": "La facture a été annulée",
+    "deleted": "Facture supprimée",
+    "deletedDescription": "La facture a été supprimée avec succès",
     "moduleLocked": "Module Factures QR verrouillé",
     "moduleLockedDescription": "La fonctionnalité Facture QR est disponible uniquement avec les offres Prime et Prime Founder.",
     "upgradePlan": "Mettre à niveau mon abonnement"

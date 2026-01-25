@@ -194,12 +194,52 @@ export function useQRInvoices() {
 
   const updateInvoiceStatus = useCallback(async (
     id: string, 
-    status: QRInvoice['status']
+    status: QRInvoice['status'],
+    pdfBlob?: Blob
   ): Promise<boolean> => {
     const updates: Partial<QRInvoice> = { status };
     
     if (status === 'generated') {
       updates.generated_at = new Date().toISOString();
+      
+      // If PDF blob provided, save to storage and documents table
+      if (pdfBlob && tenantId) {
+        const invoice = invoices.find(inv => inv.id === id);
+        if (invoice && invoice.client_id) {
+          try {
+            const fileName = `${invoice.invoice_number}.pdf`;
+            const filePath = `invoices/${tenantId}/${id}/${fileName}`;
+            
+            // Upload to storage
+            const { error: uploadError } = await supabase.storage
+              .from('documents')
+              .upload(filePath, pdfBlob, { 
+                contentType: 'application/pdf',
+                upsert: true 
+              });
+            
+            if (!uploadError) {
+              // Create document record linked to client
+              await supabase.from('documents').insert({
+                tenant_id: tenantId,
+                owner_id: invoice.client_id,
+                owner_type: 'client',
+                file_name: fileName,
+                file_key: filePath,
+                mime_type: 'application/pdf',
+                size_bytes: pdfBlob.size,
+                doc_kind: 'facture',
+                created_by: user?.id
+              });
+              
+              // Update invoice with PDF path
+              updates.pdf_path = filePath;
+            }
+          } catch (err) {
+            console.error('Error saving invoice PDF to documents:', err);
+          }
+        }
+      }
     } else if (status === 'sent') {
       updates.sent_at = new Date().toISOString();
     } else if (status === 'paid') {
@@ -207,7 +247,7 @@ export function useQRInvoices() {
     }
     
     return updateInvoice(id, updates);
-  }, [updateInvoice]);
+  }, [updateInvoice, tenantId, invoices, user]);
 
   const deleteInvoice = useCallback(async (id: string): Promise<boolean> => {
     if (!user) return false;
