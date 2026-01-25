@@ -20,7 +20,7 @@ interface QRInvoicePreviewProps {
   invoice: QRInvoice | null;
   open: boolean;
   onClose: () => void;
-  onGenerate: () => Promise<void>;
+  onGenerate: (pdfBlob?: Blob) => Promise<void>;
   onSend: () => Promise<void>;
   onMarkPaid: () => void;
 }
@@ -145,10 +145,22 @@ export function QRInvoicePreview({
         jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
       };
       
-      await html2pdf().set(opt).from(printRef.current).save();
+      // Generate PDF and get blob for storage
+      const pdfBlob = await html2pdf().set(opt).from(printRef.current).outputPdf('blob');
       
+      // Trigger download
+      const url = URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = opt.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      // If draft, generate and save to client documents
       if (invoice?.status === 'draft') {
-        await onGenerate();
+        await onGenerate(pdfBlob);
       }
     } finally {
       setGenerating(false);

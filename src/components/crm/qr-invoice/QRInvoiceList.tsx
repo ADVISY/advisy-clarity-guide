@@ -27,7 +27,8 @@ import {
   MoreHorizontal, 
   CheckCircle,
   XCircle,
-  Loader2
+  Loader2,
+  Trash2
 } from "lucide-react";
 import { QRInvoice } from "@/hooks/useQRInvoices";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,7 @@ interface QRInvoiceListProps {
   onDuplicate: (invoice: QRInvoice) => void;
   onMarkPaid: (invoice: QRInvoice) => void;
   onCancel: (invoice: QRInvoice) => void;
+  onDelete: (invoice: QRInvoice) => void;
 }
 
 const statusConfig: Record<QRInvoice['status'], { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -61,6 +63,7 @@ export function QRInvoiceList({
   onDuplicate,
   onMarkPaid,
   onCancel,
+  onDelete,
 }: QRInvoiceListProps) {
   const { t } = useTranslation();
 
@@ -186,6 +189,18 @@ export function QRInvoiceList({
                         <XCircle className="mr-2 h-4 w-4" />
                         {t('qrInvoice.cancel')}
                       </DropdownMenuItem>
+                    )}
+                    {(invoice.status === 'draft' || invoice.status === 'cancelled') && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          onClick={() => onDelete(invoice)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          {t('common.delete')}
+                        </DropdownMenuItem>
+                      </>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>

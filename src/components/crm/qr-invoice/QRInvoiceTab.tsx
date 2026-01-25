@@ -26,6 +26,7 @@ export default function QRInvoiceTab() {
     loading,
     createInvoice,
     updateInvoiceStatus,
+    deleteInvoice,
   } = useQRInvoices();
 
   // Check access
@@ -160,9 +161,19 @@ export default function QRInvoiceTab() {
     }
   };
 
-  const handleGenerate = async () => {
+  const handleDelete = async (invoice: QRInvoice) => {
+    const success = await deleteInvoice(invoice.id);
+    if (success) {
+      toast({
+        title: t('qrInvoice.deleted'),
+        description: t('qrInvoice.deletedDescription'),
+      });
+    }
+  };
+
+  const handleGenerate = async (pdfBlob?: Blob) => {
     if (!selectedInvoice) return;
-    const success = await updateInvoiceStatus(selectedInvoice.id, 'generated');
+    const success = await updateInvoiceStatus(selectedInvoice.id, 'generated', pdfBlob);
     if (success) {
       toast({
         title: t('qrInvoice.generated'),
@@ -272,6 +283,7 @@ export default function QRInvoiceTab() {
             onDuplicate={handleDuplicate}
             onMarkPaid={handleMarkPaid}
             onCancel={handleCancel}
+            onDelete={handleDelete}
           />
         </CardContent>
       </Card>
