@@ -24,9 +24,29 @@ interface QRInvoicePreviewProps {
   onMarkPaid: () => void;
 }
 
-// Swiss QR Bill reference generation
+// Validate and clean IBAN - Swiss IBAN must be exactly 21 characters
+function validateAndCleanIBAN(iban: string): string {
+  if (!iban) return '';
+  // Remove all spaces and non-alphanumeric characters except letters and digits
+  const cleaned = iban.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+  // Swiss IBAN: CH + 2 check digits + 17 alphanumeric = 21 chars
+  if (cleaned.length === 21 && cleaned.startsWith('CH')) {
+    return cleaned;
+  }
+  // Try to fix common issues (trailing letter that shouldn't be there)
+  const trimmed = cleaned.replace(/[A-Z]$/i, '');
+  if (trimmed.length === 21 && trimmed.startsWith('CH')) {
+    return trimmed;
+  }
+  // Return as-is but trimmed to 21 chars if too long
+  return cleaned.slice(0, 21);
+}
+
+// Swiss QR Bill reference generation (QRR format - 27 digits)
 function generateQRReference(invoiceNumber: string): string {
+  // Extract numeric part and pad to 26 digits
   const numericPart = invoiceNumber.replace(/\D/g, '').padStart(26, '0').slice(0, 26);
+  // Modulo 10 recursive check digit calculation
   const weights = [0, 9, 4, 6, 8, 2, 7, 1, 3, 5];
   let carry = 0;
   for (const char of numericPart) {
@@ -37,7 +57,8 @@ function generateQRReference(invoiceNumber: string): string {
 }
 
 function formatIBAN(iban: string): string {
-  return iban.replace(/(.{4})/g, '$1 ').trim();
+  const clean = iban.replace(/\s/g, '');
+  return clean.replace(/(.{4})/g, '$1 ').trim();
 }
 
 function formatReference(ref: string): string {
@@ -54,6 +75,28 @@ function formatServiceType(serviceType: string): string {
     .join(' ');
 }
 
+// Convert image URL to base64 for PDF embedding (fixes CORS issues)
+async function imageUrlToBase64(url: string): Promise<string> {
+  try {
+    // If already base64, return as-is
+    if (url.startsWith('data:')) return url;
+    
+    const response = await fetch(url, { mode: 'cors' });
+    if (!response.ok) throw new Error('Failed to fetch image');
+    
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('Error converting image to base64:', error);
+    return ''; // Return empty on error
+  }
+}
+
 export function QRInvoicePreview({
   invoice,
   open,
@@ -68,6 +111,7 @@ export function QRInvoicePreview({
   const [generating, setGenerating] = useState(false);
   const [sending, setSending] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
+  const [logoBase64, setLogoBase64] = useState<string>('');
 
   const tenantBranding = tenant?.branding;
   const tenantName = tenantBranding?.display_name || tenant?.name || 'Cabinet';
@@ -75,7 +119,8 @@ export function QRInvoicePreview({
   const tenantPhone = tenantBranding?.company_phone || '';
   const tenantEmail = tenantBranding?.company_email || '';
   const tenantLogo = tenantBranding?.logo_url;
-  const tenantIBAN = tenantBranding?.iban || tenantBranding?.qr_iban || '';
+  const rawIBAN = tenantBranding?.iban || tenantBranding?.qr_iban || '';
+  const tenantIBAN = validateAndCleanIBAN(rawIBAN);
   const tenantVAT = tenantBranding?.vat_number || '';
   const primaryColor = tenantBranding?.primary_color || '#0f172a';
 
@@ -84,30 +129,66 @@ export function QRInvoicePreview({
     return generateQRReference(invoice.invoice_number);
   }, [invoice]);
 
+  // Generate Swiss QR Bill payload according to SIX specs
   const qrData = useMemo(() => {
     if (!invoice || !tenantIBAN) return '';
     
-    const data = [
-      'SPC', '0200', '1',
-      tenantIBAN.replace(/\s/g, ''),
-      'K', tenantName,
-      tenantAddress.split(',')[0] || '', '',
-      tenantAddress.split(',')[1]?.trim().split(' ')[0] || '',
-      tenantAddress.split(',')[1]?.trim().split(' ').slice(1).join(' ') || '',
-      'CH', '', '', '', '', '', '',
-      invoice.amount_ttc.toFixed(2), 'CHF',
-      'K', invoice.client_name,
-      invoice.client_address || '', '',
-      invoice.client_postal_code || '',
-      invoice.client_city || '',
-      invoice.client_country || 'CH',
-      'QRR', qrReference,
-      invoice.object || 'Facture', 'EPD',
+    // Parse address components
+    const addressParts = tenantAddress.split(',').map(s => s.trim());
+    const streetAndNumber = addressParts[0] || '';
+    const postalCity = addressParts[1] || '';
+    const postalMatch = postalCity.match(/^(\d{4})\s*(.*)$/);
+    const postalCode = postalMatch ? postalMatch[1] : '';
+    const city = postalMatch ? postalMatch[2] : postalCity;
+    
+    // Swiss QR Bill SPC format (SIX standard)
+    const lines = [
+      'SPC',                          // QR Type
+      '0200',                         // Version
+      '1',                            // Coding Type (UTF-8)
+      tenantIBAN,                     // IBAN (21 chars, no spaces)
+      'S',                            // Creditor address type (S = structured)
+      tenantName.slice(0, 70),        // Creditor name (max 70)
+      streetAndNumber.slice(0, 70),   // Street or address line 1
+      '',                             // Building number (empty for combined)
+      postalCode,                     // Postal code
+      city.slice(0, 35),              // City
+      'CH',                           // Country
+      '',                             // Ultimate Creditor (7 empty lines)
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      invoice.amount_ttc.toFixed(2),  // Amount
+      'CHF',                          // Currency
+      'S',                            // Debtor address type
+      invoice.client_name.slice(0, 70),              // Debtor name
+      (invoice.client_address || '').slice(0, 70),   // Debtor street
+      '',                             // Debtor building
+      invoice.client_postal_code || '',              // Debtor postal
+      (invoice.client_city || '').slice(0, 35),      // Debtor city
+      invoice.client_country || 'CH',                // Debtor country
+      'QRR',                          // Reference type (QR-Reference)
+      qrReference,                    // Payment reference (27 digits)
+      (invoice.object || formatServiceType(invoice.service_type)).slice(0, 140), // Message
+      'EPD',                          // End Payment Data
     ];
     
-    return data.join('\n');
+    return lines.join('\r\n');
   }, [invoice, tenantIBAN, tenantName, tenantAddress, qrReference]);
 
+  // Load logo as base64 for PDF embedding
+  useEffect(() => {
+    if (tenantLogo && open) {
+      imageUrlToBase64(tenantLogo)
+        .then(setLogoBase64)
+        .catch(() => setLogoBase64(''));
+    }
+  }, [tenantLogo, open]);
+
+  // Generate QR code
   useEffect(() => {
     if (qrData && open) {
       QRCode.toDataURL(qrData, {
@@ -248,18 +329,21 @@ export function QRInvoicePreview({
           <div style={{ padding: '12mm 15mm 10mm 15mm' }}>
             {/* Header with Logo and Invoice Info */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15mm' }}>
-              {/* Company Info Left */}
+            {/* Company Info Left */}
               <div style={{ flex: 1 }}>
-                {tenantLogo ? (
+                {(logoBase64 || tenantLogo) ? (
                   <img 
-                    src={tenantLogo} 
+                    src={logoBase64 || tenantLogo} 
                     alt={tenantName}
-                    crossOrigin="anonymous"
                     style={{ 
                       maxHeight: '18mm', 
                       maxWidth: '55mm', 
                       objectFit: 'contain',
                       marginBottom: '4mm'
+                    }}
+                    onError={(e) => {
+                      // Fallback to text if image fails
+                      (e.target as HTMLImageElement).style.display = 'none';
                     }}
                   />
                 ) : (
