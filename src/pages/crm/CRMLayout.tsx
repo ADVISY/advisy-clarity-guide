@@ -38,7 +38,6 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { WelcomeMessage } from "@/components/crm/WelcomeMessage";
 import { UserAvatar } from "@/components/crm/UserAvatar";
-import { SoundToggle } from "@/components/crm/SoundToggle";
 
 
 interface MenuItem {
@@ -210,31 +209,24 @@ export default function CRMLayout() {
         )}>
           {/* Logo Section */}
           <div className="p-4 border-b border-border flex-shrink-0">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-center">
               {!sidebarCollapsed && tenantLogo ? (
                 <img 
                   src={tenantLogo} 
                   alt={tenantName} 
-                  className="h-10 object-contain"
+                  className="h-14 object-contain"
                 />
               ) : !sidebarCollapsed ? (
                 <div className="flex items-center gap-2">
-                  <Building2 className="h-6 w-6 text-primary" />
-                  <span className="text-lg font-bold truncate">{tenantName}</span>
+                  <Building2 className="h-8 w-8 text-primary" />
+                  <span className="text-xl font-bold truncate">{tenantName}</span>
                 </div>
               ) : (
                 <Building2 className="h-6 w-6 text-primary mx-auto" />
               )}
-              {!sidebarCollapsed && (
-                <div className="flex items-center gap-1">
-                  <LanguageSelector />
-                  <SoundToggle />
-                  <ThemeToggle />
-                </div>
-              )}
             </div>
             {!sidebarCollapsed && (
-              <div className="flex items-center justify-center gap-2 mt-2">
+              <div className="flex items-center justify-center gap-2 mt-3">
                 <div className="w-2 h-2 rounded-full bg-emerald-500" />
                 <p className="text-xs text-muted-foreground capitalize">
                   {role} • {t('common.online')}
@@ -298,6 +290,11 @@ export default function CRMLayout() {
                     <p className="text-xs text-muted-foreground capitalize">{role}</p>
                   </div>
                 </div>
+                {/* Language and Theme toggles */}
+                <div className="flex items-center justify-center gap-1 mb-3">
+                  <LanguageSelector />
+                  <ThemeToggle />
+                </div>
                 <Button
                   variant="outline"
                   className="w-full"
@@ -325,7 +322,6 @@ export default function CRMLayout() {
           )}
           <div className="flex items-center gap-1">
             <LanguageSelector />
-            <SoundToggle />
             <ThemeToggle />
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
