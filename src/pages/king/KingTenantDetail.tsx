@@ -22,7 +22,8 @@ import {
   CreditCard,
   Calendar,
   RotateCcw,
-  Download
+  Download,
+  Upload
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -358,6 +359,10 @@ export default function KingTenantDetail() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => navigate(`/king/tenants/${tenantId}/import`)}>
+            <Upload className="h-4 w-4 mr-2" />
+            Importer des données
+          </Button>
           <Button variant="outline" asChild>
             <a 
               href={`https://${tenant.slug}.lyta.ch`} 
