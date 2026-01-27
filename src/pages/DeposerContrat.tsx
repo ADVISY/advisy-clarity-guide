@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useCelebration } from "@/hooks/useCelebration";
 import { useTenant } from "@/contexts/TenantContext";
@@ -177,42 +178,43 @@ type BusinessFormData = {
   commentaires: string;
 };
 
-const formTypes = [
+const getFormTypes = (t: (key: string) => string) => [
   {
     id: 'sana' as FormType,
     title: 'SANA',
-    subtitle: 'Assurance Maladie',
-    description: 'LAMal et LCA',
+    subtitle: t('depositContract.sana.subtitle'),
+    description: t('depositContract.sana.description'),
     icon: Shield,
     color: 'from-blue-500 to-blue-600',
   },
   {
     id: 'vita' as FormType,
     title: 'VITA',
-    subtitle: 'Prévoyance',
-    description: '3e pilier et épargne',
+    subtitle: t('depositContract.vita.subtitle'),
+    description: t('depositContract.vita.description'),
     icon: Heart,
     color: 'from-red-500 to-red-600',
   },
   {
     id: 'medio' as FormType,
     title: 'MEDIO',
-    subtitle: 'Assurances Privées',
-    description: 'RC, Ménage, Auto',
+    subtitle: t('depositContract.medio.subtitle'),
+    description: t('depositContract.medio.description'),
     icon: Home,
     color: 'from-green-500 to-green-600',
   },
   {
     id: 'business' as FormType,
     title: 'BUSINESS',
-    subtitle: 'Assurance Entreprise',
-    description: 'RC Pro, LAA, Choses',
+    subtitle: t('depositContract.business.subtitle'),
+    description: t('depositContract.business.description'),
     icon: Factory,
     color: 'from-purple-500 to-purple-600',
   },
 ];
 
 export default function DeposerContrat() {
+  const { t } = useTranslation();
   const { celebrate } = useCelebration();
   const { toast } = useToast();
   const { tenant, isLoading: tenantLoading } = useTenant();
@@ -274,33 +276,35 @@ export default function DeposerContrat() {
 
   // Required documents per form
   const sanaRequiredDocs = [
-    "Pièce d'identité (recto/verso)",
-    "Attestation de résidence / Permis de séjour",
-    "Carte d'assuré actuelle",
-    "Documents supplémentaires",
+    t('depositContract.sana.docs.identity'),
+    t('depositContract.sana.docs.residence'),
+    t('depositContract.sana.docs.insuranceCard'),
+    t('depositContract.common.additionalDocs'),
   ];
 
   const vitaRequiredDocs = [
-    "Proposition avec déclaration de santé",
-    "Pièce d'identité / attestation de domicile",
-    "Procès-verbal de conseil",
-    "Documents supplémentaires",
+    t('depositContract.vita.docs.proposal'),
+    t('depositContract.vita.docs.identityDomicile'),
+    t('depositContract.vita.docs.minutes'),
+    t('depositContract.common.additionalDocs'),
   ];
 
   const medioRequiredDocs = [
-    "Pièce d'identité (recto/verso)",
-    "Justificatif de domicile",
-    "Carte grise véhicule (si auto)",
-    "Police d'assurance actuelle",
-    "Documents supplémentaires",
+    t('depositContract.medio.docs.identity'),
+    t('depositContract.medio.docs.domicile'),
+    t('depositContract.medio.docs.vehicleRegistration'),
+    t('depositContract.medio.docs.currentPolicy'),
+    t('depositContract.common.additionalDocs'),
   ];
 
   const businessRequiredDocs = [
-    "Extrait du registre du commerce (Zefix)",
-    "Pièce d'identité du chef d'entreprise",
-    "Liste du personnel avec salaires (si LAA)",
-    "Documents supplémentaires",
+    t('depositContract.business.docs.commerceExtract'),
+    t('depositContract.business.docs.ceoIdentity'),
+    t('depositContract.business.docs.staffList'),
+    t('depositContract.common.additionalDocs'),
   ];
+
+  const formTypes = getFormTypes(t);
 
   useEffect(() => {
     if (verifiedPartner) {
@@ -313,12 +317,12 @@ export default function DeposerContrat() {
 
   const handleVerifyEmail = async () => {
     if (!partnerEmail.trim()) {
-      toast({ title: "Email requis", description: "Veuillez entrer votre adresse email", variant: "destructive" });
+      toast({ title: t('depositContract.emailRequired'), description: t('depositContract.enterEmail'), variant: "destructive" });
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(partnerEmail.trim())) {
-      toast({ title: "Email invalide", description: "Veuillez entrer une adresse email valide", variant: "destructive" });
+      toast({ title: t('depositContract.invalidEmail'), description: t('depositContract.enterValidEmail'), variant: "destructive" });
       return;
     }
     setVerifying(true);
@@ -326,16 +330,16 @@ export default function DeposerContrat() {
       const { data, error } = await supabase.functions.invoke('verify-partner-email', {
         body: { email: partnerEmail.trim().toLowerCase() }
       });
-      if (error) throw new Error(error.message || "Erreur de vérification");
+      if (error) throw new Error(error.message || t('depositContract.verificationError'));
       if (data?.success && data?.partner) {
         setVerifiedPartner(data.partner);
         setVerificationStep('selection');
-        toast({ title: "Bienvenue !", description: `Accès autorisé pour ${data.partner.name}` });
+        toast({ title: t('depositContract.welcome'), description: t('depositContract.accessGranted', { name: data.partner.name }) });
       } else {
-        toast({ title: "Accès refusé", description: "Cet email n'est pas enregistré comme collaborateur", variant: "destructive" });
+        toast({ title: t('depositContract.accessDenied'), description: t('depositContract.emailNotRegistered'), variant: "destructive" });
       }
     } catch (error: any) {
-      toast({ title: "Erreur", description: error.message || "Impossible de vérifier l'email", variant: "destructive" });
+      toast({ title: t('common.error'), description: error.message || t('depositContract.cannotVerify'), variant: "destructive" });
     } finally {
       setVerifying(false);
     }
@@ -393,11 +397,11 @@ export default function DeposerContrat() {
 
   const handleSubmitSana = async () => {
     if (!sanaForm.clientNom || !sanaForm.clientPrenom || !sanaForm.clientEmail) {
-      toast({ title: "Erreur", description: "Veuillez remplir tous les champs obligatoires", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('depositContract.fillRequired'), variant: "destructive" });
       return;
     }
     if (!sanaForm.confirmDocuments) {
-      toast({ title: "Confirmation requise", description: "Veuillez confirmer avoir téléchargé les documents", variant: "destructive" });
+      toast({ title: t('depositContract.confirmRequired'), description: t('depositContract.confirmDocsUpload'), variant: "destructive" });
       return;
     }
     setSubmitting(true);
@@ -415,12 +419,12 @@ export default function DeposerContrat() {
       if (data?.error) throw new Error(data.error);
       await sendContractDepositEmail('sana', sanaForm, sanaDocuments);
       celebrate("contract_added");
-      toast({ title: "Formulaire SANA envoyé !", description: "Votre demande a été soumise avec succès" });
+      toast({ title: t('depositContract.formSent', { type: 'SANA' }), description: t('depositContract.requestSubmitted') });
       setSanaForm({ clientNom: "", clientPrenom: "", clientEmail: "", clientTel: "", dateNaissance: "", adresse: "", npa: "", localite: "", lamalDateEffet: "", lcaDateEffet: "", lcaProduction: "", assureurActuel: "", agentName: verifiedPartner?.name || "", commentaires: "", confirmDocuments: false });
       setSanaDocuments([]);
       handleBackToSelection();
     } catch (error: any) {
-      toast({ title: "Erreur", description: error.message || "Impossible de soumettre", variant: "destructive" });
+      toast({ title: t('common.error'), description: error.message || t('depositContract.cannotSubmit'), variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -428,11 +432,11 @@ export default function DeposerContrat() {
 
   const handleSubmitVita = async () => {
     if (!vitaForm.clientNom || !vitaForm.clientPrenom || !vitaForm.clientEmail) {
-      toast({ title: "Erreur", description: "Veuillez remplir tous les champs obligatoires", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('depositContract.fillRequired'), variant: "destructive" });
       return;
     }
     if (!vitaForm.confirmDocuments) {
-      toast({ title: "Confirmation requise", description: "Veuillez confirmer avoir téléchargé les documents", variant: "destructive" });
+      toast({ title: t('depositContract.confirmRequired'), description: t('depositContract.confirmDocsUpload'), variant: "destructive" });
       return;
     }
     setSubmitting(true);
@@ -451,12 +455,12 @@ export default function DeposerContrat() {
       if (data?.error) throw new Error(data.error);
       await sendContractDepositEmail('vita', vitaForm, vitaDocuments);
       celebrate("contract_added");
-      toast({ title: "Formulaire VITA envoyé !", description: "Votre demande a été soumise avec succès" });
+      toast({ title: t('depositContract.formSent', { type: 'VITA' }), description: t('depositContract.requestSubmitted') });
       setVitaForm({ clientNom: "", clientPrenom: "", clientEmail: "", clientTel: "", vitaDateEffet: "", vitaDureeContrat: "", vitaPrimeMensuelle: "", agentName: verifiedPartner?.name || "", commentaires: "", confirmDocuments: false });
       setVitaDocuments([]);
       handleBackToSelection();
     } catch (error: any) {
-      toast({ title: "Erreur", description: error.message || "Impossible de soumettre", variant: "destructive" });
+      toast({ title: t('common.error'), description: error.message || t('depositContract.cannotSubmit'), variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -464,11 +468,11 @@ export default function DeposerContrat() {
 
   const handleSubmitMedio = async () => {
     if (!medioForm.preneurNom || !medioForm.preneurPrenom || !medioForm.preneurEmail) {
-      toast({ title: "Erreur", description: "Veuillez remplir tous les champs obligatoires", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('depositContract.fillRequired'), variant: "destructive" });
       return;
     }
     if (!medioForm.confirmDocuments) {
-      toast({ title: "Confirmation requise", description: "Veuillez confirmer avoir téléchargé les documents", variant: "destructive" });
+      toast({ title: t('depositContract.confirmRequired'), description: t('depositContract.confirmDocsUpload'), variant: "destructive" });
       return;
     }
     setSubmitting(true);
@@ -486,12 +490,12 @@ export default function DeposerContrat() {
       if (data?.error) throw new Error(data.error);
       await sendContractDepositEmail('medio', medioForm, medioDocuments);
       celebrate("contract_added");
-      toast({ title: "Formulaire MEDIO envoyé !", description: "Votre demande a été soumise avec succès" });
+      toast({ title: t('depositContract.formSent', { type: 'MEDIO' }), description: t('depositContract.requestSubmitted') });
       setMedioForm({ preneurNom: "", preneurPrenom: "", preneurEmail: "", preneurTel: "", preneurAdresse: "", preneurNpa: "", preneurLocalite: "", typeAssurance: "", rcPrivee: false, rcMontant: "5000000", menage: false, menageMontant: "", menageVol: false, auto: false, marqueVehicule: "", modeleVehicule: "", anneeVehicule: "", plaqueVehicule: "", dateEffet: "", agentName: verifiedPartner?.name || "", commentaires: "", confirmDocuments: false });
       setMedioDocuments([]);
       handleBackToSelection();
     } catch (error: any) {
-      toast({ title: "Erreur", description: error.message || "Impossible de soumettre", variant: "destructive" });
+      toast({ title: t('common.error'), description: error.message || t('depositContract.cannotSubmit'), variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -499,7 +503,7 @@ export default function DeposerContrat() {
 
   const handleSubmitBusiness = async () => {
     if (!businessForm.entrepriseNom || !businessForm.chefNom || !businessForm.emailRetour) {
-      toast({ title: "Erreur", description: "Veuillez remplir tous les champs obligatoires", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('depositContract.fillRequired'), variant: "destructive" });
       return;
     }
     setSubmitting(true);
@@ -517,12 +521,12 @@ export default function DeposerContrat() {
       if (data?.error) throw new Error(data.error);
       await sendContractDepositEmail('business', businessForm, businessDocuments);
       celebrate("contract_added");
-      toast({ title: "Formulaire BUSINESS envoyé !", description: "Votre demande a été soumise avec succès" });
+      toast({ title: t('depositContract.formSent', { type: 'BUSINESS' }), description: t('depositContract.requestSubmitted') });
       setBusinessForm({ entrepriseNom: "", entrepriseActivite: "", formeSociete: "", nouvelleCreation: "", entrepriseAdresse: "", chefCivilite: "", chefPrenom: "", chefNom: "", chefDateNaissance: "", chefAdresse: "", chefNationalite: "", chefPermis: "", rcEntreprise: false, rcAssureurPrecedent: "", rcTypeContrat: "", rcChiffreAffaire: "", rcSommeAssurance: "3000000", rcFranchise: "500", assuranceChoses: false, chosesIncendie: false, chosesIncendieMontant: "", chosesVol: false, chosesVolMontant: "", chosesDegatsEau: false, chosesDegatsEauMontant: "", laaObligatoire: false, laaComplementaire: false, nombreFemmes: "", ageMoyenFemmes: "", salairesFemmes: "", nombreHommes: "", ageMoyenHommes: "", salairesHommes: "", perteGainMaladie: false, compagnies: [], dateEffet: "", dateRdv: "", emailRetour: "", langue: "fr", commentaires: "" });
       setBusinessDocuments([]);
       handleBackToSelection();
     } catch (error: any) {
-      toast({ title: "Erreur", description: error.message || "Impossible de soumettre", variant: "destructive" });
+      toast({ title: t('common.error'), description: error.message || t('depositContract.cannotSubmit'), variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -537,7 +541,7 @@ export default function DeposerContrat() {
             <div className="flex items-center justify-between">
               <Button variant="ghost" size="sm" onClick={() => window.location.href = '/connexion'}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Retour
+                {t('common.back')}
               </Button>
               <ThemeToggle />
             </div>
@@ -545,17 +549,17 @@ export default function DeposerContrat() {
               <img src={tenantLogo} alt={tenantName} className="h-12 max-w-[200px] object-contain" />
             </div>
             <div>
-              <CardTitle>Dépôt de contrat</CardTitle>
-              <CardDescription>Entrez votre email collaborateur pour accéder au formulaire</CardDescription>
+              <CardTitle>{t('depositContract.title')}</CardTitle>
+              <CardDescription>{t('depositContract.enterCollaboratorEmail')}</CardDescription>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="partner-email">Email collaborateur</Label>
-              <Input id="partner-email" type="email" placeholder="votre.email@entreprise.ch" value={partnerEmail} onChange={(e) => setPartnerEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleVerifyEmail()} />
+              <Label htmlFor="partner-email">{t('depositContract.collaboratorEmail')}</Label>
+              <Input id="partner-email" type="email" placeholder={t('depositContract.emailPlaceholder')} value={partnerEmail} onChange={(e) => setPartnerEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleVerifyEmail()} />
             </div>
             <Button className="w-full" onClick={handleVerifyEmail} disabled={verifying} style={tenantPrimaryColor ? { backgroundColor: tenantPrimaryColor } : undefined}>
-              {verifying ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Vérification...</> : <><Mail className="mr-2 h-4 w-4" />Accéder au formulaire</>}
+              {verifying ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('depositContract.verifying')}</> : <><Mail className="mr-2 h-4 w-4" />{t('depositContract.accessForm')}</>}
             </Button>
           </CardContent>
         </Card>
@@ -576,14 +580,14 @@ export default function DeposerContrat() {
                 <span className="text-sm font-medium">{verifiedPartner?.name}</span>
               </div>
               <ThemeToggle />
-              <Button variant="outline" size="sm" onClick={handleLogout}><LogOut className="h-4 w-4 mr-2" />Déconnexion</Button>
+              <Button variant="outline" size="sm" onClick={handleLogout}><LogOut className="h-4 w-4 mr-2" />{t('clientSpace.logout')}</Button>
             </div>
           </div>
         </header>
         <main className="container py-12 max-w-4xl">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">Dépôt de contrat</h1>
-            <p className="text-muted-foreground">Sélectionnez le type de formulaire correspondant au produit</p>
+            <h1 className="text-3xl font-bold mb-2">{t('depositContract.title')}</h1>
+            <p className="text-muted-foreground">{t('depositContract.selectFormType')}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {formTypes.map((form) => {
@@ -635,7 +639,7 @@ export default function DeposerContrat() {
               <span className="text-sm font-medium">{verifiedPartner?.name}</span>
             </div>
             <ThemeToggle />
-            <Button variant="outline" size="sm" onClick={handleLogout}><LogOut className="h-4 w-4 mr-2" />Déconnexion</Button>
+            <Button variant="outline" size="sm" onClick={handleLogout}><LogOut className="h-4 w-4 mr-2" />{t('clientSpace.logout')}</Button>
           </div>
         </div>
       </header>
@@ -651,71 +655,71 @@ export default function DeposerContrat() {
                   <Shield className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <span className="block">Formulaire SANA</span>
-                  <span className="text-sm font-normal text-muted-foreground">Assurance Maladie LAMal / LCA</span>
+                  <span className="block">{t('depositContract.sana.formTitle')}</span>
+                  <span className="text-sm font-normal text-muted-foreground">{t('depositContract.sana.formSubtitle')}</span>
                 </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Client info */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Informations du client</h3>
+                <h3 className="font-semibold text-lg border-b pb-2">{t('depositContract.common.clientInfo')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Nom *</Label>
-                    <Input value={sanaForm.clientNom} onChange={(e) => setSanaForm(prev => ({ ...prev, clientNom: e.target.value }))} placeholder="Nom de famille" />
+                    <Label>{t('depositContract.common.lastName')} *</Label>
+                    <Input value={sanaForm.clientNom} onChange={(e) => setSanaForm(prev => ({ ...prev, clientNom: e.target.value }))} placeholder={t('depositContract.common.lastNamePlaceholder')} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Prénom *</Label>
-                    <Input value={sanaForm.clientPrenom} onChange={(e) => setSanaForm(prev => ({ ...prev, clientPrenom: e.target.value }))} placeholder="Prénom" />
+                    <Label>{t('depositContract.common.firstName')} *</Label>
+                    <Input value={sanaForm.clientPrenom} onChange={(e) => setSanaForm(prev => ({ ...prev, clientPrenom: e.target.value }))} placeholder={t('depositContract.common.firstNamePlaceholder')} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Email *</Label>
+                    <Label>{t('depositContract.common.email')} *</Label>
                     <Input type="email" value={sanaForm.clientEmail} onChange={(e) => setSanaForm(prev => ({ ...prev, clientEmail: e.target.value }))} placeholder="email@exemple.com" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Téléphone *</Label>
+                    <Label>{t('depositContract.common.phone')} *</Label>
                     <Input value={sanaForm.clientTel} onChange={(e) => setSanaForm(prev => ({ ...prev, clientTel: e.target.value }))} placeholder="+41 79 000 00 00" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Date de naissance</Label>
+                    <Label>{t('depositContract.common.birthDate')}</Label>
                     <Input type="date" value={sanaForm.dateNaissance} onChange={(e) => setSanaForm(prev => ({ ...prev, dateNaissance: e.target.value }))} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Assureur actuel</Label>
-                    <Input value={sanaForm.assureurActuel} onChange={(e) => setSanaForm(prev => ({ ...prev, assureurActuel: e.target.value }))} placeholder="Nom de la caisse actuelle" />
+                    <Label>{t('depositContract.sana.currentInsurer')}</Label>
+                    <Input value={sanaForm.assureurActuel} onChange={(e) => setSanaForm(prev => ({ ...prev, assureurActuel: e.target.value }))} placeholder={t('depositContract.sana.currentInsurerPlaceholder')} />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2 md:col-span-2">
-                    <Label>Adresse</Label>
-                    <Input value={sanaForm.adresse} onChange={(e) => setSanaForm(prev => ({ ...prev, adresse: e.target.value }))} placeholder="Rue et numéro" />
+                    <Label>{t('depositContract.common.address')}</Label>
+                    <Input value={sanaForm.adresse} onChange={(e) => setSanaForm(prev => ({ ...prev, adresse: e.target.value }))} placeholder={t('depositContract.common.streetPlaceholder')} />
                   </div>
                   <div className="space-y-2">
-                    <Label>NPA</Label>
+                    <Label>{t('depositContract.common.postalCode')}</Label>
                     <Input value={sanaForm.npa} onChange={(e) => setSanaForm(prev => ({ ...prev, npa: e.target.value }))} placeholder="1000" />
                   </div>
                   <div className="space-y-2 md:col-span-3">
-                    <Label>Localité</Label>
-                    <Input value={sanaForm.localite} onChange={(e) => setSanaForm(prev => ({ ...prev, localite: e.target.value }))} placeholder="Ville" />
+                    <Label>{t('depositContract.common.city')}</Label>
+                    <Input value={sanaForm.localite} onChange={(e) => setSanaForm(prev => ({ ...prev, localite: e.target.value }))} placeholder={t('depositContract.common.cityPlaceholder')} />
                   </div>
                 </div>
               </div>
 
               {/* LAMal/LCA details */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Détails LAMal / LCA</h3>
+                <h3 className="font-semibold text-lg border-b pb-2">{t('depositContract.sana.lamalLcaDetails')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label>Date d'effet LAMal</Label>
+                    <Label>{t('depositContract.sana.lamalEffectDate')}</Label>
                     <Input type="date" value={sanaForm.lamalDateEffet} onChange={(e) => setSanaForm(prev => ({ ...prev, lamalDateEffet: e.target.value }))} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Date d'effet LCA</Label>
+                    <Label>{t('depositContract.sana.lcaEffectDate')}</Label>
                     <Input type="date" value={sanaForm.lcaDateEffet} onChange={(e) => setSanaForm(prev => ({ ...prev, lcaDateEffet: e.target.value }))} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Production LCA (CHF)</Label>
+                    <Label>{t('depositContract.sana.lcaProduction')}</Label>
                     <Input type="number" value={sanaForm.lcaProduction} onChange={(e) => setSanaForm(prev => ({ ...prev, lcaProduction: e.target.value }))} placeholder="0.00" />
                   </div>
                 </div>
@@ -724,21 +728,21 @@ export default function DeposerContrat() {
               {/* Agent */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Nom de l'agent</Label>
+                  <Label>{t('depositContract.common.agentName')}</Label>
                   <Input value={sanaForm.agentName} onChange={(e) => setSanaForm(prev => ({ ...prev, agentName: e.target.value }))} />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label>Commentaires</Label>
-                <Textarea value={sanaForm.commentaires} onChange={(e) => setSanaForm(prev => ({ ...prev, commentaires: e.target.value }))} placeholder="Informations complémentaires..." rows={3} />
+                <Label>{t('depositContract.common.comments')}</Label>
+                <Textarea value={sanaForm.commentaires} onChange={(e) => setSanaForm(prev => ({ ...prev, commentaires: e.target.value }))} placeholder={t('depositContract.common.additionalInfo')} rows={3} />
               </div>
 
               {/* Documents */}
               <div className="space-y-4 p-4 border-2 rounded-lg" style={{ borderColor: tenantPrimaryColor || 'hsl(var(--primary)/0.3)', backgroundColor: tenantPrimaryColor ? `${tenantPrimaryColor}08` : 'hsl(var(--primary)/0.05)' }}>
                 <div className="flex items-center gap-2" style={{ color: tenantPrimaryColor || 'hsl(var(--primary))' }}>
                   <FileText className="h-5 w-5" />
-                  <h3 className="font-semibold">Documents à fournir</h3>
+                  <h3 className="font-semibold">{t('depositContract.common.documentsToProvide')}</h3>
                 </div>
                 <div className="space-y-3">
                   {sanaRequiredDocs.map((doc, i) => (
@@ -750,13 +754,13 @@ export default function DeposerContrat() {
               <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
                 <Checkbox id="sana-confirm" checked={sanaForm.confirmDocuments} onCheckedChange={(c) => setSanaForm(prev => ({ ...prev, confirmDocuments: c as boolean }))} />
                 <div className="space-y-1">
-                  <Label htmlFor="sana-confirm" className="font-medium cursor-pointer">Je confirme avoir téléchargé tous les documents requis</Label>
-                  <p className="text-sm text-muted-foreground">Vous avez ajouté {sanaDocuments.filter(Boolean).length} document(s)</p>
+                  <Label htmlFor="sana-confirm" className="font-medium cursor-pointer">{t('depositContract.common.confirmUpload')}</Label>
+                  <p className="text-sm text-muted-foreground">{t('depositContract.common.documentsAdded', { count: sanaDocuments.filter(Boolean).length })}</p>
                 </div>
               </div>
 
               <Button className="w-full" size="lg" onClick={handleSubmitSana} disabled={submitting} style={tenantPrimaryColor ? { backgroundColor: tenantPrimaryColor } : undefined}>
-                {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi en cours...</> : <><Upload className="mr-2 h-4 w-4" />Soumettre le formulaire SANA</>}
+                {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('depositContract.common.sending')}</> : <><Upload className="mr-2 h-4 w-4" />{t('depositContract.common.submitForm', { type: 'SANA' })}</>}
               </Button>
             </CardContent>
           </Card>
@@ -771,88 +775,88 @@ export default function DeposerContrat() {
                   <Heart className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <span className="block">Formulaire VITA</span>
-                  <span className="text-sm font-normal text-muted-foreground">Prévoyance / 3e pilier</span>
+                  <span className="block">{t('depositContract.vita.formTitle')}</span>
+                  <span className="text-sm font-normal text-muted-foreground">{t('depositContract.vita.formSubtitle')}</span>
                 </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Informations du client</h3>
+                <h3 className="font-semibold text-lg border-b pb-2">{t('depositContract.common.clientInfo')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Nom *</Label>
-                    <Input value={vitaForm.clientNom} onChange={(e) => setVitaForm(prev => ({ ...prev, clientNom: e.target.value }))} placeholder="Nom de famille" />
+                    <Label>{t('depositContract.common.lastName')} *</Label>
+                    <Input value={vitaForm.clientNom} onChange={(e) => setVitaForm(prev => ({ ...prev, clientNom: e.target.value }))} placeholder={t('depositContract.common.lastNamePlaceholder')} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Prénom *</Label>
-                    <Input value={vitaForm.clientPrenom} onChange={(e) => setVitaForm(prev => ({ ...prev, clientPrenom: e.target.value }))} placeholder="Prénom" />
+                    <Label>{t('depositContract.common.firstName')} *</Label>
+                    <Input value={vitaForm.clientPrenom} onChange={(e) => setVitaForm(prev => ({ ...prev, clientPrenom: e.target.value }))} placeholder={t('depositContract.common.firstNamePlaceholder')} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Email *</Label>
+                    <Label>{t('depositContract.common.email')} *</Label>
                     <Input type="email" value={vitaForm.clientEmail} onChange={(e) => setVitaForm(prev => ({ ...prev, clientEmail: e.target.value }))} placeholder="email@exemple.com" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Téléphone *</Label>
+                    <Label>{t('depositContract.common.phone')} *</Label>
                     <Input value={vitaForm.clientTel} onChange={(e) => setVitaForm(prev => ({ ...prev, clientTel: e.target.value }))} placeholder="+41 79 000 00 00" />
                   </div>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Détails du contrat VITA</h3>
+                <h3 className="font-semibold text-lg border-b pb-2">{t('depositContract.vita.contractDetails')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label>Date d'effet</Label>
+                    <Label>{t('depositContract.common.effectDate')}</Label>
                     <Input type="date" value={vitaForm.vitaDateEffet} onChange={(e) => setVitaForm(prev => ({ ...prev, vitaDateEffet: e.target.value }))} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Durée du contrat</Label>
+                    <Label>{t('depositContract.vita.contractDuration')}</Label>
                     <Select value={vitaForm.vitaDureeContrat} onValueChange={(v) => setVitaForm(prev => ({ ...prev, vitaDureeContrat: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={t('common.select')} /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="5">5 ans</SelectItem>
-                        <SelectItem value="10">10 ans</SelectItem>
-                        <SelectItem value="15">15 ans</SelectItem>
-                        <SelectItem value="20">20 ans</SelectItem>
-                        <SelectItem value="25">25 ans</SelectItem>
-                        <SelectItem value="30">30 ans</SelectItem>
-                        <SelectItem value="retraite">Jusqu'à la retraite</SelectItem>
+                        <SelectItem value="5">{t('depositContract.vita.years', { count: 5 })}</SelectItem>
+                        <SelectItem value="10">{t('depositContract.vita.years', { count: 10 })}</SelectItem>
+                        <SelectItem value="15">{t('depositContract.vita.years', { count: 15 })}</SelectItem>
+                        <SelectItem value="20">{t('depositContract.vita.years', { count: 20 })}</SelectItem>
+                        <SelectItem value="25">{t('depositContract.vita.years', { count: 25 })}</SelectItem>
+                        <SelectItem value="30">{t('depositContract.vita.years', { count: 30 })}</SelectItem>
+                        <SelectItem value="retraite">{t('depositContract.vita.untilRetirement')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Prime mensuelle nette (CHF)</Label>
-                    <Input type="number" value={vitaForm.vitaPrimeMensuelle} onChange={(e) => setVitaForm(prev => ({ ...prev, vitaPrimeMensuelle: e.target.value }))} placeholder="Diviser par 12 si annuelle" />
+                    <Label>{t('depositContract.vita.monthlyPremium')}</Label>
+                    <Input type="number" value={vitaForm.vitaPrimeMensuelle} onChange={(e) => setVitaForm(prev => ({ ...prev, vitaPrimeMensuelle: e.target.value }))} placeholder={t('depositContract.vita.divideByTwelve')} />
                   </div>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label>Nom de l'agent</Label>
+                <Label>{t('depositContract.common.agentName')}</Label>
                 <Input value={vitaForm.agentName} onChange={(e) => setVitaForm(prev => ({ ...prev, agentName: e.target.value }))} />
               </div>
 
               <div className="space-y-2">
-                <Label>Commentaires</Label>
-                <Textarea value={vitaForm.commentaires} onChange={(e) => setVitaForm(prev => ({ ...prev, commentaires: e.target.value }))} placeholder="Informations complémentaires..." rows={3} />
+                <Label>{t('depositContract.common.comments')}</Label>
+                <Textarea value={vitaForm.commentaires} onChange={(e) => setVitaForm(prev => ({ ...prev, commentaires: e.target.value }))} placeholder={t('depositContract.common.additionalInfo')} rows={3} />
               </div>
 
               <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg text-sm">
-                <p className="font-medium text-amber-800 dark:text-amber-200 mb-2">⚠️ Documents requis pour VITA :</p>
+                <p className="font-medium text-amber-800 dark:text-amber-200 mb-2">⚠️ {t('depositContract.vita.requiredDocsTitle')}</p>
                 <ul className="list-disc list-inside text-amber-700 dark:text-amber-300 space-y-1">
-                  <li><strong>Proposition avec déclaration de santé</strong></li>
-                  <li>Copie des pièces d'identité (certifiées signées et datées)</li>
-                  <li>Formulaire d'adéquation (PAX Quicksales)</li>
-                  <li>Formulaire débit direct (confirmer l'envoi à la banque)</li>
-                  <li><strong>Procès-verbal de conseil (VITA)</strong></li>
+                  <li><strong>{t('depositContract.vita.docProposal')}</strong></li>
+                  <li>{t('depositContract.vita.docIdentity')}</li>
+                  <li>{t('depositContract.vita.docAdequacy')}</li>
+                  <li>{t('depositContract.vita.docDirectDebit')}</li>
+                  <li><strong>{t('depositContract.vita.docMinutes')}</strong></li>
                 </ul>
               </div>
 
               <div className="space-y-4 p-4 border-2 rounded-lg" style={{ borderColor: tenantPrimaryColor || 'hsl(var(--primary)/0.3)', backgroundColor: tenantPrimaryColor ? `${tenantPrimaryColor}08` : 'hsl(var(--primary)/0.05)' }}>
                 <div className="flex items-center gap-2" style={{ color: tenantPrimaryColor || 'hsl(var(--primary))' }}>
                   <FileText className="h-5 w-5" />
-                  <h3 className="font-semibold">Documents à fournir</h3>
+                  <h3 className="font-semibold">{t('depositContract.common.documentsToProvide')}</h3>
                 </div>
                 <div className="space-y-3">
                   {vitaRequiredDocs.map((doc, i) => (
@@ -864,13 +868,13 @@ export default function DeposerContrat() {
               <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
                 <Checkbox id="vita-confirm" checked={vitaForm.confirmDocuments} onCheckedChange={(c) => setVitaForm(prev => ({ ...prev, confirmDocuments: c as boolean }))} />
                 <div className="space-y-1">
-                  <Label htmlFor="vita-confirm" className="font-medium cursor-pointer">Je confirme avoir téléchargé tous les documents requis</Label>
-                  <p className="text-sm text-muted-foreground">Vous avez ajouté {vitaDocuments.filter(Boolean).length} document(s)</p>
+                  <Label htmlFor="vita-confirm" className="font-medium cursor-pointer">{t('depositContract.common.confirmUpload')}</Label>
+                  <p className="text-sm text-muted-foreground">{t('depositContract.common.documentsAdded', { count: vitaDocuments.filter(Boolean).length })}</p>
                 </div>
               </div>
 
               <Button className="w-full" size="lg" onClick={handleSubmitVita} disabled={submitting} style={tenantPrimaryColor ? { backgroundColor: tenantPrimaryColor } : undefined}>
-                {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi en cours...</> : <><Upload className="mr-2 h-4 w-4" />Soumettre le formulaire VITA</>}
+                {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('depositContract.common.sending')}</> : <><Upload className="mr-2 h-4 w-4" />{t('depositContract.common.submitForm', { type: 'VITA' })}</>}
               </Button>
             </CardContent>
           </Card>
@@ -885,44 +889,44 @@ export default function DeposerContrat() {
                   <Home className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <span className="block">Formulaire MEDIO</span>
-                  <span className="text-sm font-normal text-muted-foreground">RC Privée / Ménage / Auto</span>
+                  <span className="block">{t('depositContract.medio.formTitle')}</span>
+                  <span className="text-sm font-normal text-muted-foreground">{t('depositContract.medio.formSubtitle')}</span>
                 </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Informations du preneur</h3>
+                <h3 className="font-semibold text-lg border-b pb-2">{t('depositContract.medio.policyholderInfo')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Nom *</Label>
-                    <Input value={medioForm.preneurNom} onChange={(e) => setMedioForm(prev => ({ ...prev, preneurNom: e.target.value }))} placeholder="Nom de famille" />
+                    <Label>{t('depositContract.common.lastName')} *</Label>
+                    <Input value={medioForm.preneurNom} onChange={(e) => setMedioForm(prev => ({ ...prev, preneurNom: e.target.value }))} placeholder={t('depositContract.common.lastNamePlaceholder')} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Prénom *</Label>
-                    <Input value={medioForm.preneurPrenom} onChange={(e) => setMedioForm(prev => ({ ...prev, preneurPrenom: e.target.value }))} placeholder="Prénom" />
+                    <Label>{t('depositContract.common.firstName')} *</Label>
+                    <Input value={medioForm.preneurPrenom} onChange={(e) => setMedioForm(prev => ({ ...prev, preneurPrenom: e.target.value }))} placeholder={t('depositContract.common.firstNamePlaceholder')} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Email *</Label>
+                    <Label>{t('depositContract.common.email')} *</Label>
                     <Input type="email" value={medioForm.preneurEmail} onChange={(e) => setMedioForm(prev => ({ ...prev, preneurEmail: e.target.value }))} placeholder="email@exemple.com" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Téléphone *</Label>
+                    <Label>{t('depositContract.common.phone')} *</Label>
                     <Input value={medioForm.preneurTel} onChange={(e) => setMedioForm(prev => ({ ...prev, preneurTel: e.target.value }))} placeholder="+41 79 000 00 00" />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2 md:col-span-2">
-                    <Label>Adresse</Label>
-                    <Input value={medioForm.preneurAdresse} onChange={(e) => setMedioForm(prev => ({ ...prev, preneurAdresse: e.target.value }))} placeholder="Rue et numéro" />
+                    <Label>{t('depositContract.common.address')}</Label>
+                    <Input value={medioForm.preneurAdresse} onChange={(e) => setMedioForm(prev => ({ ...prev, preneurAdresse: e.target.value }))} placeholder={t('depositContract.common.streetPlaceholder')} />
                   </div>
                   <div className="space-y-2">
-                    <Label>NPA</Label>
+                    <Label>{t('depositContract.common.postalCode')}</Label>
                     <Input value={medioForm.preneurNpa} onChange={(e) => setMedioForm(prev => ({ ...prev, preneurNpa: e.target.value }))} placeholder="1000" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Localité</Label>
-                    <Input value={medioForm.preneurLocalite} onChange={(e) => setMedioForm(prev => ({ ...prev, preneurLocalite: e.target.value }))} placeholder="Ville" />
+                    <Label>{t('depositContract.common.city')}</Label>
+                    <Input value={medioForm.preneurLocalite} onChange={(e) => setMedioForm(prev => ({ ...prev, preneurLocalite: e.target.value }))} placeholder={t('depositContract.common.cityPlaceholder')} />
                   </div>
                 </div>
               </div>
@@ -931,12 +935,12 @@ export default function DeposerContrat() {
               <div className="space-y-4 p-4 border rounded-lg">
                 <div className="flex items-center gap-3">
                   <Checkbox checked={medioForm.rcPrivee} onCheckedChange={(c) => setMedioForm(prev => ({ ...prev, rcPrivee: c as boolean }))} id="rc-privee" />
-                  <Label htmlFor="rc-privee" className="font-semibold text-lg cursor-pointer">Responsabilité Civile Privée</Label>
+                  <Label htmlFor="rc-privee" className="font-semibold text-lg cursor-pointer">{t('depositContract.medio.rcPrivate')}</Label>
                 </div>
                 {medioForm.rcPrivee && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div className="space-y-2">
-                      <Label>Somme d'assurance</Label>
+                      <Label>{t('depositContract.common.insuredSum')}</Label>
                       <Select value={medioForm.rcMontant} onValueChange={(v) => setMedioForm(prev => ({ ...prev, rcMontant: v }))}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -954,17 +958,17 @@ export default function DeposerContrat() {
               <div className="space-y-4 p-4 border rounded-lg">
                 <div className="flex items-center gap-3">
                   <Checkbox checked={medioForm.menage} onCheckedChange={(c) => setMedioForm(prev => ({ ...prev, menage: c as boolean }))} id="menage" />
-                  <Label htmlFor="menage" className="font-semibold text-lg cursor-pointer">Assurance Ménage</Label>
+                  <Label htmlFor="menage" className="font-semibold text-lg cursor-pointer">{t('depositContract.medio.household')}</Label>
                 </div>
                 {medioForm.menage && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div className="space-y-2">
-                      <Label>Valeur du mobilier (CHF)</Label>
+                      <Label>{t('depositContract.medio.furnitureValue')}</Label>
                       <Input type="number" value={medioForm.menageMontant} onChange={(e) => setMedioForm(prev => ({ ...prev, menageMontant: e.target.value }))} placeholder="50000" />
                     </div>
                     <div className="flex items-center gap-3 pt-6">
                       <Checkbox checked={medioForm.menageVol} onCheckedChange={(c) => setMedioForm(prev => ({ ...prev, menageVol: c as boolean }))} id="menage-vol" />
-                      <Label htmlFor="menage-vol" className="cursor-pointer">Inclure couverture vol</Label>
+                      <Label htmlFor="menage-vol" className="cursor-pointer">{t('depositContract.medio.includeTheft')}</Label>
                     </div>
                   </div>
                 )}
@@ -974,24 +978,24 @@ export default function DeposerContrat() {
               <div className="space-y-4 p-4 border rounded-lg">
                 <div className="flex items-center gap-3">
                   <Checkbox checked={medioForm.auto} onCheckedChange={(c) => setMedioForm(prev => ({ ...prev, auto: c as boolean }))} id="auto" />
-                  <Label htmlFor="auto" className="font-semibold text-lg cursor-pointer flex items-center gap-2"><Car className="h-5 w-5" /> Assurance Auto</Label>
+                  <Label htmlFor="auto" className="font-semibold text-lg cursor-pointer flex items-center gap-2"><Car className="h-5 w-5" /> {t('depositContract.medio.autoInsurance')}</Label>
                 </div>
                 {medioForm.auto && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div className="space-y-2">
-                      <Label>Marque</Label>
+                      <Label>{t('depositContract.medio.brand')}</Label>
                       <Input value={medioForm.marqueVehicule} onChange={(e) => setMedioForm(prev => ({ ...prev, marqueVehicule: e.target.value }))} placeholder="Ex: Volkswagen" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Modèle</Label>
+                      <Label>{t('depositContract.medio.model')}</Label>
                       <Input value={medioForm.modeleVehicule} onChange={(e) => setMedioForm(prev => ({ ...prev, modeleVehicule: e.target.value }))} placeholder="Ex: Golf" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Année</Label>
+                      <Label>{t('depositContract.medio.year')}</Label>
                       <Input value={medioForm.anneeVehicule} onChange={(e) => setMedioForm(prev => ({ ...prev, anneeVehicule: e.target.value }))} placeholder="2020" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Plaque / Immatriculation</Label>
+                      <Label>{t('depositContract.medio.licensePlate')}</Label>
                       <Input value={medioForm.plaqueVehicule} onChange={(e) => setMedioForm(prev => ({ ...prev, plaqueVehicule: e.target.value }))} placeholder="GE 123456" />
                     </div>
                   </div>
@@ -1000,24 +1004,24 @@ export default function DeposerContrat() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Date d'effet souhaitée</Label>
+                  <Label>{t('depositContract.common.desiredEffectDate')}</Label>
                   <Input type="date" value={medioForm.dateEffet} onChange={(e) => setMedioForm(prev => ({ ...prev, dateEffet: e.target.value }))} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Nom de l'agent</Label>
+                  <Label>{t('depositContract.common.agentName')}</Label>
                   <Input value={medioForm.agentName} onChange={(e) => setMedioForm(prev => ({ ...prev, agentName: e.target.value }))} />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label>Commentaires</Label>
-                <Textarea value={medioForm.commentaires} onChange={(e) => setMedioForm(prev => ({ ...prev, commentaires: e.target.value }))} placeholder="Besoins spécifiques, franchises souhaitées..." rows={3} />
+                <Label>{t('depositContract.common.comments')}</Label>
+                <Textarea value={medioForm.commentaires} onChange={(e) => setMedioForm(prev => ({ ...prev, commentaires: e.target.value }))} placeholder={t('depositContract.medio.commentsPlaceholder')} rows={3} />
               </div>
 
               <div className="space-y-4 p-4 border-2 rounded-lg" style={{ borderColor: tenantPrimaryColor || 'hsl(var(--primary)/0.3)', backgroundColor: tenantPrimaryColor ? `${tenantPrimaryColor}08` : 'hsl(var(--primary)/0.05)' }}>
                 <div className="flex items-center gap-2" style={{ color: tenantPrimaryColor || 'hsl(var(--primary))' }}>
                   <FileText className="h-5 w-5" />
-                  <h3 className="font-semibold">Documents à fournir</h3>
+                  <h3 className="font-semibold">{t('depositContract.common.documentsToProvide')}</h3>
                 </div>
                 <div className="space-y-3">
                   {medioRequiredDocs.map((doc, i) => (
@@ -1029,13 +1033,13 @@ export default function DeposerContrat() {
               <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
                 <Checkbox id="medio-confirm" checked={medioForm.confirmDocuments} onCheckedChange={(c) => setMedioForm(prev => ({ ...prev, confirmDocuments: c as boolean }))} />
                 <div className="space-y-1">
-                  <Label htmlFor="medio-confirm" className="font-medium cursor-pointer">Je confirme avoir téléchargé tous les documents requis</Label>
-                  <p className="text-sm text-muted-foreground">Vous avez ajouté {medioDocuments.filter(Boolean).length} document(s)</p>
+                  <Label htmlFor="medio-confirm" className="font-medium cursor-pointer">{t('depositContract.common.confirmUpload')}</Label>
+                  <p className="text-sm text-muted-foreground">{t('depositContract.common.documentsAdded', { count: medioDocuments.filter(Boolean).length })}</p>
                 </div>
               </div>
 
               <Button className="w-full" size="lg" onClick={handleSubmitMedio} disabled={submitting} style={tenantPrimaryColor ? { backgroundColor: tenantPrimaryColor } : undefined}>
-                {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi en cours...</> : <><Upload className="mr-2 h-4 w-4" />Soumettre le formulaire MEDIO</>}
+                {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('depositContract.common.sending')}</> : <><Upload className="mr-2 h-4 w-4" />{t('depositContract.common.submitForm', { type: 'MEDIO' })}</>}
               </Button>
             </CardContent>
           </Card>
@@ -1050,98 +1054,98 @@ export default function DeposerContrat() {
                   <Factory className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <span className="block">Formulaire BUSINESS</span>
-                  <span className="text-sm font-normal text-muted-foreground">Assurance Entreprise complète</span>
+                  <span className="block">{t('depositContract.business.formTitle')}</span>
+                  <span className="text-sm font-normal text-muted-foreground">{t('depositContract.business.formSubtitle')}</span>
                 </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-8">
               {/* Renseignements généraux */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2 flex items-center gap-2"><Building2 className="h-5 w-5" /> Renseignements généraux</h3>
+                <h3 className="font-semibold text-lg border-b pb-2 flex items-center gap-2"><Building2 className="h-5 w-5" /> {t('depositContract.business.generalInfo')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Nom de l'entreprise *</Label>
-                    <Input value={businessForm.entrepriseNom} onChange={(e) => setBusinessForm(prev => ({ ...prev, entrepriseNom: e.target.value }))} placeholder="Raison sociale" />
+                    <Label>{t('depositContract.business.companyName')} *</Label>
+                    <Input value={businessForm.entrepriseNom} onChange={(e) => setBusinessForm(prev => ({ ...prev, entrepriseNom: e.target.value }))} placeholder={t('depositContract.business.companyNamePlaceholder')} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Activité de l'entreprise *</Label>
-                    <Input value={businessForm.entrepriseActivite} onChange={(e) => setBusinessForm(prev => ({ ...prev, entrepriseActivite: e.target.value }))} placeholder="Secteur d'activité" />
+                    <Label>{t('depositContract.business.activity')} *</Label>
+                    <Input value={businessForm.entrepriseActivite} onChange={(e) => setBusinessForm(prev => ({ ...prev, entrepriseActivite: e.target.value }))} placeholder={t('depositContract.business.activityPlaceholder')} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Forme de la société *</Label>
+                    <Label>{t('depositContract.business.legalForm')} *</Label>
                     <Select value={businessForm.formeSociete} onValueChange={(v) => setBusinessForm(prev => ({ ...prev, formeSociete: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={t('common.select')} /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="sa">SA</SelectItem>
                         <SelectItem value="sarl">Sàrl</SelectItem>
-                        <SelectItem value="snc">Société en Nom Collectif</SelectItem>
-                        <SelectItem value="ri">Raison individuelle</SelectItem>
-                        <SelectItem value="association">Association</SelectItem>
+                        <SelectItem value="snc">{t('depositContract.business.snc')}</SelectItem>
+                        <SelectItem value="ri">{t('depositContract.business.ri')}</SelectItem>
+                        <SelectItem value="association">{t('depositContract.business.association')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Nouvelle création ? *</Label>
+                    <Label>{t('depositContract.business.newCreation')} *</Label>
                     <RadioGroup value={businessForm.nouvelleCreation} onValueChange={(v) => setBusinessForm(prev => ({ ...prev, nouvelleCreation: v }))} className="flex gap-4 pt-2">
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="oui" id="nc-oui" /><Label htmlFor="nc-oui">Oui</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="non" id="nc-non" /><Label htmlFor="nc-non">Non</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="oui" id="nc-oui" /><Label htmlFor="nc-oui">{t('common.yes')}</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="non" id="nc-non" /><Label htmlFor="nc-non">{t('common.no')}</Label></div>
                     </RadioGroup>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Adresse de l'entreprise *</Label>
-                  <Textarea value={businessForm.entrepriseAdresse} onChange={(e) => setBusinessForm(prev => ({ ...prev, entrepriseAdresse: e.target.value }))} placeholder="Adresse complète" rows={2} />
+                  <Label>{t('depositContract.business.companyAddress')} *</Label>
+                  <Textarea value={businessForm.entrepriseAdresse} onChange={(e) => setBusinessForm(prev => ({ ...prev, entrepriseAdresse: e.target.value }))} placeholder={t('depositContract.common.fullAddress')} rows={2} />
                 </div>
               </div>
 
               {/* Chef d'entreprise */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2 flex items-center gap-2"><User className="h-5 w-5" /> Chef d'entreprise</h3>
+                <h3 className="font-semibold text-lg border-b pb-2 flex items-center gap-2"><User className="h-5 w-5" /> {t('depositContract.business.ceo')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label>Civilité *</Label>
+                    <Label>{t('depositContract.business.title')} *</Label>
                     <Select value={businessForm.chefCivilite} onValueChange={(v) => setBusinessForm(prev => ({ ...prev, chefCivilite: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={t('common.select')} /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="m">Monsieur</SelectItem>
-                        <SelectItem value="mme">Madame</SelectItem>
+                        <SelectItem value="m">{t('common.mr')}</SelectItem>
+                        <SelectItem value="mme">{t('common.mrs')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Prénom *</Label>
+                    <Label>{t('depositContract.common.firstName')} *</Label>
                     <Input value={businessForm.chefPrenom} onChange={(e) => setBusinessForm(prev => ({ ...prev, chefPrenom: e.target.value }))} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Nom *</Label>
+                    <Label>{t('depositContract.common.lastName')} *</Label>
                     <Input value={businessForm.chefNom} onChange={(e) => setBusinessForm(prev => ({ ...prev, chefNom: e.target.value }))} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Date de naissance</Label>
+                    <Label>{t('depositContract.common.birthDate')}</Label>
                     <Input type="date" value={businessForm.chefDateNaissance} onChange={(e) => setBusinessForm(prev => ({ ...prev, chefDateNaissance: e.target.value }))} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Nationalité *</Label>
-                    <Input value={businessForm.chefNationalite} onChange={(e) => setBusinessForm(prev => ({ ...prev, chefNationalite: e.target.value }))} placeholder="Suisse" />
+                    <Label>{t('depositContract.business.nationality')} *</Label>
+                    <Input value={businessForm.chefNationalite} onChange={(e) => setBusinessForm(prev => ({ ...prev, chefNationalite: e.target.value }))} placeholder={t('depositContract.business.swiss')} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Permis de séjour *</Label>
+                    <Label>{t('depositContract.business.permit')} *</Label>
                     <Select value={businessForm.chefPermis} onValueChange={(v) => setBusinessForm(prev => ({ ...prev, chefPermis: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={t('common.select')} /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="suisse">Citoyen Suisse</SelectItem>
-                        <SelectItem value="c">Permis C</SelectItem>
-                        <SelectItem value="b">Permis B</SelectItem>
-                        <SelectItem value="g">Permis G</SelectItem>
-                        <SelectItem value="l">Permis L</SelectItem>
+                        <SelectItem value="suisse">{t('depositContract.business.swissCitizen')}</SelectItem>
+                        <SelectItem value="c">{t('depositContract.business.permitC')}</SelectItem>
+                        <SelectItem value="b">{t('depositContract.business.permitB')}</SelectItem>
+                        <SelectItem value="g">{t('depositContract.business.permitG')}</SelectItem>
+                        <SelectItem value="l">{t('depositContract.business.permitL')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Adresse du chef d'entreprise *</Label>
-                  <Input value={businessForm.chefAdresse} onChange={(e) => setBusinessForm(prev => ({ ...prev, chefAdresse: e.target.value }))} placeholder="Adresse complète" />
+                  <Label>{t('depositContract.business.ceoAddress')} *</Label>
+                  <Input value={businessForm.chefAdresse} onChange={(e) => setBusinessForm(prev => ({ ...prev, chefAdresse: e.target.value }))} placeholder={t('depositContract.common.fullAddress')} />
                 </div>
               </div>
 
@@ -1149,34 +1153,34 @@ export default function DeposerContrat() {
               <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
                 <div className="flex items-center gap-3">
                   <Checkbox checked={businessForm.rcEntreprise} onCheckedChange={(c) => setBusinessForm(prev => ({ ...prev, rcEntreprise: c as boolean }))} id="rc-entreprise" />
-                  <Label htmlFor="rc-entreprise" className="font-semibold text-lg cursor-pointer text-purple-700 dark:text-purple-300">Responsabilité Civile Entreprise</Label>
+                  <Label htmlFor="rc-entreprise" className="font-semibold text-lg cursor-pointer text-purple-700 dark:text-purple-300">{t('depositContract.business.rcBusiness')}</Label>
                 </div>
                 {businessForm.rcEntreprise && (
                   <div className="space-y-4 pt-2">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Assureur précédent ?</Label>
+                        <Label>{t('depositContract.business.previousInsurer')}</Label>
                         <RadioGroup value={businessForm.rcAssureurPrecedent} onValueChange={(v) => setBusinessForm(prev => ({ ...prev, rcAssureurPrecedent: v }))} className="flex gap-4">
-                          <div className="flex items-center space-x-2"><RadioGroupItem value="oui" id="rca-oui" /><Label htmlFor="rca-oui">Oui</Label></div>
-                          <div className="flex items-center space-x-2"><RadioGroupItem value="non" id="rca-non" /><Label htmlFor="rca-non">Non</Label></div>
+                          <div className="flex items-center space-x-2"><RadioGroupItem value="oui" id="rca-oui" /><Label htmlFor="rca-oui">{t('common.yes')}</Label></div>
+                          <div className="flex items-center space-x-2"><RadioGroupItem value="non" id="rca-non" /><Label htmlFor="rca-non">{t('common.no')}</Label></div>
                         </RadioGroup>
                       </div>
                       <div className="space-y-2">
-                        <Label>Type de contrat RC</Label>
+                        <Label>{t('depositContract.business.rcContractType')}</Label>
                         <Select value={businessForm.rcTypeContrat} onValueChange={(v) => setBusinessForm(prev => ({ ...prev, rcTypeContrat: v }))}>
-                          <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                          <SelectTrigger><SelectValue placeholder={t('common.select')} /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="base">RC de base (Bureau)</SelectItem>
-                            <SelectItem value="specifique">RC spécifique à l'activité</SelectItem>
+                            <SelectItem value="base">{t('depositContract.business.rcBase')}</SelectItem>
+                            <SelectItem value="specifique">{t('depositContract.business.rcSpecific')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Chiffre d'affaires (CHF)</Label>
+                        <Label>{t('depositContract.business.turnover')}</Label>
                         <Input type="number" value={businessForm.rcChiffreAffaire} onChange={(e) => setBusinessForm(prev => ({ ...prev, rcChiffreAffaire: e.target.value }))} placeholder="500000" />
                       </div>
                       <div className="space-y-2">
-                        <Label>Somme d'assurance</Label>
+                        <Label>{t('depositContract.common.insuredSum')}</Label>
                         <Select value={businessForm.rcSommeAssurance} onValueChange={(v) => setBusinessForm(prev => ({ ...prev, rcSommeAssurance: v }))}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
@@ -1187,7 +1191,7 @@ export default function DeposerContrat() {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Franchise</Label>
+                        <Label>{t('depositContract.business.deductible')}</Label>
                         <Select value={businessForm.rcFranchise} onValueChange={(v) => setBusinessForm(prev => ({ ...prev, rcFranchise: v }))}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
@@ -1209,40 +1213,40 @@ export default function DeposerContrat() {
               <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
                 <div className="flex items-center gap-3">
                   <Checkbox checked={businessForm.assuranceChoses} onCheckedChange={(c) => setBusinessForm(prev => ({ ...prev, assuranceChoses: c as boolean }))} id="assurance-choses" />
-                  <Label htmlFor="assurance-choses" className="font-semibold text-lg cursor-pointer text-purple-700 dark:text-purple-300">Assurance Choses Entreprise</Label>
+                  <Label htmlFor="assurance-choses" className="font-semibold text-lg cursor-pointer text-purple-700 dark:text-purple-300">{t('depositContract.business.propertyInsurance')}</Label>
                 </div>
                 {businessForm.assuranceChoses && (
                   <div className="space-y-4 pt-2">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="flex items-center gap-3">
                         <Checkbox checked={businessForm.chosesIncendie} onCheckedChange={(c) => setBusinessForm(prev => ({ ...prev, chosesIncendie: c as boolean }))} id="choses-incendie" />
-                        <Label htmlFor="choses-incendie" className="cursor-pointer">Incendie</Label>
+                        <Label htmlFor="choses-incendie" className="cursor-pointer">{t('depositContract.business.fire')}</Label>
                       </div>
                       {businessForm.chosesIncendie && (
                         <div className="space-y-2 md:col-span-2">
-                          <Input type="number" value={businessForm.chosesIncendieMontant} onChange={(e) => setBusinessForm(prev => ({ ...prev, chosesIncendieMontant: e.target.value }))} placeholder="Valeur totale CHF" />
+                          <Input type="number" value={businessForm.chosesIncendieMontant} onChange={(e) => setBusinessForm(prev => ({ ...prev, chosesIncendieMontant: e.target.value }))} placeholder={t('depositContract.business.totalValuePlaceholder')} />
                         </div>
                       )}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="flex items-center gap-3">
                         <Checkbox checked={businessForm.chosesVol} onCheckedChange={(c) => setBusinessForm(prev => ({ ...prev, chosesVol: c as boolean }))} id="choses-vol" />
-                        <Label htmlFor="choses-vol" className="cursor-pointer">Vol</Label>
+                        <Label htmlFor="choses-vol" className="cursor-pointer">{t('depositContract.business.theft')}</Label>
                       </div>
                       {businessForm.chosesVol && (
                         <div className="space-y-2 md:col-span-2">
-                          <Input type="number" value={businessForm.chosesVolMontant} onChange={(e) => setBusinessForm(prev => ({ ...prev, chosesVolMontant: e.target.value }))} placeholder="Somme d'assurance CHF" />
+                          <Input type="number" value={businessForm.chosesVolMontant} onChange={(e) => setBusinessForm(prev => ({ ...prev, chosesVolMontant: e.target.value }))} placeholder={t('depositContract.business.insuredSumPlaceholder')} />
                         </div>
                       )}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="flex items-center gap-3">
                         <Checkbox checked={businessForm.chosesDegatsEau} onCheckedChange={(c) => setBusinessForm(prev => ({ ...prev, chosesDegatsEau: c as boolean }))} id="choses-eau" />
-                        <Label htmlFor="choses-eau" className="cursor-pointer">Dégâts d'eau</Label>
+                        <Label htmlFor="choses-eau" className="cursor-pointer">{t('depositContract.business.waterDamage')}</Label>
                       </div>
                       {businessForm.chosesDegatsEau && (
                         <div className="space-y-2 md:col-span-2">
-                          <Input type="number" value={businessForm.chosesDegatsEauMontant} onChange={(e) => setBusinessForm(prev => ({ ...prev, chosesDegatsEauMontant: e.target.value }))} placeholder="Valeur totale CHF" />
+                          <Input type="number" value={businessForm.chosesDegatsEauMontant} onChange={(e) => setBusinessForm(prev => ({ ...prev, chosesDegatsEauMontant: e.target.value }))} placeholder={t('depositContract.business.totalValuePlaceholder')} />
                         </div>
                       )}
                     </div>
@@ -1252,47 +1256,47 @@ export default function DeposerContrat() {
 
               {/* LAA */}
               <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
-                <h4 className="font-semibold text-purple-700 dark:text-purple-300">Assurances de personnes employés</h4>
+                <h4 className="font-semibold text-purple-700 dark:text-purple-300">{t('depositContract.business.employeeInsurance')}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-center gap-3">
                     <Checkbox checked={businessForm.laaObligatoire} onCheckedChange={(c) => setBusinessForm(prev => ({ ...prev, laaObligatoire: c as boolean }))} id="laa-oblig" />
-                    <Label htmlFor="laa-oblig" className="cursor-pointer">LAA Obligatoire</Label>
+                    <Label htmlFor="laa-oblig" className="cursor-pointer">{t('depositContract.business.laaObligatory')}</Label>
                   </div>
                   <div className="flex items-center gap-3">
                     <Checkbox checked={businessForm.laaComplementaire} onCheckedChange={(c) => setBusinessForm(prev => ({ ...prev, laaComplementaire: c as boolean }))} id="laa-comp" />
-                    <Label htmlFor="laa-comp" className="cursor-pointer">LAA Complémentaire</Label>
+                    <Label htmlFor="laa-comp" className="cursor-pointer">{t('depositContract.business.laaSupplementary')}</Label>
                   </div>
                   <div className="flex items-center gap-3">
                     <Checkbox checked={businessForm.perteGainMaladie} onCheckedChange={(c) => setBusinessForm(prev => ({ ...prev, perteGainMaladie: c as boolean }))} id="pgm" />
-                    <Label htmlFor="pgm" className="cursor-pointer">Perte de gain maladie collective</Label>
+                    <Label htmlFor="pgm" className="cursor-pointer">{t('depositContract.business.lossOfEarnings')}</Label>
                   </div>
                 </div>
                 {(businessForm.laaObligatoire || businessForm.laaComplementaire || businessForm.perteGainMaladie) && (
                   <div className="space-y-4 pt-4 border-t">
-                    <p className="text-sm text-muted-foreground">Effectif des employés :</p>
+                    <p className="text-sm text-muted-foreground">{t('depositContract.business.staffCount')}</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
-                        <Label>Nombre de femmes</Label>
+                        <Label>{t('depositContract.business.womenCount')}</Label>
                         <Input type="number" value={businessForm.nombreFemmes} onChange={(e) => setBusinessForm(prev => ({ ...prev, nombreFemmes: e.target.value }))} />
                       </div>
                       <div className="space-y-2">
-                        <Label>Âge moyen femmes</Label>
+                        <Label>{t('depositContract.business.womenAvgAge')}</Label>
                         <Input type="number" value={businessForm.ageMoyenFemmes} onChange={(e) => setBusinessForm(prev => ({ ...prev, ageMoyenFemmes: e.target.value }))} />
                       </div>
                       <div className="space-y-2">
-                        <Label>Somme salaires femmes (annuel)</Label>
+                        <Label>{t('depositContract.business.womenSalaries')}</Label>
                         <Input type="number" value={businessForm.salairesFemmes} onChange={(e) => setBusinessForm(prev => ({ ...prev, salairesFemmes: e.target.value }))} />
                       </div>
                       <div className="space-y-2">
-                        <Label>Nombre d'hommes</Label>
+                        <Label>{t('depositContract.business.menCount')}</Label>
                         <Input type="number" value={businessForm.nombreHommes} onChange={(e) => setBusinessForm(prev => ({ ...prev, nombreHommes: e.target.value }))} />
                       </div>
                       <div className="space-y-2">
-                        <Label>Âge moyen hommes</Label>
+                        <Label>{t('depositContract.business.menAvgAge')}</Label>
                         <Input type="number" value={businessForm.ageMoyenHommes} onChange={(e) => setBusinessForm(prev => ({ ...prev, ageMoyenHommes: e.target.value }))} />
                       </div>
                       <div className="space-y-2">
-                        <Label>Somme salaires hommes (annuel)</Label>
+                        <Label>{t('depositContract.business.menSalaries')}</Label>
                         <Input type="number" value={businessForm.salairesHommes} onChange={(e) => setBusinessForm(prev => ({ ...prev, salairesHommes: e.target.value }))} />
                       </div>
                     </div>
@@ -1302,36 +1306,36 @@ export default function DeposerContrat() {
 
               {/* Finalisation */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Finalisation</h3>
+                <h3 className="font-semibold text-lg border-b pb-2">{t('depositContract.business.finalization')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Date d'effet souhaitée *</Label>
+                    <Label>{t('depositContract.common.desiredEffectDate')} *</Label>
                     <Input type="date" value={businessForm.dateEffet} onChange={(e) => setBusinessForm(prev => ({ ...prev, dateEffet: e.target.value }))} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Date du prochain RDV client</Label>
+                    <Label>{t('depositContract.business.nextMeeting')}</Label>
                     <Input type="date" value={businessForm.dateRdv} onChange={(e) => setBusinessForm(prev => ({ ...prev, dateRdv: e.target.value }))} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Email pour retour des offres *</Label>
+                    <Label>{t('depositContract.business.returnEmail')} *</Label>
                     <Input type="email" value={businessForm.emailRetour} onChange={(e) => setBusinessForm(prev => ({ ...prev, emailRetour: e.target.value }))} placeholder="email@entreprise.ch" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Langue des offres</Label>
+                    <Label>{t('depositContract.business.offerLanguage')}</Label>
                     <Select value={businessForm.langue} onValueChange={(v) => setBusinessForm(prev => ({ ...prev, langue: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="fr">Français</SelectItem>
-                        <SelectItem value="de">Allemand</SelectItem>
-                        <SelectItem value="it">Italien</SelectItem>
-                        <SelectItem value="en">Anglais</SelectItem>
+                        <SelectItem value="fr">{t('common.french')}</SelectItem>
+                        <SelectItem value="de">{t('common.german')}</SelectItem>
+                        <SelectItem value="it">{t('common.italian')}</SelectItem>
+                        <SelectItem value="en">{t('common.english')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Commentaires</Label>
-                  <Textarea value={businessForm.commentaires} onChange={(e) => setBusinessForm(prev => ({ ...prev, commentaires: e.target.value }))} placeholder="Besoins spécifiques, détails supplémentaires..." rows={4} />
+                  <Label>{t('depositContract.common.comments')}</Label>
+                  <Textarea value={businessForm.commentaires} onChange={(e) => setBusinessForm(prev => ({ ...prev, commentaires: e.target.value }))} placeholder={t('depositContract.business.commentsPlaceholder')} rows={4} />
                 </div>
               </div>
 
@@ -1339,9 +1343,9 @@ export default function DeposerContrat() {
               <div className="space-y-4 p-4 border-2 rounded-lg" style={{ borderColor: tenantPrimaryColor || 'hsl(var(--primary)/0.3)', backgroundColor: tenantPrimaryColor ? `${tenantPrimaryColor}08` : 'hsl(var(--primary)/0.05)' }}>
                 <div className="flex items-center gap-2" style={{ color: tenantPrimaryColor || 'hsl(var(--primary))' }}>
                   <FileText className="h-5 w-5" />
-                  <h3 className="font-semibold">Documents à fournir</h3>
+                  <h3 className="font-semibold">{t('depositContract.common.documentsToProvide')}</h3>
                 </div>
-                <p className="text-sm text-muted-foreground">Extrait du registre du commerce à inclure : <a href="http://zefix.admin.ch/" target="_blank" rel="noopener noreferrer" className="text-primary underline">zefix.admin.ch</a></p>
+                <p className="text-sm text-muted-foreground">{t('depositContract.business.zefixNote')} <a href="http://zefix.admin.ch/" target="_blank" rel="noopener noreferrer" className="text-primary underline">zefix.admin.ch</a></p>
                 <div className="space-y-3">
                   {businessRequiredDocs.map((doc, i) => (
                     <SingleDocumentUpload key={i} label={doc} docKind={`business_doc_${i}`} onUpload={(d) => setBusinessDocuments(prev => { const n = [...prev]; n[i] = d; return n; })} onRemove={() => setBusinessDocuments(prev => prev.filter((_, idx) => idx !== i))} uploadedDocument={businessDocuments[i] || null} required={i < 2} primaryColor={tenantPrimaryColor || undefined} />
@@ -1350,7 +1354,7 @@ export default function DeposerContrat() {
               </div>
 
               <Button className="w-full" size="lg" onClick={handleSubmitBusiness} disabled={submitting} style={tenantPrimaryColor ? { backgroundColor: tenantPrimaryColor } : undefined}>
-                {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi en cours...</> : <><Upload className="mr-2 h-4 w-4" />Soumettre le formulaire BUSINESS</>}
+                {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('depositContract.common.sending')}</> : <><Upload className="mr-2 h-4 w-4" />{t('depositContract.common.submitForm', { type: 'BUSINESS' })}</>}
               </Button>
             </CardContent>
           </Card>
