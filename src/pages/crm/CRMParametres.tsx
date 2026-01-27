@@ -664,12 +664,6 @@ export default function CRMParametres() {
               <span className="hidden sm:inline">{t('settings.profile')}</span>
             </TabsTrigger>
             {isAdmin && (
-              <TabsTrigger value="cabinet" className="gap-2 whitespace-nowrap">
-                <Building2 className="h-4 w-4" />
-                <span className="hidden sm:inline">{t('settings.cabinet')}</span>
-              </TabsTrigger>
-            )}
-            {isAdmin && (
               <TabsTrigger value="abonnement" className="gap-2 whitespace-nowrap">
                 <CreditCard className="h-4 w-4" />
                 <span className="hidden sm:inline">{t('subscription.title')}</span>
@@ -832,14 +826,10 @@ export default function CRMParametres() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
 
-        {/* CABINET INFO - Admin only */}
-        {isAdmin && (
-          <TabsContent value="cabinet" className="space-y-6 mt-6">
-            <CabinetInfoSettings />
-          </TabsContent>
-        )}
+          {/* Cabinet Info - Admin only */}
+          {isAdmin && <CabinetInfoSettings />}
+        </TabsContent>
 
         {/* ABONNEMENT - Admin only */}
         {isAdmin && (
