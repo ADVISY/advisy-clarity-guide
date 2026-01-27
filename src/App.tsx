@@ -52,6 +52,7 @@ import KingSecurity from "./pages/king/KingSecurity";
 import KingSettings from "./pages/king/KingSettings";
 import ComplianceReport from "./pages/king/ComplianceReport";
 import TenantOnboarding from "./pages/king/TenantOnboarding";
+import KingTenantImport from "./pages/king/KingTenantImport";
 import FontPreview from "./pages/FontPreview";
 
 const queryClient = new QueryClient();
@@ -101,6 +102,7 @@ const App = () => (
                 <Route index element={<KingDashboard />} />
                 <Route path="tenants" element={<KingTenants />} />
                 <Route path="tenants/:tenantId" element={<KingTenantDetail />} />
+                <Route path="tenants/:tenantId/import" element={<KingTenantImport />} />
                 <Route path="wizard" element={<KingWizard />} />
                 <Route path="users" element={<KingUsers />} />
                 <Route path="security" element={<KingSecurity />} />
