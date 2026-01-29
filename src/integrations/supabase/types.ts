@@ -14,6 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
+      affiliate_commissions: {
+        Row: {
+          affiliate_id: string
+          commission_amount: number
+          commission_rate: number
+          created_at: string
+          id: string
+          notes: string | null
+          paid_at: string | null
+          payment_amount: number
+          payment_date: string
+          payment_id: string
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id: string
+          commission_amount: number
+          commission_rate: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_amount: number
+          payment_date: string
+          payment_id: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_amount?: number
+          payment_date?: string
+          payment_id?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_commissions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_commissions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliates: {
+        Row: {
+          commission_rate: number
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          notes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          commission_rate?: number
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          commission_rate?: number
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_conversations: {
         Row: {
           created_at: string
@@ -3097,6 +3196,10 @@ export type Database = {
           activated_by: string | null
           address: string | null
           admin_email: string | null
+          affiliate_commission_rate: number | null
+          affiliate_eligibility_end: string | null
+          affiliate_id: string | null
+          affiliate_linked_at: string | null
           backoffice_email: string | null
           billing_status: Database["public"]["Enums"]["billing_status"] | null
           contact_name: string | null
@@ -3137,6 +3240,10 @@ export type Database = {
           activated_by?: string | null
           address?: string | null
           admin_email?: string | null
+          affiliate_commission_rate?: number | null
+          affiliate_eligibility_end?: string | null
+          affiliate_id?: string | null
+          affiliate_linked_at?: string | null
           backoffice_email?: string | null
           billing_status?: Database["public"]["Enums"]["billing_status"] | null
           contact_name?: string | null
@@ -3177,6 +3284,10 @@ export type Database = {
           activated_by?: string | null
           address?: string | null
           admin_email?: string | null
+          affiliate_commission_rate?: number | null
+          affiliate_eligibility_end?: string | null
+          affiliate_id?: string | null
+          affiliate_linked_at?: string | null
           backoffice_email?: string | null
           billing_status?: Database["public"]["Enums"]["billing_status"] | null
           contact_name?: string | null
@@ -3212,7 +3323,15 @@ export type Database = {
           tenant_status?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tenants_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transactions: {
         Row: {
@@ -3971,6 +4090,15 @@ export type Database = {
         }
         Returns: string
       }
+      generate_affiliate_commission: {
+        Args: {
+          p_payment_amount: number
+          p_payment_date: string
+          p_payment_id: string
+          p_tenant_id: string
+        }
+        Returns: string
+      }
       generate_verification_code: { Args: never; Returns: string }
       get_assigned_advisor_public: {
         Args: never
@@ -4077,6 +4205,10 @@ export type Database = {
       }
       is_king: { Args: never; Returns: boolean }
       is_tenant_admin: { Args: never; Returns: boolean }
+      is_tenant_affiliate_eligible: {
+        Args: { p_payment_date: string; p_tenant_id: string }
+        Returns: boolean
+      }
       log_king_action: {
         Args: {
           p_action: string

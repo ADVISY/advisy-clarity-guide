@@ -54,6 +54,8 @@ import KingPlans from "./pages/king/KingPlans";
 import ComplianceReport from "./pages/king/ComplianceReport";
 import TenantOnboarding from "./pages/king/TenantOnboarding";
 import KingTenantImport from "./pages/king/KingTenantImport";
+import KingAffiliates from "./pages/king/KingAffiliates";
+import KingAffiliateDetail from "./pages/king/KingAffiliateDetail";
 import FontPreview from "./pages/FontPreview";
 
 const queryClient = new QueryClient();
@@ -105,6 +107,8 @@ const App = () => (
                 <Route path="tenants/:tenantId" element={<KingTenantDetail />} />
                 <Route path="tenants/:tenantId/import" element={<KingTenantImport />} />
                 <Route path="wizard" element={<KingWizard />} />
+                <Route path="affiliates" element={<KingAffiliates />} />
+                <Route path="affiliates/:id" element={<KingAffiliateDetail />} />
                 <Route path="users" element={<KingUsers />} />
                 <Route path="plans" element={<KingPlans />} />
                 <Route path="security" element={<KingSecurity />} />

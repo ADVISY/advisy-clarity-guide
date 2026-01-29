@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { TenantPlan, PLAN_CONFIGS } from "@/config/plans";
+import { useAffiliates, Affiliate } from "@/hooks/useAffiliates";
+import { addMonths } from "date-fns";
 import { 
   Building2, 
   Palette, 
@@ -49,6 +51,7 @@ interface TenantFormData {
   contract_notification_emails: string[];
   plan: TenantPlan;
   extra_users: number;
+  affiliate_id: string | null;
   
   // Step 2 - Branding
   logo_url: string;
@@ -85,6 +88,7 @@ const initialFormData: TenantFormData = {
   contract_notification_emails: [],
   plan: "start",
   extra_users: 0,
+  affiliate_id: null,
   logo_url: "",
   primary_color: "#0066FF",
   secondary_color: "#1a1a2e",
@@ -114,12 +118,15 @@ const steps = [
 
 export default function KingWizard() {
   const navigate = useNavigate();
+  const { affiliates, getActiveAffiliates } = useAffiliates();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<TenantFormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [createdTenantId, setCreatedTenantId] = useState<string | null>(null);
   const [isOnboarding, setIsOnboarding] = useState(false);
+  
+  const activeAffiliates = getActiveAffiliates();
 
   const updateFormData = (field: keyof TenantFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -217,7 +224,21 @@ export default function KingWizard() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // 1. Create tenant with plan
+      // Get affiliate data for snapshot
+      let affiliateCommissionRate: number | null = null;
+      if (formData.affiliate_id) {
+        const { data: affiliateData } = await supabase
+          .from('affiliates')
+          .select('commission_rate')
+          .eq('id', formData.affiliate_id)
+          .single();
+        affiliateCommissionRate = affiliateData?.commission_rate || null;
+      }
+
+      const now = new Date();
+      const eligibilityEnd = formData.affiliate_id ? addMonths(now, 3) : null;
+
+      // 1. Create tenant with plan and affiliate
       const { data: tenant, error: tenantError } = await supabase
         .from('tenants')
         .insert({
@@ -232,6 +253,10 @@ export default function KingWizard() {
           plan: formData.plan,
           extra_users: formData.extra_users,
           billing_status: 'trial',
+          affiliate_id: formData.affiliate_id || null,
+          affiliate_commission_rate: affiliateCommissionRate,
+          affiliate_linked_at: formData.affiliate_id ? now.toISOString() : null,
+          affiliate_eligibility_end: eligibilityEnd?.toISOString() || null,
         })
         .select()
         .single();
@@ -655,6 +680,32 @@ export default function KingWizard() {
                       CHF {PLAN_CONFIGS[formData.plan].monthlyPrice + (formData.extra_users * PLAN_CONFIGS[formData.plan].extraSeatPrice)}
                     </span>
                   </div>
+                </div>
+
+                {/* Affiliate Selection */}
+                <div className="space-y-2 border-t pt-6">
+                  <Label className="flex items-center gap-2">
+                    Affilié associé (optionnel)
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    L'affilié recevra des commissions sur les paiements pendant 3 mois après activation
+                  </p>
+                  <Select 
+                    value={formData.affiliate_id || "none"} 
+                    onValueChange={(value) => updateFormData("affiliate_id", value === "none" ? null : value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Aucun affilié" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Aucun affilié</SelectItem>
+                      {activeAffiliates.map((affiliate) => (
+                        <SelectItem key={affiliate.id} value={affiliate.id}>
+                          {affiliate.first_name} {affiliate.last_name} ({affiliate.commission_rate}%)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
