@@ -18,6 +18,7 @@ import {
   FileCheck,
   BookOpen,
   Package,
+  Handshake,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -32,6 +33,7 @@ const menuItems = [
   { to: "/king", icon: LayoutDashboard, label: "Dashboard", end: true },
   { to: "/king/tenants", icon: Building2, label: "Clients SaaS" },
   { to: "/king/wizard", icon: Wand2, label: "Nouveau Client" },
+  { to: "/king/affiliates", icon: Handshake, label: "Affiliation" },
   { to: "/king/onboarding", icon: BookOpen, label: "Guide Onboarding" },
   { to: "/king/users", icon: Users, label: "Utilisateurs" },
   { to: "/king/plans", icon: Package, label: "Offres & Plans" },
