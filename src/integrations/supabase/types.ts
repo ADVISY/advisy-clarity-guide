@@ -72,6 +72,13 @@ export type Database = {
             foreignKeyName: "affiliate_commissions_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "affiliate_commissions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -291,6 +298,13 @@ export type Database = {
             foreignKeyName: "audit_logs_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "audit_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -397,6 +411,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "policies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claims_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "claims_tenant_id_fkey"
@@ -568,6 +589,13 @@ export type Database = {
             foreignKeyName: "clients_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "clients_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -631,6 +659,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clients_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaborator_permissions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "collaborator_permissions_tenant_id_fkey"
@@ -815,6 +850,13 @@ export type Database = {
             foreignKeyName: "commission_rules_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "commission_rules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -876,6 +918,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "commission_tiers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "commission_tiers_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -951,6 +1000,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "policies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "commissions_tenant_id_fkey"
@@ -1199,6 +1255,13 @@ export type Database = {
             foreignKeyName: "decomptes_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "decomptes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -1243,6 +1306,13 @@ export type Database = {
           tenant_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "document_categories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "document_categories_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -1300,6 +1370,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "documents_expiring_soon"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_reminders_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "document_reminders_tenant_id_fkey"
@@ -1363,6 +1440,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_templates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "document_templates_tenant_id_fkey"
@@ -1456,6 +1540,13 @@ export type Database = {
             foreignKeyName: "documents_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -1514,6 +1605,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_templates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "email_templates_tenant_id_fkey"
@@ -1706,6 +1804,13 @@ export type Database = {
             foreignKeyName: "king_audit_logs_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "king_audit_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -1761,6 +1866,13 @@ export type Database = {
           title?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "king_notifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "king_notifications_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -1896,6 +2008,13 @@ export type Database = {
             foreignKeyName: "notifications_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "notifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -2025,6 +2144,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "decomptes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payouts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "payouts_tenant_id_fkey"
@@ -2250,6 +2376,13 @@ export type Database = {
             foreignKeyName: "policies_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "policies_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -2361,6 +2494,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clients_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "propositions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "propositions_tenant_id_fkey"
@@ -2525,6 +2665,13 @@ export type Database = {
             foreignKeyName: "qr_invoices_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "qr_invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -2572,6 +2719,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clients_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reserve_accounts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "reserve_accounts_tenant_id_fkey"
@@ -2750,6 +2904,13 @@ export type Database = {
             foreignKeyName: "retrocommissions_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "retrocommissions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -2800,6 +2961,13 @@ export type Database = {
           tenant_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "scheduled_emails_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "scheduled_emails_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -2917,6 +3085,13 @@ export type Database = {
             foreignKeyName: "suivis_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "suivis_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -2991,6 +3166,70 @@ export type Database = {
             foreignKeyName: "tenant_branding_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: true
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "tenant_branding_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_consumption: {
+        Row: {
+          active_users: number
+          ai_docs_used: number
+          created_at: string
+          email_used: number
+          id: string
+          period_month: number
+          period_year: number
+          sms_used: number
+          storage_used_bytes: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          active_users?: number
+          ai_docs_used?: number
+          created_at?: string
+          email_used?: number
+          id?: string
+          period_month: number
+          period_year: number
+          sms_used?: number
+          storage_used_bytes?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          active_users?: number
+          ai_docs_used?: number
+          created_at?: string
+          email_used?: number
+          id?: string
+          period_month?: number
+          period_year?: number
+          sms_used?: number
+          storage_used_bytes?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_consumption_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "tenant_consumption_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -3050,6 +3289,115 @@ export type Database = {
             foreignKeyName: "tenant_email_automation_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: true
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "tenant_email_automation_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_limits: {
+        Row: {
+          ai_docs_limit_monthly: number
+          ai_enabled: boolean
+          created_at: string
+          email_limit_monthly: number
+          id: string
+          sms_limit_monthly: number
+          storage_limit_gb: number
+          tenant_id: string
+          updated_at: string
+          users_limit: number
+        }
+        Insert: {
+          ai_docs_limit_monthly?: number
+          ai_enabled?: boolean
+          created_at?: string
+          email_limit_monthly?: number
+          id?: string
+          sms_limit_monthly?: number
+          storage_limit_gb?: number
+          tenant_id: string
+          updated_at?: string
+          users_limit?: number
+        }
+        Update: {
+          ai_docs_limit_monthly?: number
+          ai_enabled?: boolean
+          created_at?: string
+          email_limit_monthly?: number
+          id?: string
+          sms_limit_monthly?: number
+          storage_limit_gb?: number
+          tenant_id?: string
+          updated_at?: string
+          users_limit?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_limits_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "tenant_limits_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_limits_audit: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          id: string
+          limit_type: string
+          new_value: string | null
+          old_value: string | null
+          reason: string | null
+          tenant_id: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          limit_type: string
+          new_value?: string | null
+          old_value?: string | null
+          reason?: string | null
+          tenant_id: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          limit_type?: string
+          new_value?: string | null
+          old_value?: string | null
+          reason?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_limits_audit_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "tenant_limits_audit_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -3138,6 +3486,13 @@ export type Database = {
             foreignKeyName: "tenant_roles_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "tenant_roles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -3181,6 +3536,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tenant_security_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "tenant_security_settings_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -3415,6 +3777,13 @@ export type Database = {
             foreignKeyName: "transactions_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "transactions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -3476,6 +3845,13 @@ export type Database = {
             foreignKeyName: "user_tenant_assignments_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "user_tenant_assignments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -3520,6 +3896,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenant_roles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_tenant_roles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "user_tenant_roles_tenant_id_fkey"
@@ -3663,6 +4046,13 @@ export type Database = {
             foreignKeyName: "webhooks_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "webhooks_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -3729,6 +4119,13 @@ export type Database = {
             foreignKeyName: "workflow_definitions_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "workflow_definitions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -3781,6 +4178,13 @@ export type Database = {
           workflow_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "workflow_executions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "workflow_executions_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -3954,6 +4358,13 @@ export type Database = {
             foreignKeyName: "clients_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "clients_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -4011,10 +4422,45 @@ export type Database = {
             foreignKeyName: "documents_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_consumption_summary"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
+      }
+      tenant_consumption_summary: {
+        Row: {
+          active_users: number | null
+          ai_docs_limit_monthly: number | null
+          ai_docs_percent: number | null
+          ai_docs_used: number | null
+          ai_enabled: boolean | null
+          current_month: number | null
+          current_year: number | null
+          email_limit_monthly: number | null
+          email_percent: number | null
+          email_used: number | null
+          sms_limit_monthly: number | null
+          sms_percent: number | null
+          sms_used: number | null
+          storage_limit_gb: number | null
+          storage_percent: number | null
+          storage_used_bytes: number | null
+          storage_used_gb: number | null
+          tenant_id: string | null
+          tenant_name: string | null
+          tenant_plan: Database["public"]["Enums"]["tenant_plan"] | null
+          tenant_status: string | null
+          users_limit: number | null
+          users_percent: number | null
+        }
+        Relationships: []
       }
     }
     Functions: {
@@ -4140,6 +4586,10 @@ export type Database = {
         Args: { p_tenant_id: string }
         Returns: string
       }
+      get_or_create_tenant_consumption: {
+        Args: { p_tenant_id: string }
+        Returns: string
+      }
       get_partner_policies: {
         Args: {
           p_limit?: number
@@ -4203,6 +4653,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_tenant_consumption: {
+        Args: { p_amount?: number; p_tenant_id: string; p_type: string }
+        Returns: boolean
+      }
       is_king: { Args: never; Returns: boolean }
       is_tenant_admin: { Args: never; Returns: boolean }
       is_tenant_affiliate_eligible: {
@@ -4218,6 +4672,16 @@ export type Database = {
         }
         Returns: string
       }
+      log_tenant_limit_change: {
+        Args: {
+          p_limit_type: string
+          p_new_value: string
+          p_old_value: string
+          p_reason?: string
+          p_tenant_id: string
+        }
+        Returns: string
+      }
       requires_sms_verification: {
         Args: { p_user_id: string }
         Returns: boolean
@@ -4226,6 +4690,10 @@ export type Database = {
       schedule_renewal_reminders: { Args: never; Returns: undefined }
       trigger_workflows_for_event: {
         Args: { p_event_data: Json; p_event_type: string; p_tenant_id: string }
+        Returns: number
+      }
+      update_tenant_storage_usage: {
+        Args: { p_tenant_id: string }
         Returns: number
       }
     }
