@@ -352,6 +352,21 @@ export default function ScanValidationDialog({
 
     setIsSubmitting(true);
     try {
+      // Non-blocking audit: mark validation started (helps debugging when UI goes blank)
+      try {
+        await supabase.from('document_scan_audit').insert({
+          scan_id: scan.id,
+          action: 'validation_started',
+          performed_by: user.id,
+          ai_response_snapshot: {
+            at: new Date().toISOString(),
+            tenant_id: tenantId,
+          },
+        });
+      } catch (e) {
+        console.warn('[ScanValidation] audit(validation_started) failed (non-critical):', e);
+      }
+
       // 1. Create the client - PRIORITIZE primary_holder from AI analysis, then fall back to fields
       const primaryHolder = scan.primary_holder;
       
@@ -1010,6 +1025,25 @@ export default function ScanValidationDialog({
     } catch (error: any) {
       console.error('[ScanValidation] Validation error:', error);
       setIsSubmitting(false);
+
+      // Non-blocking audit: capture failure details for debugging
+      try {
+        await supabase.from('document_scan_audit').insert({
+          scan_id: scan.id,
+          action: 'validation_failed',
+          performed_by: user?.id ?? null,
+          ai_response_snapshot: {
+            at: new Date().toISOString(),
+            code: (error as any)?.code,
+            status: (error as any)?.status,
+            message: (error as any)?.message,
+            hint: (error as any)?.hint,
+            details: (error as any)?.details,
+          },
+        });
+      } catch (e) {
+        console.warn('[ScanValidation] audit(validation_failed) failed (non-critical):', e);
+      }
       
       // Check for RLS policy errors
       if (error.message?.includes('row-level security policy') || error.code === '42501') {
@@ -1047,6 +1081,22 @@ export default function ScanValidationDialog({
         variant: "destructive",
       });
     }
+  };
+
+  // Safety wrapper: catches any error thrown *before* handleValidate's inner try/catch
+  // (e.g., unexpected runtime errors or rejected promises) to avoid full-page blank screens.
+  const safeHandleValidate: React.MouseEventHandler<HTMLButtonElement> = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    void handleValidate().catch((err) => {
+      console.error('[ScanValidation] Unhandled error in validation click handler:', err);
+      setIsSubmitting(false);
+      toast({
+        title: 'Erreur',
+        description: (err as any)?.message || 'Une erreur inattendue est survenue.',
+        variant: 'destructive',
+      });
+    });
   };
 
   const overallPercent = Math.round((scan.overall_confidence || 0) * 100);
@@ -1523,7 +1573,7 @@ export default function ScanValidationDialog({
             Annuler
           </Button>
           <Button
-            onClick={handleValidate}
+            onClick={safeHandleValidate}
             disabled={isSubmitting || tenantLoading || !tenantIdFromHook || !user}
             className="flex-1 bg-gradient-to-r from-primary to-violet-600 hover:from-primary/90 hover:to-violet-600/90"
           >
