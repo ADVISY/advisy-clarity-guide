@@ -878,25 +878,30 @@ export default function ScanValidationDialog({
         }
       }
 
-      // 9. Create audit log
-      await supabase.rpc('create_scan_audit_log', {
-        p_scan_id: scan.id,
-        p_action: 'validated',
-        p_ai_snapshot: {
-          validated_values: editedValues,
-          client_id: newClient.id,
-          policies: createdPolicies,
-          family_members: createdFamilyMembers,
-          suivis: createdSuivis,
-          options: {
-            createOldContract,
-            createNewContract,
-            createSuivis,
-            linkDocuments,
-            createFamilyMembers,
+      // 9. Create audit log (non-blocking - don't fail validation if this fails)
+      try {
+        await supabase.from('document_scan_audit').insert({
+          scan_id: scan.id,
+          action: 'validated',
+          performed_by: user.id,
+          ai_response_snapshot: {
+            validated_values: editedValues,
+            client_id: newClient.id,
+            policies: createdPolicies,
+            family_members: createdFamilyMembers,
+            suivis: createdSuivis,
+            options: {
+              createOldContract,
+              createNewContract,
+              createSuivis,
+              linkDocuments,
+              createFamilyMembers,
+            },
           },
-        },
-      });
+        });
+      } catch (auditError) {
+        console.warn('Audit log creation failed (non-critical):', auditError);
+      }
 
       // Build success message - count contracts (grouped by company), not individual products
       const oldContractsCount = createdPolicies.filter(p => p.type === 'old').length;
