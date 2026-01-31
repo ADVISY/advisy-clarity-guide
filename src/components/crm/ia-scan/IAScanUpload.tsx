@@ -129,6 +129,20 @@ export default function IAScanUpload({
   const startScan = async () => {
     if (uploadedFiles.length === 0) return;
 
+    const normalizedVerifiedEmail = (verifiedPartnerEmail ?? '').trim().toLowerCase();
+    if (!normalizedVerifiedEmail) {
+      setStatus('error');
+      setProgress(0);
+      setCurrentStep('');
+      setErrorMessage("Veuillez vérifier votre email collaborateur avant d'utiliser l'IA Scan.");
+      toast({
+        title: "Accès refusé",
+        description: "Veuillez vérifier votre email collaborateur avant d'utiliser l'IA Scan.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setStatus('uploading');
     setProgress(5);
     setErrorMessage(null);
@@ -186,8 +200,8 @@ export default function IAScanUpload({
           original_file_name: `Dossier (${uploadedFiles.length} documents)`,
           mime_type: 'batch',
           status: 'pending',
-          verified_partner_email: verifiedPartnerEmail,
-          verified_partner_id: verifiedPartnerId,
+          verified_partner_email: normalizedVerifiedEmail,
+          verified_partner_id: verifiedPartnerId ?? null,
         })
         .select()
         .single();
