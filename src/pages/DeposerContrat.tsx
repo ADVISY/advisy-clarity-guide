@@ -231,6 +231,9 @@ export default function DeposerContrat() {
   const [selectedFormType, setSelectedFormType] = useState<FormType>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const normalizedPartnerEmail = partnerEmail.trim().toLowerCase();
+  const isPartnerVerified = Boolean(verifiedPartner?.id) && normalizedPartnerEmail.length > 0;
+
   // SANA Form State
   const [sanaForm, setSanaForm] = useState<SanaFormData>({
     clientNom: "", clientPrenom: "", clientEmail: "", clientTel: "",
@@ -322,6 +325,14 @@ export default function DeposerContrat() {
     }
   }, [verifiedPartner]);
 
+  // Hard guard: prevent access to selection/form if partner isn't verified
+  useEffect(() => {
+    if (verificationStep !== 'email' && !isPartnerVerified) {
+      setVerificationStep('email');
+      setSelectedFormType(null);
+    }
+  }, [verificationStep, isPartnerVerified]);
+
   // Handle IA Scan results - prefill form with extracted data
   const handleSanaScanValidate = (validatedFields: Record<string, string>) => {
     setSanaForm(prev => ({
@@ -392,17 +403,20 @@ export default function DeposerContrat() {
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(partnerEmail.trim())) {
+    const emailToVerify = partnerEmail.trim().toLowerCase();
+    if (!emailRegex.test(emailToVerify)) {
       toast({ title: t('depositContract.invalidEmail'), description: t('depositContract.enterValidEmail'), variant: "destructive" });
       return;
     }
     setVerifying(true);
     try {
       const { data, error } = await supabase.functions.invoke('verify-partner-email', {
-        body: { email: partnerEmail.trim().toLowerCase() }
+        body: { email: emailToVerify }
       });
       if (error) throw new Error(error.message || t('depositContract.verificationError'));
       if (data?.success && data?.partner) {
+        // Store normalized email to ensure backend security checks work reliably
+        setPartnerEmail(emailToVerify);
         setVerifiedPartner(data.partner);
         setVerificationStep('selection');
         toast({ title: t('depositContract.welcome'), description: t('depositContract.accessGranted', { name: data.partner.name }) });
@@ -424,6 +438,15 @@ export default function DeposerContrat() {
   };
 
   const handleSelectFormType = (formType: FormType) => {
+    if (!isPartnerVerified) {
+      toast({
+        title: t('depositContract.accessDenied'),
+        description: t('depositContract.enterCollaboratorEmail'),
+        variant: "destructive",
+      });
+      setVerificationStep('email');
+      return;
+    }
     setSelectedFormType(formType);
     setVerificationStep('form');
   };
@@ -444,13 +467,13 @@ export default function DeposerContrat() {
             clientEmail: formData.clientEmail || formData.preneurEmail || formData.emailRetour || '',
             clientTel: formData.clientTel || formData.preneurTel || '',
             agentName: formData.agentName || verifiedPartner?.name || '',
-            agentEmail: partnerEmail,
+            agentEmail: normalizedPartnerEmail,
             formData,
             documents: documents.map(d => ({ file_name: d.file_name, doc_kind: d.doc_kind, file_key: d.file_key })),
             tenantSlug: tenant?.slug,
           },
           // Always notify the submitting collaborator as a minimum
-          notificationEmails: [partnerEmail.trim().toLowerCase()].filter(Boolean),
+          notificationEmails: [normalizedPartnerEmail].filter(Boolean),
         }
       });
 
@@ -479,7 +502,7 @@ export default function DeposerContrat() {
     try {
       const { data, error } = await supabase.functions.invoke('deposit-contract', {
         body: {
-          partnerEmail: partnerEmail,
+          partnerEmail: normalizedPartnerEmail,
           formType: 'sana',
           formData: sanaForm,
           startDate: sanaForm.lamalDateEffet || new Date().toISOString().split("T")[0],
@@ -514,7 +537,7 @@ export default function DeposerContrat() {
     try {
       const { data, error } = await supabase.functions.invoke('deposit-contract', {
         body: {
-          partnerEmail: partnerEmail,
+          partnerEmail: normalizedPartnerEmail,
           formType: 'vita',
           formData: vitaForm,
           startDate: vitaForm.vitaDateEffet || new Date().toISOString().split("T")[0],
@@ -550,7 +573,7 @@ export default function DeposerContrat() {
     try {
       const { data, error } = await supabase.functions.invoke('deposit-contract', {
         body: {
-          partnerEmail: partnerEmail,
+          partnerEmail: normalizedPartnerEmail,
           formType: 'medio',
           formData: medioForm,
           startDate: medioForm.dateEffet || new Date().toISOString().split("T")[0],
@@ -581,7 +604,7 @@ export default function DeposerContrat() {
     try {
       const { data, error } = await supabase.functions.invoke('deposit-contract', {
         body: {
-          partnerEmail: partnerEmail,
+          partnerEmail: normalizedPartnerEmail,
           formType: 'business',
           formData: businessForm,
           startDate: businessForm.dateEffet || new Date().toISOString().split("T")[0],
@@ -747,7 +770,7 @@ export default function DeposerContrat() {
                   tenantPlan={tenant?.plan}
                   onScanComplete={(results) => setSanaScanResults(results)}
                   primaryColor={tenantPrimaryColor || undefined}
-                  verifiedPartnerEmail={partnerEmail}
+                  verifiedPartnerEmail={normalizedPartnerEmail}
                   verifiedPartnerId={verifiedPartner?.id}
                 />
               )}
@@ -887,7 +910,7 @@ export default function DeposerContrat() {
                   tenantPlan={tenant?.plan}
                   onScanComplete={(results) => setVitaScanResults(results)}
                   primaryColor={tenantPrimaryColor || undefined}
-                  verifiedPartnerEmail={partnerEmail}
+                  verifiedPartnerEmail={normalizedPartnerEmail}
                   verifiedPartnerId={verifiedPartner?.id}
                 />
               )}
@@ -1021,7 +1044,7 @@ export default function DeposerContrat() {
                   tenantPlan={tenant?.plan}
                   onScanComplete={(results) => setMedioScanResults(results)}
                   primaryColor={tenantPrimaryColor || undefined}
-                  verifiedPartnerEmail={partnerEmail}
+                  verifiedPartnerEmail={normalizedPartnerEmail}
                   verifiedPartnerId={verifiedPartner?.id}
                 />
               )}
@@ -1206,7 +1229,7 @@ export default function DeposerContrat() {
                   tenantPlan={tenant?.plan}
                   onScanComplete={(results) => setBusinessScanResults(results)}
                   primaryColor={tenantPrimaryColor || undefined}
-                  verifiedPartnerEmail={partnerEmail}
+                  verifiedPartnerEmail={normalizedPartnerEmail}
                   verifiedPartnerId={verifiedPartner?.id}
                 />
               )}
