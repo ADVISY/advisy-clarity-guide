@@ -11,9 +11,12 @@ import {
   FileText, 
   CheckCircle2,
   AlertCircle,
-  Wand2
+  Wand2,
+  FolderOpen,
+  X
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 
 interface IAScanUploadProps {
   formType: 'sana' | 'vita' | 'medio' | 'business';
@@ -29,6 +32,7 @@ export interface ScanResults {
   qualityScore: number;
   overallConfidence: number;
   fields: ExtractedField[];
+  documentsProcessed?: number;
 }
 
 export interface ExtractedField {
@@ -39,9 +43,17 @@ export interface ExtractedField {
   confidence: 'high' | 'medium' | 'low';
   confidenceScore: number;
   notes?: string;
+  sourceDocument?: string;
 }
 
 type ScanStatus = 'idle' | 'uploading' | 'scanning' | 'completed' | 'error';
+
+interface UploadedFile {
+  file: File;
+  name: string;
+  status: 'pending' | 'uploading' | 'uploaded' | 'error';
+  storagePath?: string;
+}
 
 export default function IAScanUpload({ 
   formType, 
@@ -53,79 +65,131 @@ export default function IAScanUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<ScanStatus>('idle');
   const [progress, setProgress] = useState(0);
-  const [fileName, setFileName] = useState<string | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState<string>('');
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    // Validate file size (20MB max)
-    if (file.size > 20 * 1024 * 1024) {
-      toast({
-        title: "Fichier trop volumineux",
-        description: "La taille maximale est de 20MB",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate file type
+    // Validate files
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      toast({
-        title: "Type de fichier non supporté",
-        description: "Formats acceptés: PDF, JPG, PNG, WEBP",
-        variant: "destructive",
-      });
-      return;
+    const maxSize = 20 * 1024 * 1024; // 20MB
+
+    const validFiles: UploadedFile[] = [];
+    for (const file of files) {
+      if (file.size > maxSize) {
+        toast({
+          title: "Fichier trop volumineux",
+          description: `${file.name} dépasse la limite de 20MB`,
+          variant: "destructive",
+        });
+        continue;
+      }
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Type non supporté",
+          description: `${file.name}: formats acceptés PDF, JPG, PNG, WEBP`,
+          variant: "destructive",
+        });
+        continue;
+      }
+      validFiles.push({ file, name: file.name, status: 'pending' });
     }
 
-    setFileName(file.name);
+    if (validFiles.length === 0) return;
+
+    setUploadedFiles(prev => [...prev, ...validFiles]);
+    setStatus('idle');
+    setErrorMessage(null);
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const startScan = async () => {
+    if (uploadedFiles.length === 0) return;
+
     setStatus('uploading');
-    setProgress(10);
+    setProgress(5);
     setErrorMessage(null);
 
     try {
-      // 1. Upload file to storage
-      const fileExt = file.name.split('.').pop();
-      const storagePath = `ia-scans/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      // 1. Upload all files to storage
+      setCurrentStep('Upload des documents...');
+      const uploadedPaths: { path: string; fileName: string; mimeType: string }[] = [];
+      
+      for (let i = 0; i < uploadedFiles.length; i++) {
+        const uploadFile = uploadedFiles[i];
+        setUploadedFiles(prev => prev.map((f, idx) => 
+          idx === i ? { ...f, status: 'uploading' } : f
+        ));
 
-      const { error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(storagePath, file);
+        const fileExt = uploadFile.file.name.split('.').pop();
+        const storagePath = `ia-scans/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-      if (uploadError) throw uploadError;
-      setProgress(30);
+        const { error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(storagePath, uploadFile.file);
 
-      // 2. Create scan record
+        if (uploadError) {
+          setUploadedFiles(prev => prev.map((f, idx) => 
+            idx === i ? { ...f, status: 'error' } : f
+          ));
+          throw new Error(`Erreur upload ${uploadFile.name}: ${uploadError.message}`);
+        }
+
+        uploadedPaths.push({
+          path: storagePath,
+          fileName: uploadFile.file.name,
+          mimeType: uploadFile.file.type
+        });
+
+        setUploadedFiles(prev => prev.map((f, idx) => 
+          idx === i ? { ...f, status: 'uploaded', storagePath } : f
+        ));
+
+        setProgress(5 + Math.round((i + 1) / uploadedFiles.length * 25));
+      }
+
+      setProgress(35);
+      setStatus('scanning');
+      setCurrentStep('Création du dossier de scan...');
+
+      // 2. Create scan record for the batch
       const { data: scanRecord, error: scanError } = await supabase
         .from('document_scans' as any)
         .insert({
           tenant_id: tenantId,
           source_type: 'deposit',
           source_form_type: formType,
-          original_file_key: storagePath,
-          original_file_name: file.name,
-          mime_type: file.type,
+          original_file_key: uploadedPaths[0].path, // Primary file
+          original_file_name: `Dossier (${uploadedFiles.length} documents)`,
+          mime_type: 'batch',
           status: 'pending',
         })
         .select()
         .single();
 
       if (scanError) throw scanError;
-      setProgress(50);
-      setStatus('scanning');
+      setProgress(45);
+      setCurrentStep('Analyse IA en cours...');
 
-      // 3. Call scan-document edge function
+      // 3. Call scan-document edge function with all files
       const { data: scanResult, error: functionError } = await supabase.functions.invoke('scan-document', {
         body: {
           scanId: (scanRecord as any).id,
-          fileKey: storagePath,
-          fileName: file.name,
-          mimeType: file.type,
+          files: uploadedPaths,
           formType,
           tenantId,
+          batchMode: true,
         }
       });
 
@@ -133,6 +197,7 @@ export default function IAScanUpload({
       if (!scanResult.success) throw new Error(scanResult.error || 'Scan failed');
       
       setProgress(80);
+      setCurrentStep('Récupération des données extraites...');
 
       // 4. Fetch extracted fields
       const { data: extractedFields, error: fieldsError } = await supabase
@@ -144,6 +209,7 @@ export default function IAScanUpload({
 
       setProgress(100);
       setStatus('completed');
+      setCurrentStep('');
 
       // 5. Build results
       const results: ScanResults = {
@@ -152,6 +218,7 @@ export default function IAScanUpload({
         documentTypeConfidence: scanResult.documentTypeConfidence,
         qualityScore: scanResult.qualityScore,
         overallConfidence: scanResult.overallConfidence,
+        documentsProcessed: uploadedFiles.length,
         fields: (extractedFields as any[]).map(f => ({
           id: f.id,
           category: f.field_category,
@@ -166,32 +233,29 @@ export default function IAScanUpload({
       onScanComplete(results);
 
       toast({
-        title: "Document analysé",
-        description: `${results.fields.length} champs extraits avec succès`,
+        title: "Dossier analysé",
+        description: `${uploadedFiles.length} documents traités, ${results.fields.length} champs extraits`,
       });
 
     } catch (error: any) {
       console.error('IA Scan error:', error);
       setStatus('error');
+      setCurrentStep('');
       setErrorMessage(error.message || 'Une erreur est survenue');
       toast({
         title: "Erreur d'analyse",
-        description: error.message || 'Impossible d\'analyser le document',
+        description: error.message || 'Impossible d\'analyser les documents',
         variant: "destructive",
       });
-    }
-
-    // Reset input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
     }
   };
 
   const resetScan = () => {
     setStatus('idle');
     setProgress(0);
-    setFileName(null);
+    setUploadedFiles([]);
     setErrorMessage(null);
+    setCurrentStep('');
   };
 
   const getStatusIcon = () => {
@@ -211,17 +275,21 @@ export default function IAScanUpload({
   const getStatusText = () => {
     switch (status) {
       case 'uploading':
-        return 'Upload en cours...';
+        return currentStep || 'Upload en cours...';
       case 'scanning':
-        return 'Analyse IA en cours...';
+        return currentStep || 'Analyse IA en cours...';
       case 'completed':
         return 'Analyse terminée !';
       case 'error':
         return errorMessage || 'Erreur d\'analyse';
       default:
-        return 'Scannez un document pour pré-remplir automatiquement';
+        return uploadedFiles.length > 0 
+          ? `${uploadedFiles.length} document(s) prêt(s) à scanner`
+          : 'Déposez votre dossier complet (plusieurs documents)';
     }
   };
+
+  const isProcessing = status === 'uploading' || status === 'scanning';
 
   return (
     <Card className="border-2 border-dashed transition-all hover:border-primary/50" 
@@ -234,6 +302,7 @@ export default function IAScanUpload({
           onChange={handleFileSelect}
           className="hidden"
           id="ia-scan-upload"
+          multiple
         />
 
         <div className="flex flex-col items-center gap-4 text-center">
@@ -248,8 +317,8 @@ export default function IAScanUpload({
           {/* Title */}
           <div>
             <h3 className="font-semibold flex items-center justify-center gap-2">
-              <Sparkles className="h-4 w-4 text-amber-500" />
-              IA SCAN
+              <FolderOpen className="h-4 w-4" style={{ color: primaryColor || 'hsl(var(--primary))' }} />
+              IA SCAN DOSSIER
               <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full">
                 BETA
               </span>
@@ -259,37 +328,76 @@ export default function IAScanUpload({
             </p>
           </div>
 
-          {/* File name */}
-          {fileName && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-md">
-              <FileText className="h-4 w-4" />
-              <span className="truncate max-w-[200px]">{fileName}</span>
+          {/* Files list */}
+          {uploadedFiles.length > 0 && (
+            <div className="w-full max-w-md space-y-2">
+              {uploadedFiles.map((uf, index) => (
+                <div 
+                  key={index}
+                  className="flex items-center gap-2 text-sm bg-muted/50 px-3 py-2 rounded-md"
+                >
+                  <FileText className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate flex-1 text-left">{uf.name}</span>
+                  {uf.status === 'uploading' && (
+                    <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                  )}
+                  {uf.status === 'uploaded' && (
+                    <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                  )}
+                  {uf.status === 'error' && (
+                    <AlertCircle className="h-3 w-3 text-destructive" />
+                  )}
+                  {!isProcessing && status !== 'completed' && (
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      className="text-muted-foreground hover:text-destructive transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           )}
 
           {/* Progress bar */}
-          {(status === 'uploading' || status === 'scanning') && (
+          {isProcessing && (
             <div className="w-full max-w-xs">
               <Progress value={progress} className="h-2" />
               <p className="text-xs text-muted-foreground mt-1">
-                {status === 'uploading' ? 'Upload du document...' : 'Extraction des données...'}
+                {currentStep}
               </p>
             </div>
           )}
 
           {/* Action buttons */}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 justify-center">
             {status === 'idle' && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                style={primaryColor ? { borderColor: primaryColor, color: primaryColor } : undefined}
-                className="gap-2"
-              >
-                <Upload className="h-4 w-4" />
-                Scanner un document
-              </Button>
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  style={primaryColor ? { borderColor: primaryColor, color: primaryColor } : undefined}
+                  className="gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  {uploadedFiles.length > 0 ? 'Ajouter des documents' : 'Sélectionner les documents'}
+                </Button>
+
+                {uploadedFiles.length > 0 && (
+                  <Button
+                    type="button"
+                    onClick={startScan}
+                    style={primaryColor ? { backgroundColor: primaryColor } : undefined}
+                    className="gap-2"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    Scanner {uploadedFiles.length} document(s)
+                  </Button>
+                )}
+              </>
             )}
 
             {(status === 'completed' || status === 'error') && (
@@ -299,14 +407,22 @@ export default function IAScanUpload({
                 size="sm"
                 onClick={resetScan}
               >
-                Scanner un autre document
+                Scanner un autre dossier
               </Button>
             )}
           </div>
 
+          {/* Badge documents count */}
+          {status === 'completed' && (
+            <Badge variant="secondary" className="gap-1">
+              <CheckCircle2 className="h-3 w-3" />
+              {uploadedFiles.length} documents analysés
+            </Badge>
+          )}
+
           {/* Disclaimer */}
           <p className="text-xs text-muted-foreground max-w-sm">
-            Les données extraites sont des propositions de l'IA. Vérifiez avant validation.
+            Déposez tous les documents du dossier (police, offre, attestation...). L'IA consolidera les informations automatiquement.
           </p>
         </div>
       </CardContent>
