@@ -34,10 +34,11 @@ serve(async (req) => {
   const startTime = Date.now();
 
   try {
-    const { scanId, fileKey, fileName, mimeType, formType, tenantId } = await req.json();
+    const body = await req.json();
+    const { scanId, formType, tenantId, batchMode, files, fileKey, fileName, mimeType } = body;
 
-    if (!scanId || !fileKey) {
-      throw new Error("Missing required parameters: scanId and fileKey");
+    if (!scanId) {
+      throw new Error("Missing required parameter: scanId");
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -56,33 +57,58 @@ serve(async (req) => {
       .update({ status: "processing", updated_at: new Date().toISOString() })
       .eq("id", scanId);
 
-    // Download the file from storage
-    const { data: fileData, error: downloadError } = await supabase.storage
-      .from("documents")
-      .download(fileKey);
+    // Determine files to process
+    const filesToProcess: { path: string; fileName: string; mimeType: string }[] = batchMode && files 
+      ? files 
+      : [{ path: fileKey, fileName, mimeType }];
 
-    if (downloadError || !fileData) {
-      throw new Error(`Failed to download file: ${downloadError?.message}`);
+    console.log(`Processing ${filesToProcess.length} files in ${batchMode ? 'batch' : 'single'} mode`);
+
+    // Download and encode all files
+    const fileContents: { fileName: string; base64: string; mimeType: string }[] = [];
+    
+    for (const fileInfo of filesToProcess) {
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from("documents")
+        .download(fileInfo.path);
+
+      if (downloadError || !fileData) {
+        console.error(`Failed to download ${fileInfo.fileName}:`, downloadError);
+        continue;
+      }
+
+      const arrayBuffer = await fileData.arrayBuffer();
+      const base64File = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      
+      fileContents.push({
+        fileName: fileInfo.fileName,
+        base64: base64File,
+        mimeType: fileInfo.mimeType || 'application/pdf'
+      });
     }
 
-    // Convert to base64 for vision API
-    const arrayBuffer = await fileData.arrayBuffer();
-    const base64File = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-    const isImage = mimeType?.startsWith("image/");
-    const isPdf = mimeType === "application/pdf";
-
-    // Determine if OCR is needed
-    const ocrRequired = isImage || isPdf;
+    if (fileContents.length === 0) {
+      throw new Error("No files could be processed");
+    }
 
     // Build the prompt for document analysis
-    const systemPrompt = `Tu es un expert en analyse de documents d'assurance suisses. Tu dois:
-1. Classifier le type de document parmi: ${DOC_TYPES.join(', ')}
-2. Extraire les informations clés avec un niveau de confiance (high/medium/low)
-3. Retourner les données dans un format JSON structuré
+    const systemPrompt = `Tu es un expert en analyse de documents d'assurance suisses. Tu reçois un dossier complet de ${fileContents.length} document(s). Tu dois:
+
+1. Analyser TOUS les documents ensemble comme un dossier unique
+2. Classifier le type principal de dossier parmi: ${DOC_TYPES.join(', ')}
+3. Extraire et CONSOLIDER toutes les informations de TOUS les documents
+4. Pour chaque champ, indiquer la source (quel document) si pertinent
+5. Retourner les données dans un format JSON structuré
+
+RÈGLES IMPORTANTES:
+- Si une information apparaît dans plusieurs documents, prendre la plus récente ou la plus complète
+- Croiser les informations pour valider (ex: nom du client doit être cohérent)
+- Signaler les incohérences détectées entre documents
 
 Pour chaque champ extrait, indique:
-- La valeur trouvée
-- Le niveau de confiance (high si clairement lisible, medium si partiellement visible, low si incertain)
+- La valeur trouvée (consolidée si plusieurs sources)
+- Le niveau de confiance (high si clairement lisible et cohérent, medium si partiellement visible, low si incertain ou incohérent)
+- Le document source principal
 - Une note explicative si nécessaire
 
 Types de produits d'assurance suisses:
@@ -98,6 +124,8 @@ Réponds UNIQUEMENT en JSON valide avec cette structure:
   "document_type": "police|offre|avenant|resiliation|attestation|autre",
   "document_type_confidence": 0.95,
   "quality_score": 0.9,
+  "documents_analyzed": ["police.pdf", "attestation.pdf"],
+  "inconsistencies": ["Adresse différente entre police et attestation"],
   "fields": [
     {
       "category": "client|contract|premium|guarantees",
@@ -105,23 +133,44 @@ Réponds UNIQUEMENT en JSON valide avec cette structure:
       "value": "Dupont",
       "confidence": "high",
       "confidence_score": 0.95,
-      "notes": "Clairement visible en haut du document"
+      "source_document": "police.pdf",
+      "notes": "Nom confirmé sur 2 documents"
     }
   ]
 }`;
 
-    const userPrompt = `Analyse ce document d'assurance${formType ? ` (formulaire ${formType.toUpperCase()})` : ''} et extrait toutes les informations pertinentes.
+    const documentsDescription = fileContents.map((f, i) => 
+      `Document ${i + 1}: ${f.fileName}`
+    ).join('\n');
 
-Fichier: ${fileName}
-Type MIME: ${mimeType}
+    const userPrompt = `Analyse ce dossier d'assurance complet${formType ? ` (formulaire ${formType.toUpperCase()})` : ''} et extrait TOUTES les informations en les consolidant.
 
-Champs à extraire:
+DOCUMENTS DU DOSSIER:
+${documentsDescription}
+
+Champs à extraire et consolider:
 - Client: nom, prénom, date de naissance, email, téléphone, adresse, NPA, localité, canton, nationalité
-- Contrat: compagnie d'assurance, numéro de police, type de produit (LAMal/LCA/VIE/NON-VIE/LAA/LPP), date début, date fin
+- Contrat: compagnie d'assurance, numéro de police, type de produit (LAMal/LCA/VIE/NON-VIE/LAA/LPP), date début, date fin, durée
 - Primes: prime mensuelle, prime annuelle, franchise
 - Garanties: liste des garanties principales
 
+IMPORTANT: Consolide les informations de TOUS les documents. Signale les incohérences.
+
 Retourne UNIQUEMENT le JSON, sans texte additionnel.`;
+
+    // Build messages with all document images
+    const userContent: any[] = [
+      { type: "text", text: userPrompt }
+    ];
+
+    for (const fileContent of fileContents) {
+      userContent.push({
+        type: "image_url",
+        image_url: {
+          url: `data:${fileContent.mimeType};base64,${fileContent.base64}`,
+        },
+      });
+    }
 
     // Call Lovable AI Gateway with vision
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -134,20 +183,9 @@ Retourne UNIQUEMENT le JSON, sans texte additionnel.`;
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          {
-            role: "user",
-            content: [
-              { type: "text", text: userPrompt },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:${mimeType || 'application/pdf'};base64,${base64File}`,
-                },
-              },
-            ],
-          },
+          { role: "user", content: userContent },
         ],
-        max_tokens: 4000,
+        max_tokens: 8000,
         temperature: 0.1,
       }),
     });
@@ -177,12 +215,15 @@ Retourne UNIQUEMENT le JSON, sans texte additionnel.`;
       document_type: string;
       document_type_confidence: number;
       quality_score: number;
+      documents_analyzed?: string[];
+      inconsistencies?: string[];
       fields: Array<{
         category: string;
         name: string;
         value: string;
         confidence: 'high' | 'medium' | 'low';
         confidence_score: number;
+        source_document?: string;
         notes?: string;
       }>;
     };
@@ -217,7 +258,7 @@ Retourne UNIQUEMENT le JSON, sans texte additionnel.`;
         doc_type_confidence: parsedResult.document_type_confidence,
         quality_score: parsedResult.quality_score,
         overall_confidence: overallConfidence,
-        ocr_required: ocrRequired,
+        ocr_required: true,
         processing_time_ms: processingTime,
         ai_model_used: "google/gemini-2.5-flash",
         updated_at: new Date().toISOString(),
@@ -236,7 +277,10 @@ Retourne UNIQUEMENT le JSON, sans texte additionnel.`;
       extracted_value: field.value,
       confidence: field.confidence,
       confidence_score: field.confidence_score,
-      extraction_notes: field.notes || null,
+      extraction_notes: [
+        field.source_document ? `Source: ${field.source_document}` : null,
+        field.notes
+      ].filter(Boolean).join(' | ') || null,
     }));
 
     if (fieldsToInsert.length > 0) {
@@ -253,7 +297,11 @@ Retourne UNIQUEMENT le JSON, sans texte additionnel.`;
     await supabase.rpc("create_scan_audit_log", {
       p_scan_id: scanId,
       p_action: "extracted",
-      p_ai_snapshot: parsedResult,
+      p_ai_snapshot: {
+        ...parsedResult,
+        batch_mode: batchMode,
+        files_count: fileContents.length
+      },
     });
 
     // Increment tenant AI docs usage
@@ -261,7 +309,7 @@ Retourne UNIQUEMENT le JSON, sans texte additionnel.`;
       await supabase.rpc("increment_tenant_consumption", {
         p_tenant_id: tenantId,
         p_type: "ai_docs",
-        p_amount: 1,
+        p_amount: fileContents.length, // Count each document
       });
     }
 
@@ -273,6 +321,8 @@ Retourne UNIQUEMENT le JSON, sans texte additionnel.`;
         documentTypeConfidence: parsedResult.document_type_confidence,
         qualityScore: parsedResult.quality_score,
         overallConfidence,
+        documentsProcessed: fileContents.length,
+        inconsistencies: parsedResult.inconsistencies || [],
         fieldsExtracted: fieldsToInsert.length,
         processingTimeMs: processingTime,
       }),
