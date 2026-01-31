@@ -140,7 +140,7 @@ export default function ScanValidationDialog({
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { tenantId } = useUserTenant();
+  const { tenantId: tenantIdFromHook, loading: tenantLoading } = useUserTenant();
 
   const [editedValues, setEditedValues] = useState<Record<string, string>>({});
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -298,17 +298,57 @@ export default function ScanValidationDialog({
   };
 
   const handleValidate = async () => {
-    console.log('[ScanValidation] Starting validation...', { userId: user?.id, tenantId });
-    
-    if (!user || !tenantId) {
-      console.error('[ScanValidation] Missing user or tenantId', { user: !!user, tenantId: !!tenantId });
+    console.log('[ScanValidation] Starting validation...', { userId: user?.id, tenantId: tenantIdFromHook });
+
+    if (!user) {
+      console.error('[ScanValidation] Missing user');
       toast({
-        title: "Erreur",
-        description: "Session expirée. Veuillez vous reconnecter.",
+        title: "Session expirée",
+        description: "Veuillez vous reconnecter.",
+        variant: "destructive",
+      });
+      navigate('/connexion');
+      return;
+    }
+
+    // Resolve tenantId reliably (useUserTenant can be briefly empty right after login)
+    let effectiveTenantId = tenantIdFromHook;
+    if (!effectiveTenantId) {
+      if (tenantLoading) {
+        toast({
+          title: "Chargement en cours",
+          description: "Votre cabinet est en cours de chargement. Réessayez dans 2 secondes.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('user_tenant_assignments')
+        .select('tenant_id')
+        .eq('user_id', user.id)
+        .not('tenant_id', 'is', null)
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error('[ScanValidation] Failed to resolve tenantId from assignments:', error);
+      }
+
+      effectiveTenantId = data?.tenant_id ?? null;
+    }
+
+    if (!effectiveTenantId) {
+      toast({
+        title: "Cabinet introuvable",
+        description: "Aucun cabinet n'est associé à votre compte. Contactez un administrateur.",
         variant: "destructive",
       });
       return;
     }
+
+    // Shadow tenantId inside this handler so the rest of the function remains unchanged
+    const tenantId = effectiveTenantId;
 
     setIsSubmitting(true);
     try {
@@ -982,7 +1022,16 @@ export default function ScanValidationDialog({
       }
       
       // Check if it's an auth/session error
-      if (error.message?.includes('JWT') || error.message?.includes('token') || error.code === 'PGRST301') {
+      const status = (error as any)?.status;
+      const message = (error as any)?.message as string | undefined;
+
+      const isAuthError =
+        error.code === 'PGRST301' ||
+        status === 401 ||
+        status === 403 ||
+        (typeof message === 'string' && /jwt|invalid.*jwt|token.*expired|refresh_token/i.test(message));
+
+      if (isAuthError) {
         toast({
           title: "Session expirée",
           description: "Votre session a expiré. Veuillez vous reconnecter.",
@@ -1475,7 +1524,7 @@ export default function ScanValidationDialog({
           </Button>
           <Button
             onClick={handleValidate}
-            disabled={isSubmitting}
+            disabled={isSubmitting || tenantLoading || !tenantIdFromHook || !user}
             className="flex-1 bg-gradient-to-r from-primary to-violet-600 hover:from-primary/90 hover:to-violet-600/90"
           >
             {isSubmitting ? (
