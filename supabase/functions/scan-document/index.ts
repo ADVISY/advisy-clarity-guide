@@ -313,6 +313,70 @@ Retourne UNIQUEMENT le JSON, sans texte additionnel.`;
       });
     }
 
+    // Get scan record to get partner email
+    const { data: scanData } = await supabase
+      .from("document_scans")
+      .select("verified_partner_email, source_form_type")
+      .eq("id", scanId)
+      .single();
+
+    // Send notification to tenant admins
+    if (tenantId) {
+      // Get admin users for this tenant
+      const { data: adminUsers, error: adminError } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "admin");
+
+      if (!adminError && adminUsers && adminUsers.length > 0) {
+        // Build summary of fields to validate
+        const fieldsSummary = parsedResult.fields.map(f => ({
+          name: f.name,
+          value: f.value,
+          confidence: f.confidence,
+          category: f.category,
+        }));
+
+        const lowConfidenceCount = parsedResult.fields.filter(f => f.confidence === 'low').length;
+        const mediumConfidenceCount = parsedResult.fields.filter(f => f.confidence === 'medium').length;
+
+        // Create notification for each admin
+        const notifications = adminUsers.map(admin => ({
+          user_id: admin.user_id,
+          tenant_id: tenantId,
+          kind: 'new_contract',
+          priority: lowConfidenceCount > 0 ? 'high' : 'normal',
+          title: `📄 Nouveau dépôt à valider (${formType?.toUpperCase() || 'Document'})`,
+          message: `${fileContents.length} document(s) scanné(s) par ${scanData?.verified_partner_email || 'Partenaire'}. ${parsedResult.fields.length} champs extraits (${lowConfidenceCount} incertains, ${mediumConfidenceCount} moyens).`,
+          payload: {
+            scan_id: scanId,
+            form_type: formType,
+            partner_email: scanData?.verified_partner_email,
+            document_type: parsedResult.document_type,
+            documents_count: fileContents.length,
+            fields_count: parsedResult.fields.length,
+            low_confidence_count: lowConfidenceCount,
+            medium_confidence_count: mediumConfidenceCount,
+            quality_score: parsedResult.quality_score,
+            inconsistencies: parsedResult.inconsistencies || [],
+            fields_preview: fieldsSummary.slice(0, 10), // First 10 fields as preview
+          },
+          action_url: `/crm/propositions?scan=${scanId}`,
+          action_label: 'Valider le dépôt',
+        }));
+
+        const { error: notifError } = await supabase
+          .from("notifications")
+          .insert(notifications);
+
+        if (notifError) {
+          console.error("Failed to create admin notifications:", notifError);
+        } else {
+          console.log(`Sent notifications to ${adminUsers.length} admin(s) for scan ${scanId}`);
+        }
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
