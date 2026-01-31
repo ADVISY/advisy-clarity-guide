@@ -183,32 +183,32 @@ const getFormTypes = (t: (key: string) => string) => [
   {
     id: 'sana' as FormType,
     title: 'SANA',
-    subtitle: t('depositContract.sana.subtitle'),
-    description: t('depositContract.sana.description'),
+    subtitle: t('depositContract.formTypes.sana.subtitle'),
+    description: t('depositContract.formTypes.sana.description'),
     icon: Shield,
     color: 'from-blue-500 to-blue-600',
   },
   {
     id: 'vita' as FormType,
     title: 'VITA',
-    subtitle: t('depositContract.vita.subtitle'),
-    description: t('depositContract.vita.description'),
+    subtitle: t('depositContract.formTypes.vita.subtitle'),
+    description: t('depositContract.formTypes.vita.description'),
     icon: Heart,
     color: 'from-red-500 to-red-600',
   },
   {
     id: 'medio' as FormType,
     title: 'MEDIO',
-    subtitle: t('depositContract.medio.subtitle'),
-    description: t('depositContract.medio.description'),
+    subtitle: t('depositContract.formTypes.medio.subtitle'),
+    description: t('depositContract.formTypes.medio.description'),
     icon: Home,
     color: 'from-green-500 to-green-600',
   },
   {
     id: 'business' as FormType,
     title: 'BUSINESS',
-    subtitle: t('depositContract.business.subtitle'),
-    description: t('depositContract.business.description'),
+    subtitle: t('depositContract.formTypes.business.subtitle'),
+    description: t('depositContract.formTypes.business.description'),
     icon: Factory,
     color: 'from-purple-500 to-purple-600',
   },
@@ -744,6 +744,7 @@ export default function DeposerContrat() {
                 <IAScanUpload
                   formType="sana"
                   tenantId={tenant?.id}
+                  tenantPlan={tenant?.plan}
                   onScanComplete={(results) => setSanaScanResults(results)}
                   primaryColor={tenantPrimaryColor || undefined}
                 />
@@ -881,6 +882,7 @@ export default function DeposerContrat() {
                 <IAScanUpload
                   formType="vita"
                   tenantId={tenant?.id}
+                  tenantPlan={tenant?.plan}
                   onScanComplete={(results) => setVitaScanResults(results)}
                   primaryColor={tenantPrimaryColor || undefined}
                 />
@@ -1012,6 +1014,7 @@ export default function DeposerContrat() {
                 <IAScanUpload
                   formType="medio"
                   tenantId={tenant?.id}
+                  tenantPlan={tenant?.plan}
                   onScanComplete={(results) => setMedioScanResults(results)}
                   primaryColor={tenantPrimaryColor || undefined}
                 />
@@ -1194,6 +1197,7 @@ export default function DeposerContrat() {
                 <IAScanUpload
                   formType="business"
                   tenantId={tenant?.id}
+                  tenantPlan={tenant?.plan}
                   onScanComplete={(results) => setBusinessScanResults(results)}
                   primaryColor={tenantPrimaryColor || undefined}
                 />

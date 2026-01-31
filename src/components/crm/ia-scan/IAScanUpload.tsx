@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Upload, 
@@ -14,15 +14,17 @@ import {
   Wand2,
   FolderOpen,
   X,
-  Crown
+  Crown,
+  Lock
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { ModuleGate } from "@/components/ModuleGate";
+import { TenantPlan, isModuleEnabled, PLAN_CONFIGS } from "@/config/plans";
 
 interface IAScanUploadProps {
   formType: 'sana' | 'vita' | 'medio' | 'business';
   tenantId?: string;
+  tenantPlan?: TenantPlan;
   onScanComplete: (results: ScanResults) => void;
   primaryColor?: string;
 }
@@ -60,6 +62,7 @@ interface UploadedFile {
 export default function IAScanUpload({ 
   formType, 
   tenantId,
+  tenantPlan = 'start',
   onScanComplete,
   primaryColor 
 }: IAScanUploadProps) {
@@ -70,6 +73,9 @@ export default function IAScanUpload({
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<string>('');
+
+  // Check if module is enabled for this tenant's plan
+  const isIaScanEnabled = isModuleEnabled(tenantPlan, 'ia_scan');
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -293,10 +299,36 @@ export default function IAScanUpload({
 
   const isProcessing = status === 'uploading' || status === 'scanning';
 
+  // If module not enabled, show upgrade prompt
+  if (!isIaScanEnabled) {
+    return (
+      <Card className="border-dashed border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+        <CardHeader className="text-center pb-2">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 border border-primary/20">
+            <Lock className="h-7 w-7 text-primary" />
+          </div>
+          <CardTitle className="text-lg">IA Scan Dossier</CardTitle>
+          <CardDescription className="space-y-1">
+            <span className="font-medium text-foreground">Scanner intelligent de documents</span>
+            <br />
+            Disponible avec les offres{' '}
+            <Badge variant="secondary" className="ml-1">Prime</Badge>{' '}
+            <Badge variant="secondary" className="ml-1">Prime Founder</Badge>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-center pt-2">
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <Crown className="h-4 w-4 text-amber-500" />
+            Contactez votre administrateur pour activer cette fonctionnalité
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <ModuleGate module="ia_scan">
-      <Card className="border-2 border-dashed transition-all hover:border-primary/50" 
-            style={{ borderColor: status === 'completed' ? '#10b981' : undefined }}>
+    <Card className="border-2 border-dashed transition-all hover:border-primary/50" 
+          style={{ borderColor: status === 'completed' ? 'hsl(var(--success))' : undefined }}>
       <CardContent className="p-6">
         <Input
           ref={fileInputRef}
@@ -429,7 +461,6 @@ export default function IAScanUpload({
           </p>
         </div>
       </CardContent>
-      </Card>
-    </ModuleGate>
+    </Card>
   );
 }
