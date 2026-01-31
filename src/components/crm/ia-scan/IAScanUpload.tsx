@@ -27,6 +27,8 @@ interface IAScanUploadProps {
   tenantPlan?: TenantPlan;
   onScanComplete: (results: ScanResults) => void;
   primaryColor?: string;
+  verifiedPartnerEmail?: string;
+  verifiedPartnerId?: string;
 }
 
 export interface ScanResults {
@@ -64,7 +66,9 @@ export default function IAScanUpload({
   tenantId,
   tenantPlan = 'start',
   onScanComplete,
-  primaryColor 
+  primaryColor,
+  verifiedPartnerEmail,
+  verifiedPartnerId,
 }: IAScanUploadProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -171,7 +175,7 @@ export default function IAScanUpload({
       setStatus('scanning');
       setCurrentStep('Création du dossier de scan...');
 
-      // 2. Create scan record for the batch
+      // 2. Create scan record for the batch (requires verified partner email for security)
       const { data: scanRecord, error: scanError } = await supabase
         .from('document_scans' as any)
         .insert({
@@ -182,6 +186,8 @@ export default function IAScanUpload({
           original_file_name: `Dossier (${uploadedFiles.length} documents)`,
           mime_type: 'batch',
           status: 'pending',
+          verified_partner_email: verifiedPartnerEmail,
+          verified_partner_id: verifiedPartnerId,
         })
         .select()
         .single();

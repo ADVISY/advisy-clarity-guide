@@ -1437,6 +1437,8 @@ export type Database = {
           uploaded_by: string | null
           validated_at: string | null
           validated_by: string | null
+          verified_partner_email: string | null
+          verified_partner_id: string | null
         }
         Insert: {
           ai_model_used?: string | null
@@ -1461,6 +1463,8 @@ export type Database = {
           uploaded_by?: string | null
           validated_at?: string | null
           validated_by?: string | null
+          verified_partner_email?: string | null
+          verified_partner_id?: string | null
         }
         Update: {
           ai_model_used?: string | null
@@ -1485,6 +1489,8 @@ export type Database = {
           uploaded_by?: string | null
           validated_at?: string | null
           validated_by?: string | null
+          verified_partner_email?: string | null
+          verified_partner_id?: string | null
         }
         Relationships: [
           {
