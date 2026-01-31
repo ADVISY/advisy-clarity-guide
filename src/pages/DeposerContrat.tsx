@@ -747,6 +747,8 @@ export default function DeposerContrat() {
                   tenantPlan={tenant?.plan}
                   onScanComplete={(results) => setSanaScanResults(results)}
                   primaryColor={tenantPrimaryColor || undefined}
+                  verifiedPartnerEmail={partnerEmail}
+                  verifiedPartnerId={verifiedPartner?.id}
                 />
               )}
 
@@ -885,6 +887,8 @@ export default function DeposerContrat() {
                   tenantPlan={tenant?.plan}
                   onScanComplete={(results) => setVitaScanResults(results)}
                   primaryColor={tenantPrimaryColor || undefined}
+                  verifiedPartnerEmail={partnerEmail}
+                  verifiedPartnerId={verifiedPartner?.id}
                 />
               )}
 
@@ -1017,6 +1021,8 @@ export default function DeposerContrat() {
                   tenantPlan={tenant?.plan}
                   onScanComplete={(results) => setMedioScanResults(results)}
                   primaryColor={tenantPrimaryColor || undefined}
+                  verifiedPartnerEmail={partnerEmail}
+                  verifiedPartnerId={verifiedPartner?.id}
                 />
               )}
 
@@ -1200,6 +1206,8 @@ export default function DeposerContrat() {
                   tenantPlan={tenant?.plan}
                   onScanComplete={(results) => setBusinessScanResults(results)}
                   primaryColor={tenantPrimaryColor || undefined}
+                  verifiedPartnerEmail={partnerEmail}
+                  verifiedPartnerId={verifiedPartner?.id}
                 />
               )}
 
