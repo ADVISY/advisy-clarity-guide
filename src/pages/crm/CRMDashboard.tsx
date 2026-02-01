@@ -250,33 +250,83 @@ export default function CRMDashboard() {
     return { total: totalAmount, paid: paidAmount, pending: pendingAmount, count: periodCommissions.length };
   }, [commissions, periodRange]);
 
+  // Helper function to determine product category for CA calculation
+  // Analyzes both product_type and products_data for multi-product contracts
+  const getPolicyCategory = (p: any): 'lca' | 'vie' | 'non_vie' | 'hypo' => {
+    const type = (p.product_type || '').toLowerCase();
+    
+    // Direct VIE detection
+    if (type.includes('vie') || type.includes('life') || type.includes('pilier') || type.includes('3a') || type.includes('3b')) {
+      return 'vie';
+    }
+    
+    // Direct health detection
+    if (type.includes('health') || type.includes('lamal') || type.includes('lca') || type.includes('maladie') || 
+        type.includes('complémentaire') || type.includes('complementaire')) {
+      return 'lca';
+    }
+    
+    // For 'multi' contracts, analyze products_data to determine category
+    if (type === 'multi' && p.products_data && Array.isArray(p.products_data) && p.products_data.length > 0) {
+      const categories = p.products_data.map((prod: any) => (prod.category || '').toLowerCase());
+      
+      // Check if any product is health/LCA
+      const hasHealth = categories.some((cat: string) => 
+        cat === 'health' || cat.includes('lamal') || cat.includes('lca') || 
+        cat.includes('santé') || cat.includes('sante') || cat.includes('maladie')
+      );
+      if (hasHealth) return 'lca';
+      
+      // Check if any product is VIE
+      const hasVie = categories.some((cat: string) => 
+        cat === 'life' || cat.includes('vie') || cat.includes('pilier') || 
+        cat.includes('3a') || cat.includes('3b') || cat.includes('prévoyance')
+      );
+      if (hasVie) return 'vie';
+    }
+    
+    // HYPO detection
+    if (type.includes('hypo') || type.includes('hypothécaire') || type.includes('hypothecaire')) {
+      return 'hypo';
+    }
+    
+    // Default to non_vie for other products (home, auto, legal, etc.)
+    return 'non_vie';
+  };
+
   // Calculate CA using real commissions from database - ONLY ACTIVE CONTRACTS
   // LCA: monthly_premium * 16, VIE: use actual commission amounts from DB
   const calculateCA = useMemo(() => {
     let lcaTotal = 0;
     let vieTotal = 0;
+    let nonVieTotal = 0;
+    let hypoTotal = 0;
 
     // Only include active contracts for CA calculation
     const activePeriodPolicies = periodPolicies.filter(p => p.status === 'active');
 
     activePeriodPolicies.forEach(p => {
-      const type = (p.product_type || '').toLowerCase();
+      const category = getPolicyCategory(p);
       const monthlyPremium = p.premium_monthly || (p.premium_yearly || 0) / 12;
 
       // VIE/Life products - use real commission from commissions table
-      if (type.includes('vie') || type.includes('life') || type.includes('pilier') || type.includes('3a') || type.includes('3b')) {
-        // Find the commission for this policy
+      if (category === 'vie') {
         const policyCommission = commissions.find(c => c.policy_id === p.id);
         if (policyCommission) {
           vieTotal += policyCommission.amount || 0;
         }
-      } else {
-        // LCA/Health products (LAMal, health, multi, complémentaire)
+      } else if (category === 'lca') {
+        // LCA/Health products: monthly premium * 16
         lcaTotal += monthlyPremium * 16;
+      } else if (category === 'hypo') {
+        hypoTotal += monthlyPremium * 16;
+      } else {
+        // NON-VIE products (home, auto, legal, etc.)
+        nonVieTotal += monthlyPremium * 16;
       }
     });
 
-    return { lca: lcaTotal, vie: vieTotal, total: lcaTotal + vieTotal };
+    return { lca: lcaTotal, vie: vieTotal, nonVie: nonVieTotal, hypo: hypoTotal, total: lcaTotal + vieTotal + nonVieTotal + hypoTotal };
   }, [periodPolicies, commissions]);
 
   // Calculate CA en vigueur (from active contracts only) using real commissions
@@ -284,23 +334,28 @@ export default function CRMDashboard() {
     const activePolices = filteredPolicies.filter(p => p.status === 'active');
     let lcaTotal = 0;
     let vieTotal = 0;
+    let nonVieTotal = 0;
+    let hypoTotal = 0;
 
     activePolices.forEach(p => {
-      const type = (p.product_type || '').toLowerCase();
+      const category = getPolicyCategory(p);
       const monthlyPremium = p.premium_monthly || (p.premium_yearly || 0) / 12;
 
-      if (type.includes('vie') || type.includes('life') || type.includes('pilier') || type.includes('3a') || type.includes('3b')) {
-        // Find the commission for this policy
+      if (category === 'vie') {
         const policyCommission = commissions.find(c => c.policy_id === p.id);
         if (policyCommission) {
           vieTotal += policyCommission.amount || 0;
         }
-      } else {
+      } else if (category === 'lca') {
         lcaTotal += monthlyPremium * 16;
+      } else if (category === 'hypo') {
+        hypoTotal += monthlyPremium * 16;
+      } else {
+        nonVieTotal += monthlyPremium * 16;
       }
     });
 
-    return { lca: lcaTotal, vie: vieTotal, total: lcaTotal + vieTotal };
+    return { lca: lcaTotal, vie: vieTotal, nonVie: nonVieTotal, hypo: hypoTotal, total: lcaTotal + vieTotal + nonVieTotal + hypoTotal };
   }, [filteredPolicies, commissions]);
 
   // Commissions by period (for display)
@@ -486,7 +541,7 @@ export default function CRMDashboard() {
       let lcaCARealise = 0, vieCARealise = 0, nonVieCARealise = 0, hypoCARealise = 0;
 
       monthPolicies.forEach(p => {
-        const type = (p.product_type || '').toLowerCase();
+        const category = getPolicyCategory(p);
         const monthlyPremium = p.premium_monthly || (p.premium_yearly || 0) / 12;
         const yearlyPremium = p.premium_yearly || monthlyPremium * 12;
         
@@ -494,21 +549,19 @@ export default function CRMDashboard() {
         const policyCommission = commissions.find(c => c.policy_id === p.id);
         const commissionAmount = policyCommission?.amount || 0;
 
-        // Categorize by product type
-        if (type.includes('hypothe') || type.includes('hypo') || type.includes('mortgage')) {
+        // Categorize by product type using unified function
+        if (category === 'hypo') {
           // HYPO - Hypothèques
           hypoPrime += yearlyPremium;
           hypoCAEstime += yearlyPremium * 0.01; // Estimation 1%
           hypoCARealise += commissionAmount;
-        } else if (type.includes('vie') || type.includes('life') || type.includes('pilier') || type.includes('3a') || type.includes('3b')) {
+        } else if (category === 'vie') {
           // VIE - Life insurance
           viePrime += yearlyPremium;
           vieCAEstime += commissionAmount || yearlyPremium * 0.05; // Use real or estimate 5%
           vieCARealise += commissionAmount;
-        } else if (type.includes('lamal') || type.includes('lca') || type.includes('maladie') || 
-                   type.includes('complémentaire') || type.includes('complementaire') || 
-                   type.includes('health') || type.includes('multi') || type.includes('santé') || type.includes('sante')) {
-          // LCA - Health insurance
+        } else if (category === 'lca') {
+          // LCA - Health insurance (uses monthly * 16 formula)
           lcaPrime += yearlyPremium;
           lcaCAEstime += monthlyPremium * 16; // LCA formula: monthly * 16
           lcaCARealise += commissionAmount;
