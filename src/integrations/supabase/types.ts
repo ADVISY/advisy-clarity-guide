@@ -4687,29 +4687,19 @@ export type Database = {
         }
         Returns: string
       }
-      find_product_by_alias:
-        | {
-            Args: { search_term: string }
-            Returns: {
-              company_id: string
-              confidence: number
-              product_id: string
-              product_name: string
-            }[]
-          }
-        | {
-            Args: {
-              category_hint?: string
-              company_name?: string
-              search_term: string
-            }
-            Returns: {
-              match_score: number
-              match_type: string
-              product_id: string
-              product_name: string
-            }[]
-          }
+      find_product_by_alias: {
+        Args: {
+          category_hint?: string
+          company_name?: string
+          search_term: string
+        }
+        Returns: {
+          match_score: number
+          match_type: string
+          product_id: string
+          product_name: string
+        }[]
+      }
       generate_affiliate_commission: {
         Args: {
           p_payment_amount: number

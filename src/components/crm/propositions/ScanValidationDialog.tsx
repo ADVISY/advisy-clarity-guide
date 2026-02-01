@@ -455,52 +455,103 @@ export default function ScanValidationDialog({
       const createdSuivis: string[] = [];
       const createdFamilyMembers: { id: string; name: string }[] = [];
 
-      // Helper to find product ID by company name
-      const findProductId = async (companyName: string | null, productCategory?: string): Promise<string | null> => {
-        if (!companyName) return null;
-        
-        const { data: companies } = await supabase
-          .from('insurance_companies')
-          .select('id')
-          .ilike('name', `%${companyName}%`)
-          .limit(1);
+      // Helper to resolve product using RPC or auto-create if not found
+      const resolveOrCreateProduct = async (
+        productName: string | null,
+        companyName: string | null,
+        categoryHint?: string
+      ): Promise<{ productId: string; wasCreated: boolean }> => {
+        // 1. Try the RPC function first
+        if (productName) {
+          const { data: matches, error: rpcError } = await supabase.rpc('find_product_by_alias', {
+            search_term: productName,
+            company_name: companyName || null,
+            category_hint: categoryHint || null
+          });
 
-        if (companies && companies.length > 0) {
-          // Try to find a product matching the category
-          let query = supabase
-            .from('insurance_products')
-            .select('id')
-            .eq('company_id', companies[0].id);
-          
-          if (productCategory) {
-            query = query.ilike('category', `%${productCategory}%`);
+          if (!rpcError && matches && matches.length > 0) {
+            // Return the best match (first result, highest score)
+            const bestMatch = matches.sort((a: any, b: any) => b.match_score - a.match_score)[0];
+            console.log(`[resolveOrCreateProduct] Found match for "${productName}": ${bestMatch.product_name} (score: ${bestMatch.match_score})`);
+            return { productId: bestMatch.product_id, wasCreated: false };
           }
-          
-          const { data: products } = await query.limit(1);
-
-          if (products && products.length > 0) {
-            return products[0].id;
-          }
-          
-          // Fallback to any product from the company
-          const { data: anyCompanyProduct } = await supabase
-            .from('insurance_products')
-            .select('id')
-            .eq('company_id', companies[0].id)
-            .limit(1)
-            .single();
-          
-          return anyCompanyProduct?.id || null;
         }
 
-        // Fallback to any product
+        // 2. No match found - resolve or create company first
+        let companyId: string | null = null;
+        if (companyName) {
+          const { data: companies } = await supabase
+            .from('insurance_companies')
+            .select('id')
+            .ilike('name', `%${companyName}%`)
+            .limit(1);
+
+          if (companies && companies.length > 0) {
+            companyId = companies[0].id;
+          } else {
+            // Create the company
+            const { data: newCompany, error: companyError } = await supabase
+              .from('insurance_companies')
+              .insert({
+                name: companyName,
+                status: 'active',
+                category: 'health',
+              })
+              .select('id')
+              .single();
+            
+            if (!companyError && newCompany) {
+              companyId = newCompany.id;
+              console.log(`[resolveOrCreateProduct] Created new company: ${companyName}`);
+            }
+          }
+        }
+
+        // 3. Auto-create the product (status='active' as requested)
+        const finalProductName = productName || `Produit ${companyName || 'Inconnu'}`;
+        const { data: newProduct, error: productError } = await supabase
+          .from('insurance_products')
+          .insert({
+            name: finalProductName,
+            company_id: companyId,
+            status: 'active',
+            source: 'ia_scan',
+            category: categoryHint || 'LAMal',
+            subcategory: categoryHint || 'base',
+          })
+          .select('id')
+          .single();
+
+        if (!productError && newProduct) {
+          console.log(`[resolveOrCreateProduct] Created new product: ${finalProductName}`);
+          return { productId: newProduct.id, wasCreated: true };
+        }
+
+        // 4. Ultimate fallback - get any existing product
         const { data: anyProduct } = await supabase
           .from('insurance_products')
           .select('id')
+          .eq('status', 'active')
           .limit(1)
           .single();
-        
-        return anyProduct?.id || null;
+
+        if (anyProduct) {
+          console.warn(`[resolveOrCreateProduct] Using fallback product for "${productName}"`);
+          return { productId: anyProduct.id, wasCreated: false };
+        }
+
+        throw new Error(`Impossible de créer ou trouver un produit pour "${productName || companyName}"`);
+      };
+
+      // Helper for legacy single-product logic (uses new resolveOrCreateProduct)
+      const findProductId = async (companyName: string | null, productCategory?: string): Promise<string | null> => {
+        if (!companyName) return null;
+        try {
+          const result = await resolveOrCreateProduct(null, companyName, productCategory);
+          return result.productId;
+        } catch {
+          return null;
+        }
       };
 
       // Helper to group products by company for multi-product contracts
@@ -526,19 +577,15 @@ export default function ScanValidationDialog({
           
           if (productId) {
             // Build products_data array with ALL product details
-            // Try to find real product IDs for each product by name
+            // Use the new resolveOrCreateProduct for each product
             const productsData = await Promise.all(products.map(async (p) => {
-              // Try to find a matching product in the database by name
               let resolvedProductId = '';
               if (p.product_name) {
-                const { data: matchingProduct } = await supabase
-                  .from('insurance_products')
-                  .select('id')
-                  .ilike('name', `%${p.product_name}%`)
-                  .limit(1)
-                  .maybeSingle();
-                if (matchingProduct) {
-                  resolvedProductId = matchingProduct.id;
+                try {
+                  const result = await resolveOrCreateProduct(p.product_name, firstProduct.company, p.product_category);
+                  resolvedProductId = result.productId;
+                } catch (e) {
+                  console.warn(`Could not resolve product ${p.product_name}:`, e);
                 }
               }
               return {
@@ -637,19 +684,15 @@ export default function ScanValidationDialog({
           
           if (productId) {
             // Build products_data array with ALL product details
-            // Try to find real product IDs for each product by name
+            // Use the new resolveOrCreateProduct for each product
             const productsDataNew = await Promise.all(products.map(async (p) => {
-              // Try to find a matching product in the database by name
               let resolvedProductId = '';
               if (p.product_name) {
-                const { data: matchingProduct } = await supabase
-                  .from('insurance_products')
-                  .select('id')
-                  .ilike('name', `%${p.product_name}%`)
-                  .limit(1)
-                  .maybeSingle();
-                if (matchingProduct) {
-                  resolvedProductId = matchingProduct.id;
+                try {
+                  const result = await resolveOrCreateProduct(p.product_name, firstProduct.company, p.product_category);
+                  resolvedProductId = result.productId;
+                } catch (e) {
+                  console.warn(`Could not resolve product ${p.product_name}:`, e);
                 }
               }
               return {
@@ -835,27 +878,81 @@ export default function ScanValidationDialog({
         }
       }
 
-      // 5. Link scanned documents to client
-      if (linkDocuments && scan.original_file_key) {
-        const documentData = {
-          tenant_id: tenantId,
-          owner_type: 'client',
-          owner_id: newClient.id,
-          file_name: scan.original_file_name,
-          file_key: scan.original_file_key,
-          mime_type: 'application/pdf',
-          doc_kind: scan.detected_doc_type || 'police',
-          created_by: user.id,
-          category: 'Dossier IA Scan',
-          metadata: {
-            source: 'ia_scan',
-            scan_id: scan.id,
-            detected_type: scan.detected_doc_type,
-            confidence: scan.overall_confidence,
-          },
+      // 5. Link ALL scanned documents to client (including individual files from batch)
+      const createdDocuments: string[] = [];
+      if (linkDocuments) {
+        // Mapping for smart document naming based on doc_type
+        const docNameMapping: Record<string, string> = {
+          'police_active': 'Police active',
+          'ancienne_police': 'Ancienne police',
+          'nouvelle_police': 'Nouveau contrat',
+          'resiliation': 'Lettre de résiliation',
+          'piece_identite': 'Pièce d\'identité',
+          'attestation': 'Attestation',
+          'offre': 'Proposition',
+          'article_45': 'Art. 45 - Libre passage',
+          'autre': 'Document',
         };
 
-        await supabase.from('documents').insert([documentData]);
+        // If we have documents_detected from AI, import each one with smart naming
+        if (scan.documents_detected && scan.documents_detected.length > 0) {
+          const docTypeCounts: Record<string, number> = {};
+          
+          for (const doc of scan.documents_detected) {
+            const docType = doc.doc_type || 'autre';
+            const count = docTypeCounts[docType] || 0;
+            docTypeCounts[docType] = count + 1;
+            
+            // Smart naming: "Police active.pdf" or "Police active (2).pdf" for duplicates
+            const baseName = docNameMapping[docType] || 'Document';
+            const ext = doc.file_name?.split('.').pop()?.toLowerCase() || 'pdf';
+            const smartName = count > 0 ? `${baseName} (${count + 1}).${ext}` : `${baseName}.${ext}`;
+
+            const documentData = {
+              tenant_id: tenantId,
+              owner_type: 'client',
+              owner_id: newClient.id,
+              file_name: smartName,
+              file_key: scan.original_file_key, // Main file key (batch file)
+              mime_type: 'application/pdf',
+              doc_kind: docType,
+              created_by: user.id,
+              category: docType,
+              metadata: {
+                source: 'ia_scan',
+                scan_id: scan.id,
+                original_name: doc.file_name,
+                description: doc.description,
+                doc_type_confidence: doc.doc_type_confidence,
+              },
+            };
+
+            const { data: insertedDoc } = await supabase.from('documents').insert([documentData]).select('id').single();
+            if (insertedDoc?.id) createdDocuments.push(insertedDoc.id);
+          }
+        } else if (scan.original_file_key) {
+          // Fallback: single document import (legacy behavior)
+          const documentData = {
+            tenant_id: tenantId,
+            owner_type: 'client',
+            owner_id: newClient.id,
+            file_name: scan.original_file_name,
+            file_key: scan.original_file_key,
+            mime_type: 'application/pdf',
+            doc_kind: scan.detected_doc_type || 'police',
+            created_by: user.id,
+            category: 'Dossier IA Scan',
+            metadata: {
+              source: 'ia_scan',
+              scan_id: scan.id,
+              detected_type: scan.detected_doc_type,
+              confidence: scan.overall_confidence,
+            },
+          };
+
+          const { data: insertedDoc } = await supabase.from('documents').insert([documentData]).select('id').single();
+          if (insertedDoc?.id) createdDocuments.push(insertedDoc.id);
+        }
       }
 
       // 6. Create workflow-based follow-ups (suivis)
@@ -995,7 +1092,7 @@ export default function ScanValidationDialog({
         createdItems.push(`(${totalProductsInContracts} produits au total)`);
       }
       if (createdFamilyMembers.length > 0) createdItems.push(`${createdFamilyMembers.length} Membre(s) famille`);
-      if (linkDocuments) createdItems.push('Document');
+      if (createdDocuments.length > 0) createdItems.push(`${createdDocuments.length} Document(s)`);
       if (createdSuivis.length > 0) createdItems.push(`${createdSuivis.length} Suivi(s)`);
 
       const clientName = getClientValue('prenom', 'first_name') || '';
