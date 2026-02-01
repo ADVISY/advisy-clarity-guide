@@ -499,9 +499,13 @@ const Connexion = () => {
         console.error('[Connexion] Error checking SMS verification:', err);
       }
       try {
+        // SECURITY: Use lyta_login_space as primary source (persisted for entire session)
+        // loginTarget is a one-shot value that gets cleared after first redirect
         const targetSpace =
-          sessionStorage.getItem('loginTarget') ||
-          sessionStorage.getItem('lyta_login_space');
+          sessionStorage.getItem('lyta_login_space') ||
+          sessionStorage.getItem('loginTarget');
+
+        console.log('[Connexion] Redirect check - targetSpace:', targetSpace, 'userId:', user.id);
 
         // OPTIMIZATION: Use cached login data from signIn (no extra DB calls!)
         const cachedDataStr = sessionStorage.getItem('userLoginData');
@@ -510,12 +514,14 @@ const Connexion = () => {
         if (cachedDataStr) {
           try {
             cachedData = JSON.parse(cachedDataStr);
+            console.log('[Connexion] Using cached login data:', cachedData);
           } catch {
             cachedData = null;
           }
         }
 
         const goToTenantCrm = (tenantSlug: string) => {
+          console.log('[Connexion] Redirecting to tenant CRM:', tenantSlug);
           const hostname = window.location.hostname;
           const isLocalhost = hostname === 'localhost' || hostname.includes('lovable');
 
@@ -544,6 +550,7 @@ const Connexion = () => {
           }
 
           const roles = (data ?? []).map((r) => r.role as string);
+          console.log('[Connexion] User global roles:', roles);
           if (roles.includes('king')) return 'king';
           if (roles.includes('client')) return 'client';
           return roles[0] ?? 'client';
@@ -569,11 +576,13 @@ const Connexion = () => {
           const tenantSlug =
             cachedData?.tenant_slug ?? ((data?.tenants as any)?.slug || null);
 
-          return {
+          const result = {
             tenantId: (data?.tenant_id as string | undefined) ?? null,
             tenantSlug,
             isPlatformAdmin: Boolean((data as any)?.is_platform_admin),
           };
+          console.log('[Connexion] Tenant assignment:', result);
+          return result;
         };
 
         const getTeamAccess = async (): Promise<{
@@ -583,11 +592,13 @@ const Connexion = () => {
           const assignment = await getTenantAssignment();
 
           if (!assignment.tenantId) {
+            console.log('[Connexion] No tenant assignment found');
             return { allowed: false, tenantSlug: null };
           }
 
           // Platform admins are allowed regardless of tenant role assignment.
           if (assignment.isPlatformAdmin) {
+            console.log('[Connexion] User is platform admin - allowing team access');
             return { allowed: true, tenantSlug: assignment.tenantSlug };
           }
 
@@ -603,8 +614,11 @@ const Connexion = () => {
             return { allowed: false, tenantSlug: assignment.tenantSlug };
           }
 
+          const hasTeamRole = (tenantRoles?.length ?? 0) > 0;
+          console.log('[Connexion] Team role check:', hasTeamRole, 'for tenant:', assignment.tenantId);
+          
           return {
-            allowed: (tenantRoles?.length ?? 0) > 0,
+            allowed: hasTeamRole,
             tenantSlug: assignment.tenantSlug,
           };
         };
@@ -615,87 +629,59 @@ const Connexion = () => {
         // Mark this user as processed to prevent re-running
         processedUserRef.current = user.id;
 
-        // If no target space set, user navigated to /connexion while logged in
-        // IMPORTANT: we must set an intended space, otherwise ProtectedRoute will bounce back to /connexion.
-        if (!targetSpace) {
-          const globalRole = await getGlobalRole();
-
-          if (globalRole === 'king') {
-            sessionStorage.setItem('lyta_login_space', 'king');
-            navigateRef.current("/king/wizard", { replace: true });
-            return;
-          }
-
-          const teamAccess = await getTeamAccess();
-          if (teamAccess.allowed) {
-            sessionStorage.setItem('lyta_login_space', 'team');
-            if (teamAccess.tenantSlug) {
-              goToTenantCrm(teamAccess.tenantSlug);
-            } else {
-              navigateRef.current("/crm", { replace: true });
-            }
-            return;
-          }
-
-          // Fall back to client space only if user has a client role/record
-          if (globalRole === 'client') {
-            sessionStorage.setItem('lyta_login_space', 'client');
-            navigateRef.current("/espace-client", { replace: true });
-            return;
-          }
-
-          const { data: clientRecord } = await supabase
-            .from('clients')
-            .select('id')
-            .eq('user_id', user.id)
-            .maybeSingle();
-
-          if (clientRecord) {
-            sessionStorage.setItem('lyta_login_space', 'client');
-            navigateRef.current("/espace-client", { replace: true });
-            return;
-          }
-
-          toastRef.current({
-            title: "Accès refusé",
-            description: "Votre compte n'a accès ni au CRM ni à l'espace client pour ce cabinet.",
-            variant: "destructive",
-          });
-          await supabase.auth.signOut();
-          return;
-        }
-
-        // New login flow - targetSpace is set
-        sessionStorage.removeItem('loginTarget');
-
+        // ======== CRITICAL SECURITY: STRICT SPACE ENFORCEMENT ========
+        // If a targetSpace was chosen, we MUST respect it and NEVER fall back to another space.
+        // This prevents privilege escalation and cross-space access.
+        
         if (targetSpace === 'king') {
           const globalRole = await getGlobalRole();
           if (globalRole === 'king') {
+            console.log('[Connexion] KING access granted');
             navigateRef.current("/king/wizard", { replace: true });
           } else {
+            console.error('[Connexion] SECURITY: User tried to access KING space without king role');
             toastRef.current({
               title: "Accès refusé",
               description: "Vous n'avez pas les droits SUPER ADMIN.",
               variant: "destructive",
             });
+            sessionStorage.clear();
             await supabase.auth.signOut();
           }
           return;
         }
+        
+        if (targetSpace === 'team') {
+          // SECURITY: For TEAM space, verify team access and NEVER redirect to client
+          const teamAccess = await getTeamAccess();
+          
+          if (!teamAccess.allowed) {
+            console.error('[Connexion] SECURITY: User tried to access TEAM space without team role');
+            toastRef.current({
+              title: "Accès refusé",
+              description: "Votre compte n'a pas accès au CRM (Espace Team). Contactez votre administrateur.",
+              variant: "destructive",
+            });
+            sessionStorage.clear();
+            await supabase.auth.signOut();
+            return;
+          }
 
-        const globalRole = await getGlobalRole();
-
-        // KING users always go to /king/wizard
-        if (globalRole === 'king') {
-          navigateRef.current("/king/wizard", { replace: true });
+          console.log('[Connexion] TEAM access granted');
+          if (teamAccess.tenantSlug) {
+            goToTenantCrm(teamAccess.tenantSlug);
+          } else {
+            navigateRef.current("/crm", { replace: true });
+          }
           return;
         }
-
+        
         if (targetSpace === 'client') {
-          // SECURITY: Verify user actually has client access before redirecting
-          const hasClientAccess = globalRole === 'client';
+          // SECURITY: Verify user actually has client access
+          const globalRole = await getGlobalRole();
+          const hasClientRole = globalRole === 'client';
           
-          if (!hasClientAccess) {
+          if (!hasClientRole) {
             // Check if user has a client record
             const { data: clientRecord } = await supabase
               .from('clients')
@@ -704,6 +690,7 @@ const Connexion = () => {
               .maybeSingle();
             
             if (!clientRecord) {
+              console.error('[Connexion] SECURITY: User tried to access CLIENT space without client record');
               toastRef.current({
                 title: "Accès refusé",
                 description: "Votre compte n'a pas accès à l'espace client.",
@@ -711,33 +698,71 @@ const Connexion = () => {
               });
               sessionStorage.clear();
               await supabase.auth.signOut();
-              redirectInProgress.current = false;
               return;
             }
           }
           
+          console.log('[Connexion] CLIENT access granted');
+          navigateRef.current("/espace-client", { replace: true });
+          return;
+        }
+        
+        // No targetSpace set - this should only happen for users already logged in
+        // navigating directly to /connexion. Determine best space based on priority.
+        console.log('[Connexion] No targetSpace - determining from user roles/assignments');
+        
+        const globalRole = await getGlobalRole();
+        console.log('[Connexion] Global role for auto-detect:', globalRole);
+
+        if (globalRole === 'king') {
+          sessionStorage.setItem('lyta_login_space', 'king');
+          navigateRef.current("/king/wizard", { replace: true });
+          return;
+        }
+
+        // Check team access first (higher priority than client for multi-role users)
+        const teamAccess = await getTeamAccess();
+        if (teamAccess.allowed) {
+          console.log('[Connexion] Auto-detected TEAM access');
+          sessionStorage.setItem('lyta_login_space', 'team');
+          if (teamAccess.tenantSlug) {
+            goToTenantCrm(teamAccess.tenantSlug);
+          } else {
+            navigateRef.current("/crm", { replace: true });
+          }
+          return;
+        }
+
+        // Fall back to client space only if user has a client role/record
+        if (globalRole === 'client') {
+          console.log('[Connexion] Auto-detected CLIENT access (role)');
+          sessionStorage.setItem('lyta_login_space', 'client');
           navigateRef.current("/espace-client", { replace: true });
           return;
         }
 
-        // targetSpace === 'team'
-        const teamAccess = await getTeamAccess();
-        if (!teamAccess.allowed) {
-          toastRef.current({
-            title: "Accès refusé",
-            description: "Votre compte n'a pas accès au CRM (Espace Team).",
-            variant: "destructive",
-          });
-          // Keep spaces strictly separated: force re-login if team access is missing.
-          await supabase.auth.signOut();
+        const { data: clientRecord } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (clientRecord) {
+          console.log('[Connexion] Auto-detected CLIENT access (record)');
+          sessionStorage.setItem('lyta_login_space', 'client');
+          navigateRef.current("/espace-client", { replace: true });
           return;
         }
 
-        if (teamAccess.tenantSlug) {
-          goToTenantCrm(teamAccess.tenantSlug);
-        } else {
-          navigateRef.current("/crm", { replace: true });
-        }
+        // No access found
+        console.error('[Connexion] SECURITY: User has no valid access to any space');
+        toastRef.current({
+          title: "Accès refusé",
+          description: "Votre compte n'a accès ni au CRM ni à l'espace client pour ce cabinet.",
+          variant: "destructive",
+        });
+        sessionStorage.clear();
+        await supabase.auth.signOut();
       } finally {
         redirectInProgress.current = false;
       }

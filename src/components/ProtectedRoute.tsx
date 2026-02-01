@@ -117,6 +117,8 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
         const roles = (rolesData ?? []).map((r) => r.role as string);
         const currentPath = location.pathname;
+        
+        console.log('[ProtectedRoute] Validating access - path:', currentPath, 'roles:', roles);
 
         // ======== CRITICAL SECURITY: CROSS-DOMAIN SESSION HIJACK PREVENTION ========
         // When user has a Supabase session from another domain (e.g., KING on app.lyta.ch),
@@ -128,6 +130,8 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
         const intendedSpace =
           sessionStorage.getItem('lyta_login_space') ||
           sessionStorage.getItem('loginTarget');
+
+        console.log('[ProtectedRoute] Security context - tenantSlug:', currentTenantSlug, 'intendedSpace:', intendedSpace);
 
         // SECURITY: If there's no intended space in sessionStorage, the user did NOT
         // login through this domain's login flow - they have a stale cross-domain session
@@ -148,6 +152,27 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
           setIsValidating(false);
           return;
         }
+        
+        // ======== CRITICAL SECURITY: SPACE-PATH MISMATCH DETECTION ========
+        // Detect if the current route doesn't match the intended space
+        // This prevents users from manually navigating to restricted URLs
+        
+        const isClientPath = currentPath.startsWith('/espace-client');
+        const isCrmPath = currentPath.startsWith('/crm');
+        const isKingPath = currentPath.startsWith('/king');
+        
+        const expectedSpace = isClientPath ? 'client' : isCrmPath ? 'team' : isKingPath ? 'king' : null;
+        
+        if (expectedSpace && expectedSpace !== intendedSpace) {
+          console.error(`[ProtectedRoute] SECURITY VIOLATION: Space mismatch! Path expects '${expectedSpace}' but user is in '${intendedSpace}' space`);
+          console.error(`[ProtectedRoute] User attempted to access ${currentPath} - blocking and forcing logout`);
+          sessionStorage.clear();
+          await signOut();
+          setIsAuthorized(false);
+          setIsValidating(false);
+          return;
+        }
+        // ======== END SPACE-PATH MISMATCH DETECTION ========
         
         // SECURITY: Verify the intended space matches the current domain context
         // If on a tenant subdomain, the user MUST have logged in with 'team' or 'client' space
