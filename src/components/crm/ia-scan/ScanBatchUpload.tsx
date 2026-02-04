@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -37,6 +38,7 @@ export default function ScanBatchUpload({
   onBatchCreated,
   primaryColor,
 }: ScanBatchUploadProps) {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { createBatch, classifyBatch } = useScanBatches();
@@ -58,16 +60,16 @@ export default function ScanBatchUpload({
     for (const file of files) {
       if (file.size > maxSize) {
         toast({
-          title: "Fichier trop volumineux",
-          description: `${file.name} dépasse la limite de 20MB`,
+          title: t('iaScan.fileTooLarge'),
+          description: t('iaScan.fileSizeLimit', { name: file.name }),
           variant: "destructive",
         });
         continue;
       }
       if (!allowedTypes.includes(file.type)) {
         toast({
-          title: "Type non supporté",
-          description: `${file.name}: formats acceptés PDF, JPG, PNG, WEBP`,
+          title: t('iaScan.unsupportedType'),
+          description: t('iaScan.supportedFormats', { name: file.name }),
           variant: "destructive",
         });
         continue;
@@ -97,10 +99,10 @@ export default function ScanBatchUpload({
     const normalizedEmail = (verifiedPartnerEmail ?? '').trim().toLowerCase();
     if (!normalizedEmail) {
       setStatus('error');
-      setErrorMessage("Veuillez vérifier votre email collaborateur avant d'utiliser le scan.");
+      setErrorMessage(t('iaScan.verifyEmailFirst'));
       toast({
-        title: "Accès refusé",
-        description: "Email collaborateur non vérifié",
+        title: t('auth.accessDenied'),
+        description: t('iaScan.verifyEmailFirst'),
         variant: "destructive",
       });
       return;
@@ -110,26 +112,26 @@ export default function ScanBatchUpload({
       // Step 1: Upload files and create batch
       setStatus('uploading');
       setProgress(10);
-      setCurrentStep('Création du dossier...');
+      setCurrentStep(t('iaScan.creatingFolder'));
 
       const files = pendingFiles.map(pf => pf.file);
       const batchId = await createBatch(files, normalizedEmail, verifiedPartnerId);
 
       if (!batchId) {
-        throw new Error("Échec de création du dossier");
+        throw new Error(t('iaScan.createFolderFailed'));
       }
 
       setProgress(40);
       
       // Step 2: Classify documents
       setStatus('classifying');
-      setCurrentStep('Classification IA des documents...');
+      setCurrentStep(t('iaScan.classifyingDocuments'));
       setProgress(50);
 
       const classifySuccess = await classifyBatch(batchId);
 
       if (!classifySuccess) {
-        throw new Error("Échec de classification");
+        throw new Error(t('iaScan.classificationFailed'));
       }
 
       setProgress(100);
@@ -143,10 +145,10 @@ export default function ScanBatchUpload({
     } catch (err: any) {
       console.error('Batch process error:', err);
       setStatus('error');
-      setErrorMessage(err.message || 'Une erreur est survenue');
+      setErrorMessage(err.message || t('iaScan.processingError'));
       toast({
-        title: "Erreur",
-        description: err.message,
+        title: t('common.error'),
+        description: err.message || t('iaScan.processingError'),
         variant: "destructive",
       });
     }
@@ -181,11 +183,11 @@ export default function ScanBatchUpload({
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center gap-2">
           <FolderOpen className="h-5 w-5" style={{ color: primaryColor }} />
-          Dossier Multi-Documents
-          <Badge variant="secondary" className="text-xs">NOUVEAU</Badge>
+          {t('iaScan.batchFolderTitle')}
+          <Badge variant="secondary" className="text-xs">{t('iaScan.newBadge')}</Badge>
         </CardTitle>
         <CardDescription>
-          Uploadez plusieurs documents, l'IA classifiera automatiquement chaque pièce
+          {t('iaScan.batchFolderDesc')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -242,7 +244,7 @@ export default function ScanBatchUpload({
         {status === 'done' && (
           <div className="flex items-center justify-center gap-2 text-emerald-600">
             <CheckCircle2 className="h-5 w-5" />
-            <span className="font-medium">Classification terminée !</span>
+            <span className="font-medium">{t('iaScan.classificationDone')}</span>
           </div>
         )}
 
@@ -258,7 +260,7 @@ export default function ScanBatchUpload({
                 className="gap-2"
               >
                 <Upload className="h-4 w-4" />
-                {pendingFiles.length > 0 ? 'Ajouter des documents' : 'Sélectionner les documents'}
+                {pendingFiles.length > 0 ? t('iaScan.addDocuments') : t('iaScan.selectDocuments')}
               </Button>
 
               {pendingFiles.length > 0 && (
@@ -269,7 +271,7 @@ export default function ScanBatchUpload({
                   className="gap-2"
                 >
                   <Sparkles className="h-4 w-4" />
-                  Classifier {pendingFiles.length} document(s)
+                  {t('iaScan.classifyDocuments', { count: pendingFiles.length })}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               )}
@@ -283,15 +285,14 @@ export default function ScanBatchUpload({
               size="sm"
               onClick={reset}
             >
-              Nouveau dossier
+              {t('iaScan.newFolder')}
             </Button>
           )}
         </div>
 
         {/* Info */}
         <p className="text-xs text-muted-foreground text-center">
-          Pièce d'identité, ancienne police, nouveau contrat, résiliation, art.45... 
-          L'IA classifiera chaque document automatiquement.
+          {t('iaScan.documentInfo')}
         </p>
       </CardContent>
     </Card>

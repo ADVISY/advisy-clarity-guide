@@ -95,16 +95,16 @@ export default function IAScanUpload({
     for (const file of files) {
       if (file.size > maxSize) {
         toast({
-          title: "Fichier trop volumineux",
-          description: `${file.name} dépasse la limite de 20MB`,
+          title: t('iaScan.fileTooLarge'),
+          description: t('iaScan.fileSizeLimit', { name: file.name }),
           variant: "destructive",
         });
         continue;
       }
       if (!allowedTypes.includes(file.type)) {
         toast({
-          title: "Type non supporté",
-          description: `${file.name}: formats acceptés PDF, JPG, PNG, WEBP`,
+          title: t('iaScan.unsupportedType'),
+          description: t('iaScan.supportedFormats', { name: file.name }),
           variant: "destructive",
         });
         continue;
@@ -136,10 +136,10 @@ export default function IAScanUpload({
       setStatus('error');
       setProgress(0);
       setCurrentStep('');
-      setErrorMessage("Veuillez vérifier votre email collaborateur avant d'utiliser l'IA Scan.");
+      setErrorMessage(t('iaScan.verifyEmailFirst'));
       toast({
-        title: "Accès refusé",
-        description: "Veuillez vérifier votre email collaborateur avant d'utiliser l'IA Scan.",
+        title: t('auth.accessDenied'),
+        description: t('iaScan.verifyEmailFirst'),
         variant: "destructive",
       });
       return;
@@ -151,7 +151,7 @@ export default function IAScanUpload({
 
     try {
       // 1. Upload all files to storage
-      setCurrentStep('Upload des documents...');
+      setCurrentStep(t('iaScan.uploadingDocuments'));
       const uploadedPaths: { path: string; fileName: string; mimeType: string }[] = [];
       
       for (let i = 0; i < uploadedFiles.length; i++) {
@@ -171,7 +171,12 @@ export default function IAScanUpload({
           setUploadedFiles(prev => prev.map((f, idx) => 
             idx === i ? { ...f, status: 'error' } : f
           ));
-          throw new Error(`Erreur upload ${uploadFile.name}: ${uploadError.message}`);
+          throw new Error(
+            t('iaScan.uploadErrorWithFile', {
+              name: uploadFile.name,
+              message: uploadError.message,
+            }),
+          );
         }
 
         uploadedPaths.push({
@@ -189,7 +194,7 @@ export default function IAScanUpload({
 
       setProgress(35);
       setStatus('scanning');
-      setCurrentStep('Création du dossier de scan...');
+      setCurrentStep(t('iaScan.creatingFolder'));
 
       // 2. Create scan record for the batch (requires verified partner email for security)
       const { data: scanRecord, error: scanError } = await supabase
@@ -210,7 +215,7 @@ export default function IAScanUpload({
 
       if (scanError) throw scanError;
       setProgress(45);
-      setCurrentStep('Analyse IA en cours...');
+      setCurrentStep(t('iaScan.analyzingFolder'));
 
       // 3. Call scan-document edge function with all files
       const { data: scanResult, error: functionError } = await supabase.functions.invoke('scan-document', {
@@ -224,10 +229,10 @@ export default function IAScanUpload({
       });
 
       if (functionError) throw functionError;
-      if (!scanResult.success) throw new Error(scanResult.error || 'Scan failed');
+      if (!scanResult.success) throw new Error(scanResult.error || t('iaScan.scanFailed'));
       
       setProgress(80);
-      setCurrentStep('Récupération des données extraites...');
+      setCurrentStep(t('iaScan.fetchingExtractedData'));
 
       // 4. Fetch extracted fields
       const { data: extractedFields, error: fieldsError } = await supabase
@@ -263,18 +268,21 @@ export default function IAScanUpload({
       onScanComplete(results);
 
       toast({
-        title: "Dossier analysé",
-        description: `${uploadedFiles.length} documents traités, ${results.fields.length} champs extraits`,
+        title: t('iaScan.folderAnalyzed'),
+        description: t('iaScan.folderAnalyzedDesc', {
+          documents: uploadedFiles.length,
+          fields: results.fields.length,
+        }),
       });
 
     } catch (error: any) {
       console.error('IA Scan error:', error);
       setStatus('error');
       setCurrentStep('');
-      setErrorMessage(error.message || 'Une erreur est survenue');
+      setErrorMessage(error.message || t('iaScan.processingError'));
       toast({
-        title: "Erreur d'analyse",
-        description: error.message || 'Impossible d\'analyser les documents',
+        title: t('iaScan.analysisErrorTitle'),
+        description: error.message || t('iaScan.unableToAnalyze'),
         variant: "destructive",
       });
     }
@@ -305,17 +313,17 @@ export default function IAScanUpload({
   const getStatusText = () => {
     switch (status) {
       case 'uploading':
-        return currentStep || 'Upload en cours...';
+        return currentStep || t('iaScan.uploadInProgress');
       case 'scanning':
-        return currentStep || 'Analyse IA en cours...';
+        return currentStep || t('iaScan.analysisInProgress');
       case 'completed':
-        return 'Analyse terminée !';
+        return t('iaScan.analysisComplete');
       case 'error':
-        return errorMessage || 'Erreur d\'analyse';
+        return errorMessage || t('iaScan.processingError');
       default:
         return uploadedFiles.length > 0 
-          ? `${uploadedFiles.length} document(s) prêt(s) à scanner`
-          : 'Déposez votre dossier complet (plusieurs documents)';
+          ? t('iaScan.readyToScan', { count: uploadedFiles.length })
+          : t('iaScan.depositFullFolder');
     }
   };
 
@@ -340,7 +348,7 @@ export default function IAScanUpload({
         <CardContent className="text-center pt-2">
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <Crown className="h-4 w-4 text-amber-500" />
-            Contactez votre administrateur pour activer cette fonctionnalité
+            {t('iaScan.contactAdminToEnable')}
           </div>
         </CardContent>
       </Card>
@@ -375,7 +383,7 @@ export default function IAScanUpload({
             <div className="flex items-center justify-center gap-2 mb-1">
               <img src={lytaSmartFlowLogo} alt="LYTA Smart Flow" className="h-8 w-auto" />
               <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full">
-                BETA
+                {t('iaScan.beta')}
               </span>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
@@ -438,7 +446,7 @@ export default function IAScanUpload({
                   className="gap-2"
                 >
                   <Upload className="h-4 w-4" />
-                  {uploadedFiles.length > 0 ? 'Ajouter des documents' : 'Sélectionner les documents'}
+                  {uploadedFiles.length > 0 ? t('iaScan.addDocuments') : t('iaScan.selectDocuments')}
                 </Button>
 
                 {uploadedFiles.length > 0 && (
@@ -449,7 +457,7 @@ export default function IAScanUpload({
                     className="gap-2"
                   >
                     <Sparkles className="h-4 w-4" />
-                    Scanner {uploadedFiles.length} document(s)
+                    {t('iaScan.scanDocuments', { count: uploadedFiles.length })}
                   </Button>
                 )}
               </>
@@ -462,7 +470,7 @@ export default function IAScanUpload({
                 size="sm"
                 onClick={resetScan}
               >
-                Scanner un autre dossier
+                {t('iaScan.scanAnotherFolder')}
               </Button>
             )}
           </div>
@@ -471,13 +479,13 @@ export default function IAScanUpload({
           {status === 'completed' && (
             <Badge variant="secondary" className="gap-1">
               <CheckCircle2 className="h-3 w-3" />
-              {uploadedFiles.length} documents analysés
+              {t('iaScan.documentsAnalyzed', { count: uploadedFiles.length })}
             </Badge>
           )}
 
           {/* Disclaimer */}
           <p className="text-xs text-muted-foreground max-w-sm">
-            Déposez tous les documents du dossier (police, offre, attestation...). L'IA consolidera les informations automatiquement.
+            {t('iaScan.depositAllDocuments')}
           </p>
         </div>
       </CardContent>
