@@ -25,6 +25,7 @@ import {
   FolderOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import lytaSmartFlowLogo from "@/assets/lyta-smartflow-logo.png";
 
 export default function CRMPropositions() {
   const { t } = useTranslation();
@@ -95,21 +96,17 @@ export default function CRMPropositions() {
     <div className="space-y-8">
       {/* Header with decorative background */}
       <div className="relative">
-        <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/10 via-blue-500/5 to-transparent rounded-3xl blur-2xl" />
+        <div className="absolute -inset-4 bg-gradient-to-r from-primary/10 via-secondary/5 to-transparent rounded-3xl blur-2xl" />
         <div className="relative flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl blur-lg opacity-50" />
-              <div className="relative p-4 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-xl">
-                <Sparkles className="h-7 w-7 text-white" />
-              </div>
-            </div>
+            <img 
+              src={lytaSmartFlowLogo} 
+              alt="LYTA Smart Flow" 
+              className="h-14 w-auto"
+            />
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                Dépôts IA Scan
-              </h1>
               <p className="text-muted-foreground">
-                Validez les dossiers scannés et créez les clients
+                {t('propositions.validateScansSubtitle', 'Validez les dossiers scannés et créez les clients')}
               </p>
             </div>
           </div>
